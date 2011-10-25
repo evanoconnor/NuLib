@@ -1,0 +1,16 @@
+F90=ifort
+F90FLAGS= -O3
+
+#if you want to take advantage of openmp use this flag
+#F90FLAGS= -O3 -openmp
+
+MODINC="-I ./"
+
+#You must have a HDF5 version installed with
+#the _same_ compiler, this often means compiling
+#it by yourself.
+#See README file for compiling HDF5
+
+HDF5DIR=/Users/evanoc/opt/hdf5-1.8.3-ifort12.0
+HDF5INCS=-I$(HDF5DIR)/include
+HDF5LIBS=-L$(HDF5DIR)/lib -lhdf5 -lhdf5_fortran -lhdf5 -lz
