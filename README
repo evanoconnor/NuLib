@@ -6,6 +6,19 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+DISCLAIMER: 
+-----------
+
+Please note that the routines provided here come with absolutely no
+warranty and we are unable to guarantee that we will be able to
+provide support or help if you run into problems integrating them with
+your simulation code. If you decide to use the provided routines in
+published work, it is YOUR responsibility to check their physical
+correctness and consistency.
+
+If you have any questions or have discovered a bug in our routines,
+please e-mail us at evanoc@tapir.caltech.edu.
+
 Introduction:
 -------------
 
