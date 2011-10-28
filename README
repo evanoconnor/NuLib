@@ -19,6 +19,21 @@ correctness and consistency.
 If you have any questions or have discovered a bug in our routines,
 please e-mail us at evanoc@tapir.caltech.edu.
 
+COPYRIGHT:
+----------
+
+While NuLib is open source, its copyright is held by Evan O’Connor. In
+the absence of suitable open scientific software licenses, we release
+this version of NuLib to the community under the Creative Commons
+attribution-noncommercial-share alike license:
+
+http://creativecommons.org/licenses/by-nc-sa/3.0/us
+
+Essentially, you may use NuLib, but must make reference to our work,
+must not use NuLib for commercial purposes, and any code including or
+using our routines or part of them may be made publically available,
+and if so, only under the same license.
+
 Introduction:
 -------------
 
