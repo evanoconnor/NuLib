@@ -17,15 +17,15 @@ published work, it is YOUR responsibility to check their physical
 correctness and consistency.
 
 If you have any questions or have discovered a bug in our routines,
-please e-mail us at evanoc@tapir.caltech.edu.
+please e-mail us at evanoc@tapir.caltech.edu or cott@tapir.caltech.edu
 
 COPYRIGHT:
 ----------
 
-While NuLib is open source, its copyright is held by Evan O’Connor. In
-the absence of suitable open scientific software licenses, we release
-this version of NuLib to the community under the Creative Commons
-attribution-noncommercial-share alike license:
+While NuLib is open source, its copyright is held by Evan O’Connor and
+Christian Ott. In the absence of suitable open scientific software
+licenses, we release this version of NuLib to the community under the
+Creative Commons attribution-noncommercial-share alike license:
 
 http://creativecommons.org/licenses/by-nc-sa/3.0/us
 
