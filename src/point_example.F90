@@ -42,6 +42,7 @@ program point_example
   real*8 :: precision = 1.0d-10
   real*8 :: xrho, xtemp, xye
   integer i,j
+  real*8 dxfac,mindx
 
   !allocate the arrays for the point values
   allocate(local_emissivity(mypoint_number_output_species,mypoint_number_groups))
@@ -61,6 +62,28 @@ program point_example
   xrho = 1.0d12 !g/cm^3
   xtemp = 1.5d0 !MeV
   xye = 0.35d0 !dimensionless
+
+  !set up energies bins
+  mindx = 1.0d0
+  bin_bottom(1) = 0.0d0 !MeV
+  bin_bottom(2) = 4.0d0 !MeV
+  bin_bottom(3) = bin_bottom(2)+mindx
+  bin_bottom(number_groups) = 250.0d0
+  
+  call nulib_series2(number_groups-1,bin_bottom(2),bin_bottom(number_groups),mindx,dxfac)
+  do i=4,number_groups
+     bin_bottom(i) = bin_bottom(i-1)+(bin_bottom(i-1)-bin_bottom(i-2))*dxfac
+  enddo
+  
+  !calculate bin widths & energies from the bottom of the bin & energy at top on bin
+  do i=1,number_groups-1
+     energies(i) = (bin_bottom(i)+bin_bottom(i+1))/2.0d0
+     bin_widths(i) = bin_bottom(i+1)-bin_bottom(i)
+     bin_top(i) = bin_bottom(i+1)
+  enddo
+  energies(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups-1)*dxfac/2.0d0
+  bin_widths(number_groups) = 2.0*(energies(number_groups)-bin_bottom(number_groups))
+  bin_top(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups)
 
   allocate(eos_variables(total_eos_variables))
   eos_variables = 0.0d0

@@ -74,9 +74,6 @@ module nulib
       integer :: number_species_in
       integer :: number_groups_in
 
-      integer :: i
-      real*8 dxfac,mindx
-
       neutrino_scheme = neutrino_scheme_in
       number_species = number_species_in
       number_groups = number_groups_in
@@ -115,28 +112,6 @@ module nulib
       allocate(bin_widths(number_groups))
       allocate(bin_bottom(number_groups))
       allocate(bin_top(number_groups))
-
-      !set up energies bins
-      mindx = 1.0d0
-      bin_bottom(1) = 0.0d0 !MeV
-      bin_bottom(2) = 4.0d0 !MeV
-      bin_bottom(3) = bin_bottom(2)+mindx
-      bin_bottom(number_groups) = 250.0d0
-
-      call nulib_series2(number_groups-1,bin_bottom(2),bin_bottom(number_groups),mindx,dxfac)
-      do i=4,number_groups
-         bin_bottom(i) = bin_bottom(i-1)+(bin_bottom(i-1)-bin_bottom(i-2))*dxfac
-      enddo
-
-      !calculate bin widths & energies from the bottom of the bin & energy at top on bin
-      do i=1,number_groups-1
-         energies(i) = (bin_bottom(i)+bin_bottom(i+1))/2.0d0
-         bin_widths(i) = bin_bottom(i+1)-bin_bottom(i)
-         bin_top(i) = bin_bottom(i+1)
-      enddo
-      energies(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups-1)*dxfac/2.0d0
-      bin_widths(number_groups) = 2.0*(energies(number_groups)-bin_bottom(number_groups))
-      bin_top(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups)
 
       !setup H0_constants for electron positron annihilation
       !standard

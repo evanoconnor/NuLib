@@ -55,6 +55,8 @@ program make_table_example
   real*8 :: matter_prs,matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe
   integer :: keytemp,keyerr
   real*8 :: precision = 1.0d-10
+  integer :: i
+  real*8 dxfac,mindx
 
   !this sets up many cooefficients and creates the energy grid (one
   !zone + log spacing) see nulib.F90:initialize_nulib
@@ -64,7 +66,7 @@ program make_table_example
   call readtable(eos_filename)
   m_ref = m_n !for LS200
   
-  !make table
+  !set up table
   final_table_size_ye = 10
   final_table_size_rho = 10
   final_table_size_temp = 10
@@ -76,6 +78,29 @@ program make_table_example
   min_logtemp = log10(0.05d0)
   max_logtemp = log10(200.0d0)
   number_output_species = 3
+
+  !set up energies bins
+  mindx = 1.0d0
+  bin_bottom(1) = 0.0d0 !MeV
+  bin_bottom(2) = 4.0d0 !MeV
+  bin_bottom(3) = bin_bottom(2)+mindx
+  bin_bottom(number_groups) = 250.0d0
+  
+  call nulib_series2(number_groups-1,bin_bottom(2),bin_bottom(number_groups),mindx,dxfac)
+  do i=4,number_groups
+     bin_bottom(i) = bin_bottom(i-1)+(bin_bottom(i-1)-bin_bottom(i-2))*dxfac
+  enddo
+  
+  !calculate bin widths & energies from the bottom of the bin & energy at top on bin
+  do i=1,number_groups-1
+     energies(i) = (bin_bottom(i)+bin_bottom(i+1))/2.0d0
+     bin_widths(i) = bin_bottom(i+1)-bin_bottom(i)
+     bin_top(i) = bin_bottom(i+1)
+  enddo
+  energies(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups-1)*dxfac/2.0d0
+  bin_widths(number_groups) = 2.0*(energies(number_groups)-bin_bottom(number_groups))
+  bin_top(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups)
+
 
   allocate(table_ye(final_table_size_ye))
   allocate(table_rho(final_table_size_rho))
