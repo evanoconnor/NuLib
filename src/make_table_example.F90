@@ -80,6 +80,7 @@ program make_table_example
   number_output_species = 3
 
   !set up energies bins
+  do_integrated_BB_and_emissivity = .false.
   mindx = 1.0d0
   bin_bottom(1) = 0.0d0 !MeV
   bin_bottom(2) = 4.0d0 !MeV

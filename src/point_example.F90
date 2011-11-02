@@ -64,6 +64,7 @@ program point_example
   xye = 0.35d0 !dimensionless
 
   !set up energies bins
+  do_integrated_BB_and_emissivity = .false.
   mindx = 1.0d0
   bin_bottom(1) = 0.0d0 !MeV
   bin_bottom(2) = 4.0d0 !MeV

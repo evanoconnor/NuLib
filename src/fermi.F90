@@ -94,17 +94,15 @@ subroutine return_blackbody_spectra(blackbody_spectra,eos_variables)
   integer :: ns,ng,i
   real*8 :: energy_top_x,energy_bottom_x, bin_width_x! dimensionless
   real*8 :: energy_x, eta
-  logical :: do_integrated_BB
 
   !function declaration
   real*8 :: fermidirac_dimensionless
   real*8 :: complete_fermi_integral
 
-  do_integrated_BB = .false.
   eta = (eos_variables(mueindex)-eos_variables(muhatindex))/eos_variables(tempindex)
   blackbody_spectra = 0.0d0
 
-  if (do_integrated_BB) then
+  if (do_integrated_BB_and_emissivity) then
      do ng=1,number_groups
     
         energy_bottom_x = bin_bottom(ng)/eos_variables(tempindex)

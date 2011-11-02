@@ -62,6 +62,7 @@ module nulib
   integer :: muhatindex = 14
 
   logical :: debug = .false.
+  logical :: do_integrated_BB_and_emissivity
 
   include 'constants.inc'
   include 'requested_interactions.inc'
