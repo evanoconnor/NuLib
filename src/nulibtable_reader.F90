@@ -5,8 +5,7 @@ subroutine nulibtable_reader(filename)
   use hdf5
   implicit none
 
-  character*(200) :: filename
-  character*(200) :: h5filename
+  character(*) :: filename
   
   !H5 stuff
   integer :: error,rank,cerror
@@ -27,11 +26,10 @@ subroutine nulibtable_reader(filename)
      stop "Error reading in nulib file"
   endif
   
-  h5filename = trim(adjustl(filename))
-  call h5fopen_f(h5filename, &
+  call h5fopen_f(trim(adjustl(filename)), &
        H5F_ACC_RDONLY_F,file_id,error)
   if (error.ne.0) then
-     write(*,*) h5filename
+     write(*,*) trim(adjustl(filename))
      stop "Error reading in nulib table"
   endif
 
