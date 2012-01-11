@@ -141,11 +141,11 @@ subroutine return_blackbody_spectra(blackbody_spectra,eos_variables)
      do ng=1,number_groups
         energy_x = energies(ng)/eos_variables(tempindex)
         blackbody_spectra(1,ng) = clight*energies(ng)**3* &
-             (1.681333d24/2.0d0)*fermidirac_dimensionless(energy_x,eta)
+             (mev_to_erg/(2.0d0*pi*hbarc_mevcm)**3)*fermidirac_dimensionless(energy_x,eta)
         blackbody_spectra(2,ng) = clight*energies(ng)**3* &
-             (1.681333d24/2.0d0)*fermidirac_dimensionless(energy_x,-eta)
+             (mev_to_erg/(2.0d0*pi*hbarc_mevcm)**3)*fermidirac_dimensionless(energy_x,-eta)
         blackbody_spectra(3,ng) = clight*energies(ng)**3* &
-             (1.681333d24/2.0d0)*fermidirac_dimensionless(energy_x,0.0d0)
+             (mev_to_erg/(2.0d0*pi*hbarc_mevcm)**3)*fermidirac_dimensionless(energy_x,0.0d0)
      enddo
      
   endif
