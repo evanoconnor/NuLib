@@ -94,7 +94,8 @@ function nu_scatter_elastic_p_total(neutrino_energy,type,lepton) result(crosssec
   integer :: lepton_local
   
   !function declaration
-  real*8 :: weak_mag_correction_scattering
+  real*8 :: weak_mag_correction_scattering_transport
+  real*8 :: weak_mag_correction_scattering_total
 
   !for scattering on p, only need sign of lepton number
   if (lepton.gt.0) then
@@ -115,11 +116,18 @@ function nu_scatter_elastic_p_total(neutrino_energy,type,lepton) result(crosssec
   if (type.eq.1) then
      delta_p = ((c_v_prime-1.0d0)**2-gA**2*(c_a_prime-1.0d0)**2)/((c_v_prime-1.0d0)**2+3.0d0*gA**2*(c_a_prime-1.0d0)**2)
      if (do_weak_mag_corrections) then
-        weak_mag = weak_mag_correction_scattering(neutrino_energy,1,lepton_local) !1 for proton
+        weak_mag = weak_mag_correction_scattering_transport(neutrino_energy,1,lepton_local) !1 for proton
      else
         weak_mag = 1.0d0
      endif
      crosssection = crosssection*(1.0d0-delta_p/3.0d0)*weak_mag !implicit integration over \Omega
+  else if (type.eq.0) then
+     if (do_weak_mag_corrections) then
+        weak_mag = weak_mag_correction_scattering_total(neutrino_energy,1,lepton_local) !1 for proton
+     else
+        weak_mag = 1.0d0
+     endif
+     crosssection = crosssection*weak_mag !implicit integration over \Omega
   endif
   
 end function nu_scatter_elastic_p_total
@@ -142,7 +150,8 @@ function nu_scatter_elastic_n_total(neutrino_energy,type,lepton) result(crosssec
   integer :: lepton_local
 
   !function declaration
-  real*8 :: weak_mag_correction_scattering
+  real*8 :: weak_mag_correction_scattering_transport
+  real*8 :: weak_mag_correction_scattering_total
 
   !for scattering on n, only need sign of lepton number
   if (lepton.gt.0) then
@@ -160,11 +169,18 @@ function nu_scatter_elastic_n_total(neutrino_energy,type,lepton) result(crosssec
   if (type.eq.1) then
      delta_n = (1.0d0-gA**2)/(1.0d0+3.0d0*gA**2)
      if (do_weak_mag_corrections) then
-        weak_mag = weak_mag_correction_scattering(neutrino_energy,0,lepton_local) !0 for neutron
+        weak_mag = weak_mag_correction_scattering_transport(neutrino_energy,0,lepton_local) !0 for neutron
      else
         weak_mag = 1.0d0
      endif
      crosssection = crosssection*(1.0d0-delta_n/3.0d0)*weak_mag !implicit integration over \Omega
+  else if (type.eq.0) then
+     if (do_weak_mag_corrections) then
+        weak_mag = weak_mag_correction_scattering_total(neutrino_energy,0,lepton_local) !0 for neutron
+     else
+        weak_mag = 1.0d0
+     endif
+     crosssection = crosssection*weak_mag !implicit integration over \Omega
   endif
 
 end function nu_scatter_elastic_n_total
@@ -187,11 +203,17 @@ function nu_scatter_elastic_p_differential(neutrino_energy,cosine_angle,lepton) 
   real*8  :: delta_p
   real*8  :: c_v_prime = 0.5d0+2.0d0*sin2thetaW
   real*8  :: c_a_prime = 0.5d0
-  integer :: type = 0 !we do not want transport differential crosssection, not sure what this is....
+  integer :: type = 0 !if using BRT, we take total cross section and
+                      !the \delta defintion to get the differential
+                      !cross section, for this we set type = 0
   integer :: lepton_local
+  real*8 :: c_v = 0.5d0-2.0d0*sin2thetaW
+  real*8 :: c_a = gA/2.0d0
+  real*8 :: weak_mag !correction factor
 
   !function declaration
   real*8 :: nu_scatter_elastic_p_total
+  real*8 :: weak_mag_correction_scattering_differential
 
   !for scattering on p, only need sign of lepton number
   if (lepton.gt.0) then
@@ -200,14 +222,25 @@ function nu_scatter_elastic_p_differential(neutrino_energy,cosine_angle,lepton) 
      lepton_local = -1
   endif
 
-  stop "Confirm these, what is integrated over already? theta? phi?"
+!  stop "This differential routine does not integrate over \phi, is that what you want?"
 
-  delta_p = ((c_v_prime-1.0d0)**2-gA**2*(c_a_prime-1.0d0)**2)/((c_v_prime-1.0d0)**2+3.0d0*gA**2*(c_a_prime-1.0d0)**2)
+  if (do_weak_mag_corrections) then
+     
+     !note that the integral of this dcrosssection over {\phi,0,2pi} and {\theta,0,pi} gives nu_scatter_elastic_n_total
+     weak_mag = weak_mag_correction_scattering_differential(neutrino_energy,cosine_angle,0,lepton)
+     dcrosssection = sigma0/(16.0d0*pi) * & !cm^2/sterad
+          (neutrino_energy/m_e)**2 * & !dimensionless
+          (c_v**2*(1.0d0+cosine_angle)+c_a**2*(3.0d0-cosine_angle)) * &
+          weak_mag !correction
 
-  !BRT06 Eq.16
-  !note that the integral of this dcrosssection over {\phi,0,2pi} and {\theta,0,pi} gives nu_scatter_elastic_p_total
-  dcrosssection = nu_scatter_elastic_p_total(neutrino_energy,type,lepton_local)/(4.0d0*pi) * & !total crosssection cm^2
-       (1.0d0+cosine_angle*delta_p) !angular part, dimensionless
+  else
+     !BRT way for ease
+     delta_p = ((c_v_prime-1.0d0)**2-gA**2*(c_a_prime-1.0d0)**2)/((c_v_prime-1.0d0)**2+3.0d0*gA**2*(c_a_prime-1.0d0)**2)
+     !BRT06 Eq.21
+     !note that the integral of this dcrosssection over {\phi,0,2pi} and {\theta,0,pi} gives nu_scatter_elastic_p_total
+     dcrosssection = nu_scatter_elastic_p_total(neutrino_energy,type,lepton_local)/(4.0d0*pi) * & !total crosssection cm^2/sterad
+          (1.0d0+cosine_angle*delta_p) !angular part, dimensionless
+  endif
        
 end function nu_scatter_elastic_p_differential
 
@@ -228,9 +261,13 @@ function nu_scatter_elastic_n_differential(neutrino_energy,cosine_angle,lepton) 
   real*8 :: delta_n
   integer :: type = 0 !we do not want transport differential crosssection, not sure what this is....
   integer :: lepton_local
+  real*8 :: c_v = -0.5d0 
+  real*8 :: c_a = -gA/2.0d0
+  real*8 :: weak_mag !correction factor
 
   !function declaration
   real*8 :: nu_scatter_elastic_n_total
+  real*8 :: weak_mag_correction_scattering_differential
 
   !for scattering on n, only need sign of lepton number
   if (lepton.gt.0) then
@@ -239,14 +276,26 @@ function nu_scatter_elastic_n_differential(neutrino_energy,cosine_angle,lepton) 
      lepton_local = -1
   endif
 
-  delta_n = (1.0d0-gA**2)/(1.0d0+3.0d0*gA**2)
+  stop "This differential routine does not integrate over \phi, is that what you want?"
 
-  stop "Confirm these, what is integrated over already? theta? phi?"
-  
-  !BRT06 Eq.21
-  !note that the integral of this dcrosssection over {\phi,0,2pi} and {\theta,0,pi} gives nu_scatter_elastic_n_total
-  dcrosssection = nu_scatter_elastic_n_total(neutrino_energy,type,lepton_local)/(4.0d0*pi) * & !total crosssection cm^2
-       (1.0d0+cosine_angle*delta_n) !angular part, dimensionless
+  if (do_weak_mag_corrections) then
+     
+     !note that the integral of this dcrosssection over {\phi,0,2pi} and {\theta,0,pi} gives nu_scatter_elastic_n_total
+     weak_mag = weak_mag_correction_scattering_differential(neutrino_energy,cosine_angle,1,lepton)
+     dcrosssection = sigma0/(16.0d0*pi) * & !cm^2/sterad
+          (neutrino_energy/m_e)**2 * & !dimensionless
+          (c_v**2*(1.0d0+cosine_angle)+c_a**2*(3.0d0-cosine_angle)) * &
+          weak_mag !correction
+
+  else
+     !BRT way for ease
+     delta_n = (1.0d0-gA**2)/(1.0d0+3.0d0*gA**2)
+     !BRT06 Eq.21
+     !note that the integral of this dcrosssection over {\phi,0,2pi} and {\theta,0,pi} gives nu_scatter_elastic_n_total
+     dcrosssection = nu_scatter_elastic_n_total(neutrino_energy,type,lepton_local)/(4.0d0*pi) * & !total crosssection cm^2/sterad
+          (1.0d0+cosine_angle*delta_n) !angular part, dimensionless
+  endif
+
        
 end function nu_scatter_elastic_n_differential
 
