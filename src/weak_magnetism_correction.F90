@@ -17,14 +17,14 @@ function weak_mag_correction_absorption(nu_energy,type) result(correction)
   if (type.eq.0) then !neutrino capture crosssection on neutron
      e = nu_energy/m_n
      correction = (c_v**2*(1.0d0+4.0d0*e+16.0d0/3.0d0*e**2)+ &
-          3.0d0*c_a**2*(1.0d0+4.0d0/3.0d0*e)**2-4.0d0*(c_v+F2)*c_a*e* &
+          3.0d0*c_a**2*(1.0d0+4.0d0/3.0d0*e)**2+4.0d0*(c_v+F2)*c_a*e* &
           (1.0d0+4.0d0/3.0d0*e)+8.0d0/3.0d0*c_v*F2*e**2+&
           5.0d0/3.0d0*e**2*(1.0d0+2.0d0/5.0d0*e)*F2**2)/ &
           ((c_v**2+3.0d0*c_a**2)*(1.0d0+2.0d0*e)**3)
   else if (type.eq.1) then !antineutrino capture crosssection on proton
      e = nu_energy/m_p
      correction = (c_v**2*(1.0d0+4.0d0*e+16.0d0/3.0d0*e**2)+ &
-          3.0d0*c_a**2*(1.0d0+4.0d0/3.0d0*e)**2+4.0d0*(c_v+F2)*c_a*e* &
+          3.0d0*c_a**2*(1.0d0+4.0d0/3.0d0*e)**2-4.0d0*(c_v+F2)*c_a*e* &
           (1.0d0+4.0d0/3.0d0*e)+8.0d0/3.0d0*c_v*F2*e**2+&
           5.0d0/3.0d0*e**2*(1.0d0+2.0d0/5.0d0*e)*F2**2)/ &
           ((c_v**2+3.0d0*c_a**2)*(1.0d0+2.0d0*e)**3)
@@ -61,12 +61,6 @@ function weak_mag_correction_scattering_differential(nu_energy,x,type,lepton) re
      eta = 1.0d0/(1.0d0+e*(1.0d0-x))
      eta2 = eta*eta
      sign = real(lepton)
-     !lepton causes sign change for antineutrino (lepton=-1) and neutrino (lepton=1) 
-     correction = (eta2*(c_v**2*(1.0d0+eta2-eta*(1.0d0-x)) + &
-          c_a**2*(1.0d0+eta2+eta*(1.0d0-x)) + &
-          sign*2.0d0*c_a*(c_v+F2)*(1.0d0-eta**2) + &
-          eta2*e*e/2.0d0*(1.0d0-x)*(F2**2*(3.0d0-x)+4.0d0*c_v*F2*(1.0d0-x)))) / &
-          (c_v**2*(1.0d0+x)+c_a**2*(3.0d0-x)) !non-corrected answer
      
   else if (type.eq.1) then
      !scattering on protons
@@ -77,15 +71,17 @@ function weak_mag_correction_scattering_differential(nu_energy,x,type,lepton) re
      eta = 1.0d0/(1.0d0+e*(1.0d0-x))
      eta2 = eta*eta
      sign = real(lepton)
-     !lepton causes sign change for antineutrino (lepton=-1) and neutrino (lepton=1)
-     correction = (eta2*(c_v**2*(1.0d0+eta2-eta*(1.0d0-x)) + &
-          c_a**2*(1.0d0+eta2+eta*(1.0d0-x)) + &
-          sign*2.0d0*c_a*(c_v+F2)*(1.0d0-eta**2) + &
-          eta2*e*e/2.0d0*(1.0d0-x)*(F2**2*(3.0d0-x)+4.0d0*c_v*F2*(1.0d0-x)))) / &
-          (c_v**2*(1.0d0+x)+c_a**2*(3.0d0-x)) !non-corrected answer
+
   else 
      stop "wrong type"
   endif
+
+  !lepton causes sign change for antineutrino (lepton=-1) and neutrino (lepton=1)
+  correction = (eta2*(c_v**2*(1.0d0+eta2-eta*(1.0d0-x)) + &
+       c_a**2*(1.0d0+eta2+eta*(1.0d0-x)) + &
+       sign*2.0d0*c_a*(c_v+F2)*(1.0d0-eta**2) + &
+       eta2*e*e/2.0d0*(1.0d0-x)*(F2**2*(3.0d0-x)+4.0d0*c_v*F2*(1.0d0-x)))) / &
+       (c_v**2*(1.0d0+x)+c_a**2*(3.0d0-x)) 
 
 end function weak_mag_correction_scattering_differential
 
@@ -182,12 +178,7 @@ function weak_mag_correction_scattering_total(nu_energy,type,lepton) result(corr
      e = nu_energy/m_n
      e2 = e*e
      sign = real(lepton)
-     !lepton causes sign change for antineutrino (lepton=-1) and neutrino (lepton=1)
-     correction = (c_v**2*(1.0d0+4.0d0*e+16.0d0/3.0d0*e2)+ &
-          3.0d0*c_a**2*(1.0d0+4.0d0/3.0d0*e)**2-4.0d0*(c_v+F2)*c_a*e* &
-          (1.0d0+4.0d0/3.0d0*e)+8.0d0/3.0d0*c_v*F2*e2+&
-          5.0d0/3.0d0*e2*(1.0d0+2.0d0/5.0d0*e)*F2**2)/ &
-          ((c_v**2+3.0d0*c_a**2)*(1.0d0+2.0d0*e)**3)
+
   else if (type.eq.1) then
      !scattering on protons
      c_v = 0.5d0-2.0d0*sin2thetaW
@@ -196,16 +187,16 @@ function weak_mag_correction_scattering_total(nu_energy,type,lepton) result(corr
      e = nu_energy/m_p
      e2 = e*e
      sign = real(lepton)
-     !lepton causes sign change for antineutrino (lepton=-1) and neutrino (lepton=1)
-     correction = (c_v**2*(1.0d0+4.0d0*e+16.0d0/3.0d0*e2)+ &
-          3.0d0*c_a**2*(1.0d0+4.0d0/3.0d0*e)**2+4.0d0*(c_v+F2)*c_a*e* &
-          (1.0d0+4.0d0/3.0d0*e)+8.0d0/3.0d0*c_v*F2*e2+&
-          5.0d0/3.0d0*e2*(1.0d0+2.0d0/5.0d0*e)*F2**2)/ &
-          ((c_v**2+3.0d0*c_a**2)*(1.0d0+2.0d0*e)**3)
-
   else
      stop "weak_mag_correction_scattering: Wrong type"
   endif
+
+  !lepton causes sign change for antineutrino (lepton=-1) and neutrino (lepton=1)
+  correction = (c_v**2*(1.0d0+4.0d0*e+16.0d0/3.0d0*e2)+ &
+       3.0d0*c_a**2*(1.0d0+4.0d0/3.0d0*e)**2+sign*4.0d0*(c_v+F2)*c_a*e* &
+       (1.0d0+4.0d0/3.0d0*e)+8.0d0/3.0d0*c_v*F2*e2+&
+       5.0d0/3.0d0*e2*(1.0d0+2.0d0/5.0d0*e)*F2**2)/ &
+       ((c_v**2+3.0d0*c_a**2)*(1.0d0+2.0d0*e)**3)
 
 end function weak_mag_correction_scattering_total
 

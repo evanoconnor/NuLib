@@ -1,7 +1,7 @@
   !constants
   real*8, parameter :: sigma0 =	1.761d-44 !cm^2
   real*8, parameter :: Gfermi = 1.16637d-11 !MeV^-2
-  real*8, parameter :: gA = -1.254d0 !dimensionless
+  real*8, parameter :: gA = 1.254d0 !dimensionless
   real*8, parameter :: delta_np = 1.293332d0 !MeV
   real*8, parameter :: m_e = 0.510998910d0  !MeV
   real*8, parameter :: m_e_x2 = (0.510998910d0)**2 !MeV^2
