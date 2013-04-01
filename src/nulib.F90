@@ -70,7 +70,7 @@ module nulib
   contains
 !#################################################################
     subroutine initialize_nulib(neutrino_scheme_in,number_species_in,number_groups_in)
-      
+
       integer :: neutrino_scheme_in
       integer :: number_species_in
       integer :: number_groups_in
@@ -106,6 +106,102 @@ module nulib
          endif
       else
          stop "initialize_nulib: neutrino scheme unknown"
+      endif
+
+      if (add_nue_Iscattering_electrons.and.add_nue_scattering_electrons) then
+         stop "initialize_nulib: you can't both inelastically and elastically scatter off of electrons: nue"
+      endif
+      if (add_anue_Iscattering_electrons.and.add_anue_scattering_electrons) then
+         stop "initialize_nulib: you can't both inelastically and elastically scatter off of electrons: anue"
+      endif
+      if (add_numu_Iscattering_electrons.and.add_numu_scattering_electrons) then
+         stop "initialize_nulib: you can't both inelastically and elastically scatter off of electrons: numu"
+      endif
+      if (add_anumu_Iscattering_electrons.and.add_anumu_scattering_electrons) then
+         stop "initialize_nulib: you can't both inelastically and elastically scatter off of electrons: anumu"
+      endif
+      if (add_nutau_Iscattering_electrons.and.add_nutau_scattering_electrons) then
+         stop "initialize_nulib: you can't both inelastically and elastically scatter off of electrons: nutau"
+      endif
+      if (add_anutau_Iscattering_electrons.and.add_anutau_scattering_electrons) then
+         stop "initialize_nulib: you can't both inelastically and elastically scatter off of electrons: anutau"
+      endif
+
+      if (neutrino_scheme.eq.1) then
+         if (add_numu_Iscattering_electrons.neqv.add_anumu_Iscattering_electrons.or. &
+              add_numu_Iscattering_electrons.neqv.add_nutau_Iscattering_electrons.or. &
+              add_numu_Iscattering_electrons.neqv.add_anutau_Iscattering_electrons) then
+            stop "With neutrino scheme 1, all 4 heavy lepton inelastic scattering must be the same"
+         endif
+         if (add_numu_scattering_n.neqv.add_anumu_scattering_n.or. &
+              add_numu_scattering_n.neqv.add_nutau_scattering_n.or. &
+              add_numu_scattering_n.neqv.add_anutau_scattering_n) then
+            stop "With neutrino scheme 1, all 4 heavy lepton n-scattering must be the same"
+         endif
+         if (add_numu_scattering_p.neqv.add_anumu_scattering_p.or. &
+              add_numu_scattering_p.neqv.add_nutau_scattering_p.or. &
+              add_numu_scattering_p.neqv.add_anutau_scattering_p) then
+            stop "With neutrino scheme 1, all 4 heavy lepton p-scattering must be the same"
+         endif
+         if (add_numu_scattering_heavies.neqv.add_anumu_scattering_heavies.or. &
+              add_numu_scattering_heavies.neqv.add_nutau_scattering_heavies.or. &
+              add_numu_scattering_heavies.neqv.add_anutau_scattering_heavies) then
+            stop "With neutrino scheme 1, all 4 heavy lepton havy-scattering must be the same"
+         endif
+         if (add_numu_scattering_electrons.neqv.add_anumu_scattering_electrons.or. &
+              add_numu_scattering_electrons.neqv.add_nutau_scattering_electrons.or. &
+              add_numu_scattering_electrons.neqv.add_anutau_scattering_electrons) then
+            stop "With neutrino scheme 1, all 4 heavy lepton electron-scattering must be the same"
+         endif
+         if (add_numu_scattering_alphas.neqv.add_anumu_scattering_alphas.or. &
+              add_numu_scattering_alphas.neqv.add_nutau_scattering_alphas.or. &
+              add_numu_scattering_alphas.neqv.add_anutau_scattering_alphas) then
+            stop "With neutrino scheme 1, all 4 heavy lepton alpha-scattering must be the same"
+         endif
+         if (add_numu_emission_epannihil.neqv.add_anumu_emission_epannihil.or. &
+              add_numu_emission_epannihil.neqv.add_nutau_emission_epannihil.or. &
+              add_numu_emission_epannihil.neqv.add_anutau_emission_epannihil) then
+            stop "With neutrino scheme 1, all 4 heavy lepton epannihils must be the same"
+         endif
+         if (add_numu_emission_NNBrems.neqv.add_anumu_emission_NNBrems.or. &
+              add_numu_emission_NNBrems.neqv.add_nutau_emission_NNBrems.or. &
+              add_numu_emission_NNBrems.neqv.add_anutau_emission_NNBrems) then
+            stop "With neutrino scheme 1, all 4 heavy lepton NBrems must be the same"
+         endif
+      else if (neutrino_scheme.eq.2) then
+         if (add_numu_Iscattering_electrons.neqv.add_nutau_Iscattering_electrons.or. &
+              add_anumu_Iscattering_electrons.neqv.add_anutau_Iscattering_electrons) then
+            stop "With neutrino scheme 2, each heavy lepton nu/anu inelastic scattering must be the same"
+         endif
+         if (add_numu_scattering_n.neqv.add_nutau_scattering_n.or. &
+              add_anumu_scattering_n.neqv.add_anutau_scattering_n) then
+            stop "With neutrino scheme 2, each heavy lepton nu/anu n-scattering must be the same"
+         endif
+         if (add_numu_scattering_p.neqv.add_nutau_scattering_p.or. &
+              add_anumu_scattering_p.neqv.add_anutau_scattering_p) then
+            stop "With neutrino scheme 2, each heavy lepton nu/anu p-scattering must be the same"
+         endif
+         if (add_numu_scattering_heavies.neqv.add_nutau_scattering_heavies.or. &
+              add_anumu_scattering_heavies.neqv.add_anutau_scattering_heavies) then
+            stop "With neutrino scheme 2, each heavy lepton nu/anu havy-scattering must be the same"
+         endif
+         if (add_numu_scattering_electrons.neqv.add_nutau_scattering_electrons.or. &
+              add_anumu_scattering_electrons.neqv.add_anutau_scattering_electrons) then
+            stop "With neutrino scheme 2, each heavy lepton nu/anu electron-scattering must be the same"
+         endif
+         if (add_numu_scattering_alphas.neqv.add_nutau_scattering_alphas.or. &
+              add_anumu_scattering_alphas.neqv.add_anutau_scattering_alphas) then
+            stop "With neutrino scheme 2, each heavy lepton nu/anu alpha-scattering must be the same"
+         endif
+         if (add_numu_emission_epannihil.neqv.add_nutau_emission_epannihil.or. &
+              add_anumu_emission_epannihil.neqv.add_anutau_emission_epannihil) then
+            stop "With neutrino scheme 2, each heavy lepton nu/anu epannihils must be the same"
+         endif
+         if (add_numu_emission_NNBrems.neqv.add_nutau_emission_NNBrems.or. &
+              add_anumu_emission_NNBrems.neqv.add_anutau_emission_NNBrems) then
+            stop "With neutrino scheme 2, each heavy lepton nu/anu NBrems must be the same"
+         endif
+
       endif
 
       !allocate some arrays
@@ -448,6 +544,168 @@ module nulib
 
 
     end subroutine single_point_return_all
+
+    !calcualates the expansion of the scattering kernal, This is
+    !R_{out}, it does not contain the
+    !exp(-\beta(\omega-\omega^\prime))
+    subroutine single_Ipoint_return_all(iin,eta,temperature, &
+         Phi0s,Phi1s,neutrino_local_scheme)
+
+      implicit none
+
+      !input
+      real*8, dimension(:,:), intent(out) :: Phi0s
+      real*8, dimension(:,:), intent(out) :: Phi1s
+      integer, intent(in) :: iin
+      real*8, intent(in) :: eta,temperature
+      integer, intent(in) :: neutrino_local_scheme
+           
+      !neutrino species
+      !1 = electron neutrino !local scheme 1,2,3
+      !2 = electron anti-neutrino !scheme 1,2,3
+      !3 = muon neutrino !scheme 1,2,3
+      !4 = muon anti-neutrino !scheme 2,3
+      !5 = tau neutrino !scheme 3
+      !6 = tau anti-neutrino !scheme 3
+
+      !x neutrino = (3+4+5+6) !scheme 1
+      !y neutrino = (3+5) !scheme 2
+      !z anti-neutrino = (4+6) !scheme 2
+
+      !local
+      integer :: ns,ng
+      integer :: number_local_species
+      real*8  :: nuenergyin 
+
+      !functions
+      real*8 :: NES_Phi0_ThompsonBruenn
+      real*8 :: NES_Phi1_ThompsonBruenn
+
+      if (neutrino_local_scheme.ne.neutrino_scheme) then
+         write(*,*) neutrino_local_scheme, neutrino_scheme
+         stop "you are requesting different schemes"
+      endif
+
+      if (neutrino_scheme.eq.1) then
+         number_local_species = 3
+      else if (neutrino_scheme.eq.2) then
+         number_local_species = 4
+      else if (neutrino_scheme.eq.3) then
+         number_local_species = 6
+      else
+         stop "single_point_return_all:incorrect neutrino scheme"
+      endif
+
+      if (size(Phi0s,1).ne.number_local_species) then
+         stop "single_Ipoint_return_all:provided array has wrong number of species"
+      endif
+      if (size(Phi0s,2).ne.number_groups) then
+         stop "single_Ipoint_return_all:provided array has wrong number of groups"
+      endif
+
+      if (size(Phi1s,1).ne.number_local_species) then
+         stop "single_Ipoint_return_all:provided array has wrong number of species"
+      endif
+      if (size(Phi1s,2).ne.number_groups) then
+         stop "single_Ipoint_return_all:provided array has wrong number of groups"
+      endif
+      
+      nuenergyin = energies(iin)
+
+      Phi0s = 0.0d0
+      Phi1s = 0.0d0
+
+      !best way to calculate a kernel with E_iout > E_in is to
+      !calculate it with E_in^\prime = E_out and E_out^\prime = E_in,
+      !and use that fact that Rout(e2,e1) = Rin(e1,e2) =
+      !exp(-(e2-e1)/T * Rout(e1,e2). Numerically this is desired
+      !because E_out > E_in doesn't work so well in these routines (in
+      !fact it may be assumed in their derivation that Ein>=Eout [or
+      !at least Ein >= Eout-Ee] although I cannot find the place)
+      do ng=1,iin
+         !electron neutrinos
+         if (add_nue_Iscattering_electrons) then
+            Phi0s(1,ng) = NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng), &
+                 eta,temperature,1)
+            Phi1s(1,ng) = NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng), &
+                 eta,temperature,1)
+         endif
+
+         !electron antineutrinos
+         if (add_anue_Iscattering_electrons) then
+            Phi0s(2,ng) = NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng), &
+                 eta,temperature,2)
+            Phi1s(2,ng) = NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng), &
+                 eta,temperature,2)
+         endif
+
+         if (number_local_species.eq.3) then
+            !already ensure that all 4 are the all included or not
+            if (add_numu_Iscattering_electrons) then
+               Phi0s(3,ng) = (NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,3) + NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,4) + NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,5) + NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,6))/4.0d0
+               Phi1s(3,ng) = (NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,3) + NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,4) + NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,5) + NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,6))/4.0d0
+            endif
+
+         else if (number_local_species.eq.4) then
+
+            !already ensure that mu and tau the same
+            if (add_numu_Iscattering_electrons) then
+               Phi0s(3,ng) = (NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,3) + NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,5))/2.0d0
+               Phi1s(3,ng) = (NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,3) + NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,5))/2.0d0
+            endif
+
+            !already ensure that amu and atau the same
+            if (add_anumu_Iscattering_electrons) then
+               Phi0s(4,ng) = (NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,4) + NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,6))/2.0d0
+               Phi1s(4,ng) = (NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,4) + NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng), &
+                    eta,temperature,6))/2.0d0
+            endif
+
+         else if (number_local_species.eq.6) then
+
+            if (add_numu_Iscattering_electrons) then
+               Phi0s(3,ng) = NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng),eta,temperature,3)
+               Phi1s(3,ng) = NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng),eta,temperature,3)
+            endif
+
+            if (add_anumu_Iscattering_electrons) then
+               Phi0s(4,ng) = NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng),eta,temperature,4)
+               Phi1s(4,ng) = NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng),eta,temperature,4)
+         endif
+
+            if (add_nutau_Iscattering_electrons) then
+               Phi0s(5,ng) = NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng),eta,temperature,5)
+               Phi1s(5,ng) = NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng),eta,temperature,5)
+            endif
+
+            if (add_anutau_Iscattering_electrons) then
+               Phi0s(6,ng) = NES_Phi0_ThompsonBruenn(nuenergyin,energies(ng),eta,temperature,6)
+               Phi1s(6,ng) = NES_Phi1_ThompsonBruenn(nuenergyin,energies(ng),eta,temperature,6)
+            endif
+
+         else
+            stop "shouldn't be here"
+         endif
+
+      enddo
+
+    end subroutine single_Ipoint_return_all
+
 
  end module nulib
 

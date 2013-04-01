@@ -35,6 +35,7 @@ program point_example
   real*8, allocatable,dimension(:,:) :: local_emissivity
   real*8, allocatable,dimension(:,:) :: local_absopacity
   real*8, allocatable,dimension(:,:) :: local_scatopacity
+  real*8, allocatable,dimension(:,:) :: local_Phi0, local_Phi1
   real*8, allocatable,dimension(:,:) :: blackbody_spectra
   real*8, allocatable,dimension(:) :: eos_variables
   real*8 :: matter_prs,matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe
@@ -177,6 +178,28 @@ program point_example
         write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),blackbody_spectra(i,j),blackbody_spectra(i,j),blackbody_spectra(i,j)
      enddo
   enddo
+
+  if (add_nue_Iscattering_electrons.or.add_anue_Iscattering_electrons.or. &
+       add_numu_Iscattering_electrons.or.add_anumu_Iscattering_electrons.or. &
+       add_nutau_Iscattering_electrons.or.add_anutau_Iscattering_electrons) then
+
+     write(*,*)
+     write(*,*)
+     write(*,*) "inelastic call"
+     
+     allocate(local_Phi0(mypoint_number_output_species,mypoint_number_groups))
+     allocate(local_Phi1(mypoint_number_output_species,mypoint_number_groups))
+     
+     call single_Ipoint_return_all(mypoint_number_species,eos_variables(mueindex)/eos_variables(tempindex), &
+          eos_variables(tempindex),local_Phi0,local_Phi1,mypoint_neutrino_scheme)              
+     
+     write(*,*) "sample scattering kernel for energy",energies(mypoint_number_species)
+     do i=1,mypoint_number_output_species
+        do j=1,mypoint_number_groups
+           write(*,*) energies(mypoint_number_species),energies(j),local_Phi0(i,j),local_Phi1(i,j)
+        enddo
+     enddo
+  endif
 
 
 end program point_example
