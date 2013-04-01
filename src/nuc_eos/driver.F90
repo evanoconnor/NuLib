@@ -20,7 +20,6 @@ program driver
   keyerr  = 0
 
   xrho = 10.0d0**1.474994d1
-  xent = 1.5d0
   xtemp = 0.7d0
   xye = 0.3d0
 
@@ -32,33 +31,18 @@ program driver
 !          1 -> coming in with temperature
 !          2 -> coming in with entropy
 
-  
-
   ! short eos call
   call nuc_eos_short(xrho,xtemp,xye,xenr,xprs,xent,xcs2,xdedt,&
        xdpderho,xdpdrhoe,xmunu,keytemp,keyerr,precision)
 
-!  write(6,*) "######################################"
-!  write(6,"(1P10E15.6)") xrho,xtemp,xye
-!  write(6,"(1P10E15.6)") xenr,xprs,xent,sqrt(xcs2)
-!  write(6,"(1P10E15.6)") xdedt,xdpdrhoe,xdpderho
-!  write(6,*) "######################################"
+  write(6,*) "######################################"
+  write(6,"(1P10E15.6)") xrho,xtemp,xye
+  write(6,"(1P10E15.6)") xenr,xprs,xent,sqrt(xcs2)
+  write(6,"(1P10E15.6)") xdedt,xdpdrhoe,xdpderho
+  write(6,*) "######################################"
 
   ! full eos call
   
-  do i =1,100
-     xrho = 10.0d0**(10.0d0+real(i)/25.0d0)
-     
-     call nuc_eos_full(xrho,xtemp,xye,xenr,xprs,xent,xcs2,xdedt,&
-          xdpderho,xdpdrhoe,xxa,xxh,xxn,xxp,xabar,xzbar,xmu_e,xmu_n,xmu_p,&
-          xmuhat,keytemp,keyerr,precision)
-
-     write(*,"(1P20E18.5)") xxn,xxp,(xxn-xxp)/(exp((xmuhat-1.293333d0)/xtemp)-1.0d0)/xxp,(xxp-xxn)/(exp(-(xmuhat-1.2933d0)/xtemp)-1.0d0)/xxn,(1.0d0-2.0d0*xye)/(exp((xmuhat-1.254d0)/xtemp)-1.0d0)/xxp,(2.0d0*xye-1.0d0)/(exp(-(xmuhat-1.254d0)/xtemp)-1.0d0)/xxn
-
-  enddo
-
-stop
-
   write(6,*) "Full EOS: ############################"
   write(6,"(1P10E15.6)") xrho,xtemp,xye
   write(6,"(1P10E15.6)") xenr,xprs,xent,sqrt(xcs2)
