@@ -108,7 +108,8 @@ function single_neutrino_emissivity_from_NNBrem_given_energyrange( &
   real*8 :: preamble_1,preamble_2
 
   !this is the total emission rate, with fix from Adam
-  preamble_1 = 2.0778d30*0.5d0*(eos_variables(xnindex)**2+eos_variables(xpindex)**2+eos_variables(xnindex)*eos_variables(xpindex)*28.0d0/3.0d0)* &
+  preamble_1 = 2.0778d30*0.5d0*(eos_variables(xnindex)**2+eos_variables(xpindex)**2+ &
+       eos_variables(xnindex)*eos_variables(xpindex)*28.0d0/3.0d0)* &
        (eos_variables(rhoindex)/1.0d14)**2*eos_variables(tempindex)**5.5d0 !erg/cm^3/s
   preamble_2 = 0.234d0
 
@@ -152,7 +153,8 @@ function single_neutrino_emissivity_from_NNBrem_given_energypoint( &
   real*8 :: preamble_1,preamble_2
 
   !this is the total emission rate, with fix from Adam
-  preamble_1 = 2.0778d30*0.5d0*(eos_variables(xnindex)**2+eos_variables(xpindex)**2+eos_variables(xnindex)*eos_variables(xpindex)*28.0d0/3.0d0)* &
+  preamble_1 = 2.0778d30*0.5d0*(eos_variables(xnindex)**2+eos_variables(xpindex)**2+ &
+       eos_variables(xnindex)*eos_variables(xpindex)*28.0d0/3.0d0)* &
        (eos_variables(rhoindex)/1.0d14)**2*eos_variables(tempindex)**5.5d0 !erg/cm^3/s
   preamble_2 = 0.234d0
 

@@ -512,7 +512,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_nue_scattering_alphas) then
         ! matter temperature, density, transport=1, lepton = 1 
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_alpha_total(neutrino_energy,1,1,eos_variables)* &
+             nu_scatter_elastic_alpha_total(neutrino_energy,1,1)* &
              (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
