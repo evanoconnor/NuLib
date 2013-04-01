@@ -423,7 +423,7 @@ function nu_scatter_elastic_heavy_differential(neutrino_energy, &
   endif
   
   electron_number_density = eos_variables(rhoindex)*eos_variables(yeindex)/(m_ref*mev_to_gram) !number /cm^3
-  fermi_energy = eos_variables(mueindex) !what is this?,  MeV
+  fermi_energy = eos_variables(mueindex)!I think this is the chemical potential,  MeV
   !when far out of equilibrium, matter_mue < m_e.  This is not good, unphysical, and causes errors.
   fermi_energy = max(eos_variables(mueindex),m_e+1.0d-10)
 

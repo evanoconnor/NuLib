@@ -114,7 +114,7 @@ module nulib
       allocate(bin_bottom(number_groups))
       allocate(bin_top(number_groups))
 
-      !setup H0_constants for electron positron annihilation
+      !setup H0_constants for electron positron annihilation and inelastic electron scattering
       !standard
       H0_constants(1,1) =  (0.5d0+2.0d0*sin2thetaW + 0.5d0)**2 !(Cv+Ca)^2, electron neutrino
       H0_constants(2,1) =  (0.5d0+2.0d0*sin2thetaW - 0.5d0)**2 !(Cv-Ca)^2, electron neutrino
