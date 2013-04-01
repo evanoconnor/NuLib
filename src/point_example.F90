@@ -190,13 +190,13 @@ program point_example
      allocate(local_Phi0(mypoint_number_output_species,mypoint_number_groups))
      allocate(local_Phi1(mypoint_number_output_species,mypoint_number_groups))
      
-     call single_Ipoint_return_all(mypoint_number_species,eos_variables(mueindex)/eos_variables(tempindex), &
+     call single_Ipoint_return_all(mypoint_number_groups,eos_variables(mueindex)/eos_variables(tempindex), &
           eos_variables(tempindex),local_Phi0,local_Phi1,mypoint_neutrino_scheme)              
      
-     write(*,*) "sample scattering kernel for energy",energies(mypoint_number_species)
+     write(*,*) "sample scattering kernel for energy",energies(mypoint_number_groups)
      do i=1,mypoint_number_output_species
         do j=1,mypoint_number_groups
-           write(*,*) energies(mypoint_number_species),energies(j),local_Phi0(i,j),local_Phi1(i,j)
+           write(*,*) energies(mypoint_number_groups),energies(j),local_Phi0(i,j),local_Phi1(i,j)
         enddo
      enddo
   endif
