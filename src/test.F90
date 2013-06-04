@@ -9,7 +9,7 @@ program test
   query_lrYe = 10.0d0
   reqnuc = 100
   call readrates_LMP(filename)
-  call interpolant_2d(query_t9,query_lrYe,logECs)
+  logECs =  weakrate_interp(query_t9,query_lrYe)
   write(*,*) logECs
 
 !  call microphysical_electron_capture()
