@@ -1,12 +1,13 @@
 !-*-f90-*- 
 module weak_rates
   implicit none
-  real*8, allocatable,dimension(:,:,:,:) :: rates  ! rates[nuc,T,rhoYe,rates+uf]
+  real*8, allocatable,dimension(:,:,:,:) :: rates  ! rates[nuc,T,rhoYe,rates+uf(indexed by nrate)]
   real*8, allocatable,dimension(:,:) :: nucspec ! nucspec[nucleus, (Q, A, Z)]
   real*8, allocatable,dimension(:) :: t9dat
   real*8, allocatable,dimension(:) :: rhoYedat
-  real*8, allocatable, dimension(:,:,:,:) :: C ! Matrix of spline coefficients 
-  integer nuc,nrho,nt9
+  real*8, allocatable, dimension(:,:,:,:,:,:) :: C ! Matrix of spline coefficients (see desc. below)
+  real*8, dimension(112,112) :: nucleus_index 
+  integer nuc,nrho,nt9,nnuc,nrate
 
 
   contains
@@ -15,13 +16,14 @@ module weak_rates
  !      real*8, allocatable,dimension(:,:,:) :: eta ! eta(nucleus,energy group, emissivity
       character lindex
       character*200 :: filename,line
-      integer i,dim
+      integer i,dim,A,Z
       real*8 :: t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu
       real*8 :: lrho_prior
       nuc = 0
       nrho = 0
       nt9 = 0
       dim = 1
+      
 
       ! Count the dimension of the data in rhoYe and T9
       open(1,file=filename,status='old')
@@ -64,7 +66,10 @@ module weak_rates
             nuc = nuc + 1
             read(line(index(line(1:),"Q= ")+3:index(line(1:),"Q= ")+10),*) nucspec(nuc,1)
             read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+4),*) nucspec(nuc,2)
+            A = nucspec(nuc,2)
             read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nucspec(nuc,3)
+            Z = nucspec(nuc,3)
+            nucleus_index(A,Z) = nuc
             nrho = 0 
             nt9 = 0
          end if
@@ -76,12 +81,12 @@ module weak_rates
                nt9 = 0
             end if
             nt9 = nt9 + 1
-            rates(nuc,nt9,nrho,1)=leps
-            rates(nuc,nt9,nrho,2)=lnu
-            rates(nuc,nt9,nrho,3)=lbetap
-            rates(nuc,nt9,nrho,4)=lpos
-            rates(nuc,nt9,nrho,5)=lanu
-            rates(nuc,nt9,nrho,6)=lbetam
+            rates(nuc,nt9,nrho,1)=lbetap
+            rates(nuc,nt9,nrho,2)=leps
+            rates(nuc,nt9,nrho,3)=lnu
+            rates(nuc,nt9,nrho,4)=lbetam
+            rates(nuc,nt9,nrho,5)=lpos
+            rates(nuc,nt9,nrho,6)=lanu
             rates(nuc,nt9,nrho,7)=uf
             t9dat(nt9)=t9
             rhoYedat(nrho)=lrho
@@ -91,59 +96,11 @@ module weak_rates
       write(*,*) "Weak rate data loaded."
 
       ! build array of interpolating spline coefficients
+      nnuc = nuc
       call monotonic_interp_2d(dim)
       write(*,*) "Interpolant functions built. Read-in is complete."
     end subroutine readrates_LMP
 
-!     subroutine microphysical_electron_capture()!ns,temp_emissivity,eos_variables)      
-!       use nulib, only : GLQ_n16_roots,GLQ_n16_weights
-!       implicit none
-
-!       real*8 :: avgE(2),leps,lnu,lbetap,uf
-!       integer i
-      
-!       ! function declaration
-!       real*8 :: weak_rate_neutrino_spectra
-
-! !      do i=1,nuc
-!          ! call interpolant_2d(eos_variables,rate_of_interest)
-!          ! These four variables will be set after interpolation, setting manually for now to test
-!          leps = rates(nuc,1,1,1)    
-!          lnu = rates(nuc,1,1,2)
-!          lbetap = rates(nuc,1,1,3)
-!          uf = rates(nuc,1,1,7)
-!          avgE(1) = 10.0d0**(lnu)/(10.0d0**(leps) + 10.0d0**(lbetap))
-         
-!          ! Find q_perT parameter in weak_rate_neutrino_spectra that solves avgE-avgE(q)=0
-!          avgE(2) = 0.0d0
-!          do i=1,16
-!             avgE(2) = avgE(2) + &
-!                  GLQ_n16_weights(i)*exp(GLQ_n16_roots(i))*weak_rate_neutrino_spectra(GLQ_n16_roots(i), &
-!                  t9dat(5),nucspec(1,1),rates(1,5,1,7))
-!          end do
-!          write(*,*) avgE(2)
-         
-
-! !      end do
-         
-!        contains
-
-!          function weak_rate_neutrino_spectra(nu_energy_perT,temp,q_perT,uf_perT) result(nu_spectra)
-!            include 'constants.inc'
-           
-!            !inputs
-!            real*8, intent(in) :: nu_energy_perT
-!            real*8, intent(in) :: temp
-!            real*8, intent(in) :: q_perT
-!            real*8, intent(in) :: uf_perT
-           
-!            !output
-!            real*8 ::  nu_spectra
-!            nu_spectra = ((kelvin_to_mev*temp)**4.0d0)*(nu_energy_perT**2.0d0)*((nu_energy_perT-q_perT)**2.0d0) &
-!                 /(1+exp(nu_energy_perT-q_perT-uf_perT))
-!          end function weak_rate_neutrino_spectra
-         
-!     end subroutine microphysical_electron_capture
 
  ! #########################################################################
  ! #########################################################################
@@ -161,8 +118,9 @@ module weak_rates
        !         N - Number of data points to be interpolated over
        ! dataArray - Array, built by readfile, containing data in the
        !             form dataArray(n,1:2) where (x,y) :: (1,2)
-       !         C - Array of spline coefficients. In 1D, C = C(1,1,1:N,1:4)
-       !             where 1:4 represents coeficient a,b,c,d respectively
+       !         C - Array of spline coefficients. C = C(nucl.,rate,dim,
+       !             splineseries,numdatapts,coef) where coef represents 
+       !             coefficients a,b,c,d respectively used in the interpolation
        !   Reference:
        !       M. Steffen, "A simple method for monotonic interpolation in one dimension" 
        !       Astron. Astrophys. 239, 443-450 (1990)
@@ -228,13 +186,13 @@ module weak_rates
           do i=1,N-1
             do j=1,4
                if (j==1) then
-                  C(dim,spl,i,j)=(Dy(i)+Dy(i+1)-2.0d0*S(i))/(h(i)**2)
+                  C(nuc,nrate,dim,spl,i,j)=(Dy(i)+Dy(i+1)-2.0d0*S(i))/(h(i)**2)
                else if (j==2) then
-                  C(dim,spl,i,j)=(3.0d0*S(i)-2.0d0*Dy(i)-Dy(i+1))/h(i)
+                  C(nuc,nrate,dim,spl,i,j)=(3.0d0*S(i)-2.0d0*Dy(i)-Dy(i+1))/h(i)
                else if (j==3) then
-                  C(dim,spl,i,j)=Dy(i)
+                  C(nuc,nrate,dim,spl,i,j)=Dy(i)
                else if (j==4) then
-                  C(dim,spl,i,j)=Data(i,2)
+                  C(nuc,nrate,dim,spl,i,j)=Data(i,2)
                end if
             end do
          end do
@@ -251,12 +209,16 @@ module weak_rates
          do i=1,nrho
             if (query <= rhoYedat(i)) then
                if (i==1) then
-                  result = C(dim,spl,i,1)*(query-rhoYedat(i))**3 + C(dim,spl,i,2)*(query-&
-                       rhoYedat(i))**2 + C(dim,spl,i,3)*(query-rhoYedat(i)) + C(dim,spl,i,4)
+                  result = C(nuc,nrate,dim,spl,i,1)*(query-rhoYedat(i))**3 +&
+                       C(nuc,nrate,dim,spl,i,2)*(query-rhoYedat(i))**2 +&
+                       C(nuc,nrate,dim,spl,i,3)*(query-rhoYedat(i)) +&
+                       C(nuc,nrate,dim,spl,i,4)
                   exit
                else
-                  result = C(dim,spl,i-1,1)*(query-rhoYedat(i-1))**3 + C(dim,spl,i-1,2)*(query-&
-                       rhoYedat(i-1))**2 + C(dim,spl,i-1,3)*(query-rhoYedat(i-1)) + C(dim,spl,i-1,4)
+                  result = C(nuc,nrate,dim,spl,i-1,1)*(query-rhoYedat(i-1))**3 +&
+                       C(nuc,nrate,dim,spl,i-1,2)*(query-rhoYedat(i-1))**2 +&
+                       C(nuc,nrate,dim,spl,i-1,3)*(query-rhoYedat(i-1)) +&
+                       C(nuc,nrate,dim,spl,i-1,4)
                   exit
                end if
             end if
@@ -270,59 +232,66 @@ module weak_rates
        subroutine monotonic_interp_2d(dim) 
          IMPLICIT NONE
          real*8, allocatable, dimension(:,:) :: Data
-         INTEGER i,j,n,dim
+         INTEGER i,j,n,r,dim
          dim = 1
 
          allocate(Data(nt9,2))
-         allocate(C(2,nrho,nt9,4))
-         
-         do n=1,nuc
+         allocate(C(nuc,7,2,nrho,nt9,4))  ! 7 = 6 LMP weak rates + chemical potential
+
+         nuc = 1
+         do nuc=1,nnuc
             do i=1,nrho
-               do j=1,nt9
-                  Data(j,1)=t9dat(j)
-                  Data(j,2)=rates(nuc,j,i,1)
+               do nrate=1,7
+                  do j=1,nt9
+                     Data(j,1)=t9dat(j) ! (NEED TO ADD) prevent t9data being filled more than once
+                     Data(j,2)=rates(nuc,j,i,nrate)
+                  end do
+                  call monotonic_interpolator(dim,i,nt9,Data)
                end do
-               call monotonic_interpolator(dim,i,nt9,Data)
             end do
-            write(*,*) nuc
          end do
 
          return
        end subroutine monotonic_interp_2d
 
-       function  weakrate_interp(query1,query2) result(int_val)
+       function weakrates(A,Z,query1,query2,rate_of_interest) result(interp_val) ! Efficiency consideration******
 
          real*8, allocatable, dimension(:,:) :: Data2d
-         real*8 :: query1,query2,result,int_val
-         INTEGER i,j,counter,dim
-
+         real*8 :: query1,query2,value,interp_val
+         integer i,j,counter,dim,nucleus,rate_of_interest,A,Z
          dim = 1
-
+         nrate = rate_of_interest
          allocate(Data2d(nrho,2))
+         nucleus = nucleus_index(A,Z)
 
          do i=1,nrho
             do j=1,nt9 
                 if (query1 <= t9dat(j)) then
-                   if(j==1) then
-                      result = C(dim,i,j,1)*(query1-t9dat(j))**3 + C(dim,i,j,2)*(query1-&
-                           t9dat(j))**2 + C(dim,i,j,3)*(query1-t9dat(j)) + C(dim,i,j,4)
+                   if(j==1) then                ! Possible check to prevent extrapolation
+                      value = C(nucleus,nrate,dim,i,j,1)*(query1-t9dat(j))**3 +&
+                           C(nucleus,nrate,dim,i,j,2)*(query1-t9dat(j))**2 +&
+                           C(nucleus,nrate,dim,i,j,3)*(query1-t9dat(j)) +&
+                           C(nucleus,nrate,dim,i,j,4)
                       exit
                    else
-                      result = C(dim,i,j-1,1)*(query1-t9dat(j-1))**3 + C(dim,i,j-1,2)*(query1-&
-                           t9dat(j-1))**2 + C(dim,i,j-1,3)*(query1-t9dat(j-1)) + C(dim,i,j-1,4)
+                      value = C(nucleus,nrate,dim,i,j-1,1)*(query1-t9dat(j-1))**3 +&
+                           C(nucleus,nrate,dim,i,j-1,2)*(query1-t9dat(j-1))**2 +&
+                           C(nucleus,nrate,dim,i,j-1,3)*(query1-t9dat(j-1)) +&
+                           C(nucleus,nrate,dim,i,j-1,4)
                       exit
                    end if
                end if
             end do
             Data2d(i,1) = rhoYedat(i)
-            Data2d(i,2) = result
+            Data2d(i,2) = value
          end do
 
-         int_val = query2
+         interp_val = query2
+         nuc = nucleus
          call monotonic_interpolator(2,1,nrho,Data2d)
-         call interpolant(2,1,int_val)
+         call interpolant(2,1,interp_val)
 
-       end function weakrate_interp
+       end function weakrates
 
 end module weak_rates
 
