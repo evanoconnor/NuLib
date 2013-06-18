@@ -63,7 +63,7 @@ program make_table_example
   call initialize_nulib(mytable_neutrino_scheme,mytable_number_species,mytable_number_groups)
 
   !read in weak rates table
-  call readrates_LMP()
+!  call readrates_LMP()
 
   !read in EOS table & set reference mass
   call readtable(eos_filename)

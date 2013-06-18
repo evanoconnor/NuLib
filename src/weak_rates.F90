@@ -6,7 +6,7 @@ module weak_rates
   real*8, allocatable,dimension(:) :: t9dat
   real*8, allocatable,dimension(:) :: rhoYedat
   real*8, allocatable, dimension(:,:,:,:,:,:) :: C ! Matrix of spline coefficients (see desc. below)
-  real*8, dimension(112,112) :: nucleus_index 
+  integer, dimension(112,112) :: nucleus_index 
   integer nuc,nrho,nt9,nnuc,nrate
 
 
@@ -292,6 +292,71 @@ module weak_rates
          call interpolant(2,1,interp_val)
 
        end function weakrates
+
+       subroutine microphysical_electron_capture()
+
+
+       end subroutine microphysical_electron_capture
+
+
+
+       function  emissivity_from_electron_capture_on_A(A,Z,eos_variables) result(emissivity)
+         use nulib
+         integer A,Z
+
+         real*8, intent(in) :: eos_variables(total_eos_variables)
+         real*8 :: emissivity !final answer in erg/cm^/s/srad/MeV
+
+         !local rate variables
+         real*8 :: lbetap
+         real*8 :: leps
+         real*8 :: lnu
+         real*8 :: lrhoYe
+         real*8 :: t9
+         real*8 :: mu_e ! electron chem.pot.
+
+         !local integration variables
+         integer :: i
+         real*8 :: avgenergy(2)
+         real*8 :: Qec
+         real*8 :: spectra
+         real*8 :: number_density_integral
+         real*8 :: energy_density_integral
+
+         lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
+         t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  ! Conversion from MeV to GK
+         mu_e = eos_variables(mueindex)
+
+         lbetap = weakrates(A,Z,t9,lrhoYe,1)
+         leps = weakrates(A,Z,t9,lrhoYe,2)
+         lnu = weakrates(A,Z,t9,lrhoYe,3)         
+         avgenergy(1) = 10.0d0**lnu/(10.0d0**leps + 10.0d0**lbetap)
+         Qec = nucspec(nucleus_index(A,Z),1)
+         
+         call GaussLaguerreQuadrature_roots_and_weights(16,GLQ_n16_roots,GLQ_n16_weights)
+         avgenergy(2)=0.0d0
+         energy_density_integral=0.0d0
+         number_density_integral=0.0d0
+         do i=1,16
+            spectra = ec_neutrino_spectra(GLQ_n16_roots(i),Qec,mu_e,t9)
+            energy_density_integral=energy_density_integral+GLQ_n16_weights(i)*GLQ_n16_roots(i)*spectra
+            number_density_integral= number_density_integral+GLQ_n16_weights(i)*spectra
+         end do
+         avgenergy(2) = (kelvin_to_mev*t9)*(energy_density_integral/number_density_integral)
+         emissivity = avgenergy(2)
+
+         write(*,*) avgenergy(1),avgenergy(2)
+
+         contains           
+         !###################
+           function ec_neutrino_spectra(nu_energy_per_T,q,uf,T) result(nu_spectra)
+             real*8 :: T,nu_energy_per_T,q,uf,nu_spectra,q_T,uf_T
+             q_T = q/(kelvin_to_mev*T)
+             uf_T = uf/(kelvin_to_mev*T)             
+             nu_spectra = (nu_energy_per_T**2.0d0)*((nu_energy_per_T-q_T)**2.0d0) &
+                  /(1+exp(nu_energy_per_T-q_T-uf_T))
+           end function ec_neutrino_spectra
+       end function emissivity_from_electron_capture_on_A
 
 end module weak_rates
 

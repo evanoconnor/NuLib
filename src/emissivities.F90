@@ -391,10 +391,10 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
         emissivity_spectra(ns,ng) = emissivity !ergs/cm^3/s/MeV/srad
      enddo
 
-     call microphysical_electron_capture(ns,temp_emissivity,eos_variables)
-     do ng=1,number_groups
-        emissivity_spectra(ns,ng) = emissivity_spectra(ns,ng) + temp_emissivity(ng) !ergs/cm^3/s/MeV/srad
-     enddo
+!     call microphysical_electron_capture(ns,temp_emissivity,eos_variables)
+!     do ng=1,number_groups
+!        emissivity_spectra(ns,ng) = emissivity_spectra(ns,ng) + temp_emissivity(ng) !ergs/cm^3/s/MeV/srad
+!     enddo
 
   enddo
   
