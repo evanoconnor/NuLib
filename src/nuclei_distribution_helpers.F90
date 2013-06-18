@@ -35,6 +35,10 @@ subroutine set_up_Hempel
 
 end subroutine set_up_Hempel
 
+!so far, all we need is mass fractions of a select number of nuclei,
+!this routine takes those nuclei and returns the mass fractions and
+!number densities of only those nuclei.
+
 subroutine nuclei_distribution_Hempel(number_nuclei,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)
 
 #if NUCLEI_HEMPEL
@@ -63,6 +67,9 @@ subroutine nuclei_distribution_Hempel(number_nuclei,nuclei_A,nuclei_Z,mass_fract
 
    sflag = 0
 
+   if (maxval(nuclei_A).gt.maxval(az(1:kmax,1)) stop "At least one value of A is too high for Hempel's table"
+   if (maxval(nuclei_Z).gt.maxval(az(1:kmax,2)) stop "At least one value of Z is too high for Hempel's table"
+
    call sub_dist_interpol(t,ye,nb,xaz,xn,xp,naz,nn,np,sflag)
 
    if (sflag.eq.1) then
@@ -73,6 +80,7 @@ subroutine nuclei_distribution_Hempel(number_nuclei,nuclei_A,nuclei_Z,mass_fract
 
    do i=1,number_nuclei
       inuc = hempel_lookup_table(nuclei_A(i),nuclei_Z(i))
+      if (inuc = 0) stop "you want a nuclei Hempel doesn't have"
       number_densities(i) = naz(inuc) !number/fm^3
       mass_fractions(i) = xaz(inuc)
    enddo
