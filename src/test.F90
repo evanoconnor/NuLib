@@ -23,9 +23,6 @@ program test
 !  write(*,*) logECs
 !  call microphysical_electron_capture(emissivity)
   emissivity = emissivity_from_electron_capture_on_A(A,Z,eos_variables)
-  write(*,*) "Emissivity: ", emissivity
-
-
 
   
 
