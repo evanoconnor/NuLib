@@ -64,6 +64,9 @@ module nulib
   logical :: debug = .false.
   logical :: do_integrated_BB_and_emissivity
 
+  !nuclei distribution global variables
+  integer,allocatable :: hempel_lookup_table(:,:)
+
   include 'constants.inc'
   include 'requested_interactions.inc'
 
@@ -593,7 +596,7 @@ module nulib
       else if (neutrino_scheme.eq.3) then
          number_local_species = 6
       else
-         stop "single_point_return_all:incorrect neutrino scheme"
+         stop "single_Ipoint_return_all:incorrect neutrino scheme"
       endif
 
       if (size(Phi0s,1).ne.number_local_species) then
