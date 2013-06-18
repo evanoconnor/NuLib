@@ -244,3 +244,14 @@ After this, a simple make should create three executables in the main
 directory, a brief explanation of these is in the section
 `executables' above.
 
+Extras
+------
+
+There is support in NuLib for using Matthias Hempel's NSE mass
+distributions available from
+http://phys-merger.physik.unibas.ch/~hempel/eos.html.  To enable these
+use must download his code and tables from his website, place them in
+the directory src/extra_code_and_tables/ and enable the preprocessor
+flag NUCLEI_HEMPEL.  We use the SFHo table as an example in the code,
+you can change this by editting nuclei_distribution_helpers.F90
+directly.  Please see this file for more details.
