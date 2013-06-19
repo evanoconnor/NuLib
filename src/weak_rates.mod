@@ -1,5 +1,5 @@
 GFORTRAN module version '9' created from weak_rates.F90
-MD5:b764cb95a499bdfc56cf9aa6aa24f1aa -- If you edit this, you'll get what you deserve.
+MD5:c254308e303fce54f978b156e272d58b -- If you edit this, you'll get what you deserve.
 
 (() () () () () () () () () () () () () () () () () () () () () () ()
 () () () ())
@@ -17,116 +17,146 @@ MD5:b764cb95a499bdfc56cf9aa6aa24f1aa -- If you edit this, you'll get what you de
 (2 'c' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
 IMPLICIT-SAVE 0 0 ALLOCATABLE DIMENSION) (REAL 8 0 0 0 REAL ()) 0 0 () (
 6 0 DEFERRED () () () () () () () () () () () ()) 0 () () () 0 0)
-3 'emissivity_from_electron_capture_on_a' 'weak_rates' '' 1 ((PROCEDURE
+3 'ec_neutrino_spectra' 'weak_rates' '' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN 0 0 FUNCTION) (REAL 8 0 0 0 REAL ()) 4 0 (5 6 7
+8) () 9 () () () 0 0)
+10 'ec_neutrino_spectra_q_derivative' 'weak_rates' '' 1 ((PROCEDURE
 UNKNOWN-INTENT MODULE-PROC DECL UNKNOWN 0 0 FUNCTION) (REAL 8 0 0 0 REAL
-()) 4 0 (5 6 7) () 8 () () () 0 0)
-9 'interpolant' 'weak_rates' '' 1 ((PROCEDURE UNKNOWN-INTENT MODULE-PROC
-DECL UNKNOWN 0 0 SUBROUTINE) (UNKNOWN 0 0 0 0 UNKNOWN ()) 10 0 (11 12 13)
-() 0 () () () 0 0)
-14 'microphysical_electron_capture' 'weak_rates' '' 1 ((PROCEDURE
+()) 11 0 (12 13 14 15) () 16 () () () 0 0)
+17 'emissivity_from_electron_capture_on_a' 'weak_rates' '' 1 ((
+PROCEDURE UNKNOWN-INTENT MODULE-PROC DECL UNKNOWN 0 0 FUNCTION) (REAL 8
+0 0 0 REAL ()) 18 0 (19 20 21) () 22 () () () 0 0)
+23 'interpolant' 'weak_rates' '' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN 0 0 SUBROUTINE) (UNKNOWN 0 0 0 0 UNKNOWN ()) 24
+0 (25 26 27) () 0 () () () 0 0)
+28 'microphysical_electron_capture' 'weak_rates' '' 1 ((PROCEDURE
 UNKNOWN-INTENT MODULE-PROC DECL UNKNOWN 0 0 SUBROUTINE IMPLICIT_PURE) (
 UNKNOWN 0 0 0 0 UNKNOWN ()) 0 0 () () 0 () () () 0 0)
-15 'monotonic_interp_2d' 'weak_rates' '' 1 ((PROCEDURE UNKNOWN-INTENT
-MODULE-PROC DECL UNKNOWN 0 0 SUBROUTINE) (UNKNOWN 0 0 0 0 UNKNOWN ()) 16
-0 (17) () 0 () () () 0 0)
-18 'monotonic_interpolator' 'weak_rates' '' 1 ((PROCEDURE UNKNOWN-INTENT
-MODULE-PROC DECL UNKNOWN 0 0 SUBROUTINE) (UNKNOWN 0 0 0 0 UNKNOWN ()) 19
-0 (20 21 22 23) () 0 () () () 0 0)
-24 'nnuc' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
+29 'monotonic_interp_2d' 'weak_rates' '' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN 0 0 SUBROUTINE) (UNKNOWN 0 0 0 0 UNKNOWN ()) 30
+0 (31) () 0 () () () 0 0)
+32 'monotonic_interpolator' 'weak_rates' '' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN 0 0 SUBROUTINE) (UNKNOWN 0 0 0 0 UNKNOWN ()) 33
+0 (34 35 36 37) () 0 () () () 0 0)
+38 'nnuc' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
 UNKNOWN UNKNOWN 0 0) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0
 0)
-25 'nrate' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
+39 'nrate' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
 UNKNOWN UNKNOWN 0 0) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0
 0)
-26 'nrho' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
+40 'nrho' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
 UNKNOWN UNKNOWN 0 0) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0
 0)
-27 'nt9' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
+41 'nt9' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
 UNKNOWN UNKNOWN 0 0) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0
 0)
-28 'nuc' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
+42 'nuc' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
 UNKNOWN UNKNOWN 0 0) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0
 0)
-29 'nucleus_index' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT
+43 'nucleus_index' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT
 UNKNOWN-PROC UNKNOWN IMPLICIT-SAVE 0 0 DIMENSION) (INTEGER 4 0 0 0
 INTEGER ()) 0 0 () (2 0 EXPLICIT (CONSTANT (INTEGER 4 0 0 0 INTEGER ())
 0 '1') (CONSTANT (INTEGER 4 0 0 0 INTEGER ()) 0 '112') (CONSTANT (
 INTEGER 4 0 0 0 INTEGER ()) 0 '1') (CONSTANT (INTEGER 4 0 0 0 INTEGER ())
 0 '112')) 0 () () () 0 0)
-30 'nucspec' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
+44 'nucspec' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
 UNKNOWN IMPLICIT-SAVE 0 0 ALLOCATABLE DIMENSION) (REAL 8 0 0 0 REAL ())
 0 0 () (2 0 DEFERRED () () () ()) 0 () () () 0 0)
-31 'rates' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
+45 'rates' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
 UNKNOWN IMPLICIT-SAVE 0 0 ALLOCATABLE DIMENSION) (REAL 8 0 0 0 REAL ())
 0 0 () (4 0 DEFERRED () () () () () () () ()) 0 () () () 0 0)
-32 'readrates_lmp' 'weak_rates' '' 1 ((PROCEDURE UNKNOWN-INTENT
-MODULE-PROC DECL UNKNOWN 0 0 SUBROUTINE) (UNKNOWN 0 0 0 0 UNKNOWN ()) 33
-0 (34) () 0 () () () 0 0)
-35 'rhoyedat' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
+46 'readrates_lmp' 'weak_rates' '' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN 0 0 SUBROUTINE) (UNKNOWN 0 0 0 0 UNKNOWN ()) 47
+0 (48) () 0 () () () 0 0)
+49 'rhoyedat' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
 UNKNOWN IMPLICIT-SAVE 0 0 ALLOCATABLE DIMENSION) (REAL 8 0 0 0 REAL ())
 0 0 () (1 0 DEFERRED () ()) 0 () () () 0 0)
-36 't9dat' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
+50 't9dat' 'weak_rates' '' 1 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
 UNKNOWN IMPLICIT-SAVE 0 0 ALLOCATABLE DIMENSION) (REAL 8 0 0 0 REAL ())
 0 0 () (1 0 DEFERRED () ()) 0 () () () 0 0)
-37 'weak_rates' 'weak_rates' '' 1 ((MODULE UNKNOWN-INTENT UNKNOWN-PROC
+51 'weak_rates' 'weak_rates' '' 1 ((MODULE UNKNOWN-INTENT UNKNOWN-PROC
 UNKNOWN UNKNOWN 0 0) (UNKNOWN 0 0 0 0 UNKNOWN ()) 0 0 () () 0 () () () 0
 0)
-38 'weakrates' 'weak_rates' '' 1 ((PROCEDURE UNKNOWN-INTENT MODULE-PROC
-DECL UNKNOWN 0 0 FUNCTION) (REAL 8 0 0 0 REAL ()) 39 0 (40 41 42 43 44)
-() 45 () () () 0 0)
-34 'filename' '' '' 33 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
+52 'weakrates' 'weak_rates' '' 1 ((PROCEDURE UNKNOWN-INTENT MODULE-PROC
+DECL UNKNOWN 0 0 FUNCTION) (REAL 8 0 0 0 REAL ()) 53 0 (54 55 56 57 58)
+() 59 () () () 0 0)
+48 'filename' '' '' 47 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
 UNKNOWN 0 0 DUMMY) (CHARACTER 1 0 0 0 CHARACTER ((CONSTANT (INTEGER 4 0
 0 0 INTEGER ()) 0 '200'))) 0 0 () () 0 () () () 0 0)
-40 'a' '' '' 39 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0
+54 'a' '' '' 53 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0
 0 DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
-20 'dim' '' '' 19 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
+34 'dim' '' '' 33 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
 0 0 DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
-21 'spl' '' '' 19 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
+35 'spl' '' '' 33 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
 0 0 DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
-22 'n' '' '' 19 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0
+36 'n' '' '' 33 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0
 0 DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
-23 'data' '' '' 19 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
+37 'data' '' '' 33 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
 UNKNOWN 0 0 DIMENSION DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () (2 0 EXPLICIT
 (CONSTANT (INTEGER 4 0 0 0 INTEGER ()) 0 '1') (VARIABLE (INTEGER 4 0 0 0
-INTEGER ()) 0 22 ()) (CONSTANT (INTEGER 4 0 0 0 INTEGER ()) 0 '1') (
+INTEGER ()) 0 36 ()) (CONSTANT (INTEGER 4 0 0 0 INTEGER ()) 0 '1') (
 CONSTANT (INTEGER 4 0 0 0 INTEGER ()) 0 '2')) 0 () () () 0 0)
-12 'spl' '' '' 10 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
+26 'spl' '' '' 24 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
 0 0 DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
-11 'dim' '' '' 10 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
+25 'dim' '' '' 24 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
 0 0 DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
-13 'query' '' '' 10 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
+27 'query' '' '' 24 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
 UNKNOWN 0 0 DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
-17 'dim' '' '' 16 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
+31 'dim' '' '' 30 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
 0 0 DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
-41 'z' '' '' 39 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0
+55 'z' '' '' 53 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0
 0 DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
-42 'query1' '' '' 39 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
+56 'query1' '' '' 53 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
 UNKNOWN 0 0 DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
-43 'query2' '' '' 39 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
+57 'query2' '' '' 53 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
 UNKNOWN 0 0 DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
-44 'rate_of_interest' '' '' 39 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
+58 'rate_of_interest' '' '' 53 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
 UNKNOWN UNKNOWN 0 0 DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () ()
 () 0 0)
-45 'interp_val' '' '' 39 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
+59 'interp_val' '' '' 53 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
 UNKNOWN 0 0 RESULT) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
-5 'a' '' '' 4 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0 0
-DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
-6 'z' '' '' 4 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0 0
-DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
-7 'eos_variables' '' '' 4 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN 0 0
-DIMENSION DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () (1 0 EXPLICIT (CONSTANT (
-INTEGER 4 0 0 0 INTEGER ()) 0 '1') (VARIABLE (INTEGER 4 0 0 0 INTEGER ())
-0 46 ())) 0 () () () 0 0)
-8 'emissivity' '' '' 4 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
+19 'a' '' '' 18 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0
+0 DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+20 'z' '' '' 18 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0
+0 DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+21 'eos_variables' '' '' 18 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN 0
+0 DIMENSION DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () (1 0 EXPLICIT (
+CONSTANT (INTEGER 4 0 0 0 INTEGER ()) 0 '1') (VARIABLE (INTEGER 4 0 0 0
+INTEGER ()) 0 60 ())) 0 () () () 0 0)
+22 'emissivity' '' '' 18 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
 UNKNOWN 0 0 RESULT) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
-46 'total_eos_variables' 'nulib' '' 4 ((VARIABLE UNKNOWN-INTENT
+14 'uf' '' '' 11 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
+0 0 DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+5 'nu_energy_per_t' '' '' 4 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
+UNKNOWN UNKNOWN 0 0 DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0
+0)
+6 'q' '' '' 4 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0 0
+DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+7 'uf' '' '' 4 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0
+0 DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+8 't' '' '' 4 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0 0
+DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+9 'nu_spectra' '' '' 4 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
+UNKNOWN 0 0 RESULT) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+12 'nu_energy_per_t' '' '' 11 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC
+UNKNOWN UNKNOWN 0 0 DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0
+0)
+13 'q' '' '' 11 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0
+0 DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+15 't' '' '' 11 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN 0
+0 DUMMY) (REAL 8 0 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+16 'nu_spectra_derivative' '' '' 11 ((VARIABLE UNKNOWN-INTENT
+UNKNOWN-PROC UNKNOWN UNKNOWN 0 0 RESULT) (REAL 8 0 0 0 REAL ()) 0 0 () ()
+0 () () () 0 0)
+60 'total_eos_variables' 'nulib' '' 18 ((VARIABLE UNKNOWN-INTENT
 UNKNOWN-PROC UNKNOWN IMPLICIT-SAVE 0 0) (INTEGER 4 0 0 0 INTEGER ()) 0 0
 () () 0 () () () 0 0)
 )
 
-('c' 0 2 'emissivity_from_electron_capture_on_a' 0 3 'interpolant' 0 9
-'microphysical_electron_capture' 0 14 'monotonic_interp_2d' 0 15
-'monotonic_interpolator' 0 18 'nnuc' 0 24 'nrate' 0 25 'nrho' 0 26 'nt9'
-0 27 'nuc' 0 28 'nucleus_index' 0 29 'nucspec' 0 30 'rates' 0 31
-'readrates_lmp' 0 32 'rhoyedat' 0 35 't9dat' 0 36 'weak_rates' 0 37
-'weakrates' 0 38)
+('c' 0 2 'ec_neutrino_spectra' 0 3 'ec_neutrino_spectra_q_derivative' 0
+10 'emissivity_from_electron_capture_on_a' 0 17 'interpolant' 0 23
+'microphysical_electron_capture' 0 28 'monotonic_interp_2d' 0 29
+'monotonic_interpolator' 0 32 'nnuc' 0 38 'nrate' 0 39 'nrho' 0 40 'nt9'
+0 41 'nuc' 0 42 'nucleus_index' 0 43 'nucspec' 0 44 'rates' 0 45
+'readrates_lmp' 0 46 'rhoyedat' 0 49 't9dat' 0 50 'weak_rates' 0 51
+'weakrates' 0 52)

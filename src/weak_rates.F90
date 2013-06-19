@@ -346,30 +346,56 @@ module weak_rates
          end do
          avgenergy(2) = (eos_variables(tempindex))*(energy_density_integral/number_density_integral)
          emissivity = avgenergy(2)
-!         write(*,*) avgenergy(1),avgenergy(2)
+         write(*,*) avgenergy(1),avgenergy(2)
          
-         contains           
-         !#################################################################################
-           function ec_neutrino_spectra(nu_energy_per_T,q,uf,T) result(nu_spectra)
-             real*8 :: T,nu_energy_per_T,q,uf,nu_spectra,q_T,uf_T
-             q_T = q/T
-             uf_T = uf/T
-             nu_spectra = (nu_energy_per_T**2.0d0)*((nu_energy_per_T-q_T)**2.0d0) &
-                  /(1+exp(nu_energy_per_T-q_T-uf_T))
-           end function ec_neutrino_spectra
-
-           function ec_neutrino_spectra_derivative(nu_energy_per_T,q,uf,T) result(nu_spectra_derivative)
-             real*8 :: T,nu_energy_per_T,q,uf,nu_spectra_derivative,q_T,uf_T
-             q_T = q/(kelvin_to_mev*T)
-             uf_T = uf/(kelvin_to_mev*T)             
-             nu_spectra_derivative = (nu_energy_per_T**2.0d0)*((nu_energy_per_T-q_T)**2.0d0) &
-                  /(1+exp(nu_energy_per_T-q_T-uf_T))
-           end function ec_neutrino_spectra_derivative
-         !#################################################################################
        end function emissivity_from_electron_capture_on_A
+
+
+       function ec_neutrino_spectra(nu_energy_per_T,q,uf,T) result(nu_spectra)
+         
+         include 'constants.inc'
+         
+         !local variables
+         real*8 :: T
+         real*8 :: nu_energy_per_T
+         real*8 :: q
+         real*8 :: uf
+         real*8 :: nu_spectra
+         real*8 :: q_T
+         real*8 :: uf_T
+         
+         !redefining q and the chemical potential to be dimensionless, T must be in MeV
+         q_T = q/T
+         uf_T = uf/T  
+         
+         !ec neutrino spectra
+         nu_spectra = (nu_energy_per_T**2.0d0)*((nu_energy_per_T-q_T)**2.0d0) &
+              /(1+exp(nu_energy_per_T-q_T-uf_T))
+       
+       end function ec_neutrino_spectra
+
+       function ec_neutrino_spectra_q_derivative(nu_energy_per_T,q,uf,T) result(nu_spectra_derivative)
+
+         include 'constants.inc'
+         
+         !local variables
+         real*8 :: T
+         real*8 :: nu_energy_per_T
+         real*8 :: q
+         real*8 :: uf
+         real*8 :: nu_spectra_derivative
+         real*8 :: q_T
+         real*8 :: uf_T
+
+         !redefining q and the chemical potential to be dimensionless, T must be in MeV
+         q_T = q/T
+         uf_T = uf/T
+         
+         !ec neutrino spectra derivative with respect to q (q=Qec)
+         nu_spectra_derivative = (1-1/(1+exp(nu_energy_per_T-q_T-uf_T))-2/(nu_energy_per_T-q_T))&
+              *ec_neutrino_spectra(nu_energy_per_T,q,uf,T)/T
+
+       end function ec_neutrino_spectra_q_derivative
 
 end module weak_rates
 
-!use nulib, only : GLQ_n16_roots, GLQ_n16_weights
-!call GaussLaguerreQuadrature_roots_and_weights(16,GLQ_n16_roots,GLQ_n16_weights)
-!write(*,*) GLQ_n16_roots(1)
