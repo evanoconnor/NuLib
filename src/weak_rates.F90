@@ -293,61 +293,27 @@ module weak_rates
 
        end function weakrates
 
-       subroutine microphysical_electron_capture()
-
-
-       end subroutine microphysical_electron_capture
+!       subroutine microphysical_electron_capture()
+!       end subroutine microphysical_electron_capture
 
 
        function  emissivity_from_electron_capture_on_A(A,Z,eos_variables) result(emissivity)
-         use nulib
+ 
+         use nulib, only : total_eos_variables
          integer A,Z
 
          real*8, intent(in) :: eos_variables(total_eos_variables)
          real*8 :: emissivity !final answer in erg/cm^/s/srad/MeV
-
-         !local rate variables
-         real*8 :: lbetap
-         real*8 :: leps
-         real*8 :: lnu
-         real*8 :: lrhoYe
-         real*8 :: t9
-         real*8 :: mu_e ! electron chem.pot.
-
-         !local integration variables
-         integer :: i
          real*8 :: avgenergy(2)
-         real*8 :: Qec
-         real*8 :: spectra
-         real*8 :: number_density_integral
-         real*8 :: energy_density_integral
+         real*8 :: qec_eff ! effective Qec for the approximate neutrino spectra
          
-         !setting local variables from eos_variables
-         lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
-         t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  ! Conversion from MeV to GK
-         mu_e = eos_variables(mueindex)
+         !avgenergy(1) calculated from rates, avgenergy(2) calculated from avg neutrino spectra
+         qec_eff = nucspec(nucleus_index(A,Z),1) !using Qgs from LMP table as seed
+         avgenergy = average_energy(A,Z,qec_eff,eos_variables)
+         qec_eff = qec_solver(avgenergy,qec_eff,eos_variables)
+         
+         write(*,*) "The approximate Q is: ",qec_eff
 
-         !interpolating rates for given eos_variables and calculating average neutrino energy
-         lbetap = weakrates(A,Z,t9,lrhoYe,1)
-         leps = weakrates(A,Z,t9,lrhoYe,2)
-         lnu = weakrates(A,Z,t9,lrhoYe,3)         
-         avgenergy(1) = 10.0d0**lnu/(10.0d0**leps + 10.0d0**lbetap)
-         Qec = nucspec(nucleus_index(A,Z),1) !using Qgs from LMP table as seed
-         
-         !set weights and roots for quadrature integration, then calculate <E>
-         call GaussLaguerreQuadrature_roots_and_weights(16,GLQ_n16_roots,GLQ_n16_weights)
-         avgenergy(2)=0.0d0
-         energy_density_integral=0.0d0
-         number_density_integral=0.0d0
-         do i=1,16
-            spectra = ec_neutrino_spectra(GLQ_n16_roots(i),Qec,mu_e,eos_variables(tempindex))
-            energy_density_integral=energy_density_integral+GLQ_n16_weights(i)*GLQ_n16_roots(i)*spectra
-            number_density_integral= number_density_integral+GLQ_n16_weights(i)*spectra
-         end do
-         avgenergy(2) = (eos_variables(tempindex))*(energy_density_integral/number_density_integral)
-         emissivity = avgenergy(2)
-         write(*,*) avgenergy(1),avgenergy(2)
-         
        end function emissivity_from_electron_capture_on_A
 
 
@@ -368,9 +334,11 @@ module weak_rates
          q_T = q/T
          uf_T = uf/T  
          
-         !ec neutrino spectra
+         !ec neutrino spectra (dimensionless)
          nu_spectra = (nu_energy_per_T**2.0d0)*((nu_energy_per_T-q_T)**2.0d0) &
-              /(1+exp(nu_energy_per_T-q_T-uf_T))
+              /(1.0d0+exp(nu_energy_per_T-q_T-uf_T))
+         !note a factor of T^4 was removed to make the spectrum dimensionless, the returned result
+         !should therefore be multiplied by T^4 (T in MeV)
        
        end function ec_neutrino_spectra
 
@@ -379,7 +347,7 @@ module weak_rates
          include 'constants.inc'
          
          !local variables
-         real*8 :: T
+         real*8 :: T !must be passed in with units of MeV
          real*8 :: nu_energy_per_T
          real*8 :: q
          real*8 :: uf
@@ -391,11 +359,114 @@ module weak_rates
          q_T = q/T
          uf_T = uf/T
          
-         !ec neutrino spectra derivative with respect to q (q=Qec)
-         nu_spectra_derivative = (1-1/(1+exp(nu_energy_per_T-q_T-uf_T))-2/(nu_energy_per_T-q_T))&
-              *ec_neutrino_spectra(nu_energy_per_T,q,uf,T)/T
+         !ec neutrino spectra derivative with respect to q (q=qec_eff) divided by the neutrino spectra
+         nu_spectra_derivative = (1.0d0-1.0d0/(1.0d0+exp(nu_energy_per_T-q_T-uf_T))-2.0d0/(nu_energy_per_T-q_T))
+         !note a factor of /T was removed to make the spectrum dimensionless, the returned result
+         !should therefore be divided by T in MeV
 
        end function ec_neutrino_spectra_q_derivative
+
+       function average_energy(A,Z,qec_eff,eos_variables) result(avgenergy)
+
+         use nulib
+
+         integer A,Z
+         real*8, intent(in) :: eos_variables(total_eos_variables)
+
+         !local rate variables
+         real*8 :: lbetap
+         real*8 :: leps
+         real*8 :: lnu
+         real*8 :: lrhoYe
+         real*8 :: t9
+         real*8 :: mu_e ! electron chem.pot.
+
+         !local integration variables
+         integer :: i
+         real*8 :: avgenergy(2)
+         real*8 :: qec_eff
+         real*8 :: spectra
+         real*8 :: number_density_integral
+         real*8 :: energy_density_integral
+
+         !setting local variables from eos_variables
+         lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
+         t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  ! Conversion from MeV to GK
+         mu_e = eos_variables(mueindex)
+
+         !interpolating rates for given eos_variables and calculating average neutrino energy
+         lbetap = weakrates(A,Z,t9,lrhoYe,1)
+         leps = weakrates(A,Z,t9,lrhoYe,2)
+         lnu = weakrates(A,Z,t9,lrhoYe,3)         
+         avgenergy(1) = 10.0d0**lnu/(10.0d0**leps + 10.0d0**lbetap)
+         
+         !set weights and roots for quadrature integration, then calculate <E>
+         call GaussLaguerreQuadrature_roots_and_weights(16,GLQ_n16_roots,GLQ_n16_weights)
+         avgenergy(2)=0.0d0
+         energy_density_integral=0.0d0
+         number_density_integral=0.0d0
+         do i=1,16
+            spectra = ec_neutrino_spectra(GLQ_n16_roots(i),qec_eff,mu_e,eos_variables(tempindex))
+            energy_density_integral=energy_density_integral+GLQ_n16_weights(i)*GLQ_n16_roots(i)*spectra
+            number_density_integral=number_density_integral+GLQ_n16_weights(i)*spectra
+         end do
+         avgenergy(2) = (eos_variables(tempindex))*(energy_density_integral/number_density_integral)
+
+       end function average_energy
+
+       function qec_solver(avgenergy,q,eos_variables) result(qec_eff)
+         use nulib, only : GLQ_n16_roots, GLQ_n16_weights, total_eos_variables, mueindex, tempindex
+
+         !starting point energies using a seed q = Qgs
+         real*8, intent(in) :: avgenergy(2)
+         real*8, intent(in) :: eos_variables(total_eos_variables)
+
+         !local buffer variables for calculations
+         real*8 :: avge_rates
+         real*8 :: avge_spectra
+         real*8 :: qec_eff
+         real*8 :: q
+         integer i
+         
+         !integration variables
+         real*8 :: energy_density_integral
+         real*8 :: number_density_integral
+         real*8 :: dq_energy_density_integral
+         real*8 :: dq_number_density_integral
+         real*8 :: nu_spectra_deriv_coef
+         real*8 :: nu_spectra
+
+         avge_rates = avgenergy(1)
+         avge_spectra = avgenergy(2)
+
+         do while (abs(avge_rates - avge_spectra)/avge_rates > 1.0d-8) 
+            call GaussLaguerreQuadrature_roots_and_weights(16,GLQ_n16_roots,GLQ_n16_weights) 
+            energy_density_integral=0.0d0 
+            number_density_integral=0.0d0
+            dq_energy_density_integral=0.0d0
+            dq_number_density_integral=0.0d0
+            nu_spectra=0.0d0
+            do i=1,16
+               nu_spectra = ec_neutrino_spectra(GLQ_n16_roots(i),q,eos_variables(mueindex),&
+                    eos_variables(tempindex))
+               nu_spectra_deriv_coef = ec_neutrino_spectra_q_derivative(GLQ_n16_roots(i),q,&
+                    eos_variables(mueindex),eos_variables(tempindex))
+               energy_density_integral=energy_density_integral+GLQ_n16_weights(i)*GLQ_n16_roots(i)*&
+                    nu_spectra
+               number_density_integral=number_density_integral+GLQ_n16_weights(i)*nu_spectra
+               dq_energy_density_integral=dq_energy_density_integral+GLQ_n16_weights(i)*GLQ_n16_roots(i)*&
+                    nu_spectra*nu_spectra_deriv_coef
+               dq_number_density_integral=dq_number_density_integral+GLQ_n16_weights(i)*nu_spectra*&
+                    nu_spectra_deriv_coef
+            end do 
+            avge_spectra = eos_variables(tempindex)*(energy_density_integral/number_density_integral)
+            q = q + (avge_rates - avge_spectra)/&
+                 ((dq_energy_density_integral*number_density_integral-energy_density_integral*&
+                 dq_number_density_integral)/(number_density_integral*number_density_integral))
+         end do
+         qec_eff = q
+
+       end function qec_solver
 
 end module weak_rates
 
