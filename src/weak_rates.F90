@@ -299,26 +299,75 @@ module weak_rates
 
        function  emissivity_from_electron_capture_on_A(A,Z,eos_variables) result(emissivity)
  
-         use nulib, only : total_eos_variables
-         integer A,Z
+         use nulib, only : total_eos_variables,energies,number_groups,do_integrated_BB_and_emissivity&
+              ,mueindex,rhoindex,tempindex,yeindex,GLQ_n32_roots,GLQ_n32_weights
+         include 'constants.inc'
 
-         real*8, intent(in) :: eos_variables(total_eos_variables)
-         real*8 :: emissivity !final answer in erg/cm^/s/srad/MeV
-         real*8 :: avgenergy(2)
-         real*8 :: qec_eff ! effective Qec for the approximate neutrino spectra
+         integer A,Z
          
-         !avgenergy(1) calculated from rates, avgenergy(2) calculated from avg neutrino spectra
+         real*8, intent(in) :: eos_variables(total_eos_variables)
+         real*8 :: emissivity(number_groups) !final answer in erg/cm^/s/srad/MeV
+         real*8 :: avgenergy(2)
+         real*8 :: qec_eff                   !effective Qec for the approximate neutrino spectra
+         
+         !spectrum integration
+         real*8 :: normalization_constant    !nu spectra normalization, units of 1/MeV^5/s
+         real*8 :: spectra
+         real*8 :: t9
+         real*8 :: lrhoYe
+         real*8 :: nu_spectrum_eval
+         integer i,ng
+
+         !set local eos_variables for rate interpolation
+         lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
+         t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  ! Conversion from MeV to GK
+         
+         !avgenergy(1) calculated from rates, avgenergy(2) calculated from the eff neutrino spectrum
          qec_eff = nucspec(nucleus_index(A,Z),1) !using Qgs from LMP table as seed
          avgenergy = average_energy(A,Z,qec_eff,eos_variables)
          qec_eff = qec_solver(avgenergy,qec_eff,eos_variables)
+         write(*,*) "<E> ",avgenergy(1)
+         write(*,*) "<E>_spectra",avgenergy(2),qec_eff
+
+
+         !calculate normalization constant using effective neutrino spectra
+         do i=1,32
+            spectra = spectra + ec_neutrino_spectra(GLQ_n32_roots(i),qec_eff,eos_variables(mueindex),&
+                 eos_variables(tempindex))
+         end do
+         spectra = (eos_variables(tempindex)**5)*spectra
+         normalization_constant = (10.0d0**weakrates(A,Z,t9,lrhoYe,1)+10.0d0**weakrates(A,Z,t9,lrhoYe,2))&
+              /spectra
          
-         write(*,*) "The approximate Q is: ",qec_eff
+         if (do_integrated_BB_and_emissivity) then
+            
+         else
+            do ng=1,number_groups
+               nu_spectrum_eval =&
+                    (eos_variables(tempindex)**4.0d0)*normalization_constant*&
+                    ec_neutrino_spectra(energies(ng),qec_eff,eos_variables(mueindex),eos_variables(tempindex))
+               emissivity(ng) = energies(ng)*nuclear_number_density(A,Z)*nu_spectrum_eval/(4.0d0*pi)
+            end do
+         endif
+
+        contains
+
+          function nuclear_number_density(A,Z) result(num)
+            integer A,Z
+            real*8 :: num
+            num = 1.0d0
+          end function nuclear_number_density
+
+!           function evaluate_spectra_at_point() result()
+!           end function evaluate_spectra_at_point
+!           function integrate_spectra_in_range() result()
+!           end function integrate_spectra_in_range
 
        end function emissivity_from_electron_capture_on_A
 
-
        function ec_neutrino_spectra(nu_energy_per_T,q,uf,T) result(nu_spectra)
-         
+         !definition: n(E) = (T^4)*N*ec_neutrino_spectra, where N is the normalization constant
+         ![N] = #/MeV^5/s
          include 'constants.inc'
          
          !local variables
@@ -342,8 +391,10 @@ module weak_rates
        
        end function ec_neutrino_spectra
 
-       function ec_neutrino_spectra_q_derivative(nu_energy_per_T,q,uf,T) result(nu_spectra_derivative)
 
+       function ec_neutrino_spectra_q_derivative(nu_energy_per_T,q,uf,T) result(nu_spectra_derivative)
+         !definition: d/dq n(E) = (ec_neutrino_spectra_q_derivative/T) * n(E)
+         
          include 'constants.inc'
          
          !local variables
@@ -401,7 +452,6 @@ module weak_rates
          avgenergy(1) = 10.0d0**lnu/(10.0d0**leps + 10.0d0**lbetap)
          
          !set weights and roots for quadrature integration, then calculate <E>
-         call GaussLaguerreQuadrature_roots_and_weights(16,GLQ_n16_roots,GLQ_n16_weights)
          avgenergy(2)=0.0d0
          energy_density_integral=0.0d0
          number_density_integral=0.0d0
@@ -438,14 +488,17 @@ module weak_rates
 
          avge_rates = avgenergy(1)
          avge_spectra = avgenergy(2)
-
+         
+         !Newton-Raphson technique to find zero (in q) of f(q) = <E>_rates - <E(q)>_spectra
          do while (abs(avge_rates - avge_spectra)/avge_rates > 1.0d-8) 
-            call GaussLaguerreQuadrature_roots_and_weights(16,GLQ_n16_roots,GLQ_n16_weights) 
             energy_density_integral=0.0d0 
             number_density_integral=0.0d0
             dq_energy_density_integral=0.0d0
             dq_number_density_integral=0.0d0
             nu_spectra=0.0d0
+            
+            !Quadrature integration of n(E), n'(E), E*n(E), E*n'(E) such that E = kT*xi (xi is dimensionless)
+            !q_n+1 = q_n - (<E>_rates - <E(q)>_spectra)/(-d/dq <E(q)>_spectra) 
             do i=1,16
                nu_spectra = ec_neutrino_spectra(GLQ_n16_roots(i),q,eos_variables(mueindex),&
                     eos_variables(tempindex))
@@ -465,6 +518,7 @@ module weak_rates
                  dq_number_density_integral)/(number_density_integral*number_density_integral))
          end do
          qec_eff = q
+         write(*,*) avge_spectra
 
        end function qec_solver
 
