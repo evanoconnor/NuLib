@@ -10,14 +10,14 @@ program test
   real*8, allocatable, dimension(:) :: emissivity
   real*8 dxfac,mindx
   integer reqnuc,rate,A,Z,i
-  call initialize_nulib(1,6,48)
+  call initialize_nulib(1,6,24)
   allocate(emissivity(number_groups))
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
   mindx = 1.0d0
   bin_bottom(1) = 0.0d0 !MeV
-  bin_bottom(2) = 4.0d0 !MeV
+  bin_bottom(2) = 1.0d0 !MeV
   bin_bottom(3) = bin_bottom(2)+mindx
   bin_bottom(number_groups) = 250.0d0
   
@@ -33,9 +33,8 @@ program test
      bin_top(i) = bin_bottom(i+1)
   enddo
   energies(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups-1)*dxfac/2.0d0
-  bin_widths(number_groups) = 2.0*(energies(number_groups)-bin_bottom(number_groups))
+  bin_widths(number_groups) = 2.0d0*(energies(number_groups)-bin_bottom(number_groups))
   bin_top(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups)
-  
 
   A = 65
   Z = 32
@@ -52,8 +51,12 @@ program test
 !  write(*,*) logECs
 !  call microphysical_electron_capture(emissivity)
   emissivity = emissivity_from_electron_capture_on_A(A,Z,eos_variables)
-
-  write(*,*)  Sum(emissivity(:)*bin_widths(:))/Sum(emissivity(:)*bin_widths(:)/energies(:))
+  
+  write(*,*)  "Avg E from emissivity = ",Sum(emissivity(:)*bin_widths(:))/Sum(emissivity(:)*bin_widths(:)/energies(:))
+  write(*,*)  "Summed rate from emissivity = ",Sum(emissivity(:)*bin_widths(:)/energies(:)*4.0d0*pi)
+  write(*,*)  "Nu energy loss rate from emissivity = ",Sum(emissivity(:)*bin_widths(:)*4.0d0*pi)
+  
+  
 
 
 
