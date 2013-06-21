@@ -25,7 +25,11 @@ program make_table_example
   integer :: mytable_number_groups = 24
 
   !EOS table
+<<<<<<< HEAD
   character*200 :: eos_filename = "/projects/ceclub/gr1dnulib/eos/LS220.h5"
+=======
+  character*200 :: eos_filename = "/Users/evanoc/research/eos/LS220.h5"
+>>>>>>> nulib_recent_pull
 
   !final table parameters
   integer :: final_table_size_ye, final_table_size_rho, final_table_size_temp
@@ -40,6 +44,8 @@ program make_table_example
   real*8, allocatable,dimension(:,:,:,:,:) :: table_emission 
   real*8, allocatable,dimension(:,:,:,:,:) :: table_absopacity
   real*8, allocatable,dimension(:,:,:,:,:) :: table_scatopacity 
+<<<<<<< HEAD
+=======
 
 
   !final Itable parameters
@@ -53,10 +59,20 @@ program make_table_example
   real*8, allocatable,dimension(:,:,:,:,:) :: Itable_Phi1   
 
 
+>>>>>>> nulib_recent_pull
   !versioning
   real*8 :: timestamp
   character(8) :: date
   integer :: values(8)
+<<<<<<< HEAD
+  character(100) :: base,vnum,srho,stemp,sye,sng,sns
+
+  !local variables to help in making table
+  integer :: irho,itemp,iye,ns,ng
+  real*8, allocatable,dimension(:,:) :: local_emissivity
+  real*8, allocatable,dimension(:,:) :: local_absopacity
+  real*8, allocatable,dimension(:,:) :: local_scatopacity
+=======
   character(100) :: base,vnum,srho,stemp,sye,sng,sns,sItemp,sIeta
 
   !local variables to help in making tables
@@ -67,26 +83,39 @@ program make_table_example
   real*8, allocatable,dimension(:,:) :: local_scatopacity
   real*8, allocatable,dimension(:,:) :: local_Phi0
   real*8, allocatable,dimension(:,:) :: local_Phi1
+>>>>>>> nulib_recent_pull
   real*8, allocatable,dimension(:) :: eos_variables
   real*8 :: matter_prs,matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe
   integer :: keytemp,keyerr
   real*8 :: precision = 1.0d-10
   integer :: i
   real*8 dxfac,mindx
+<<<<<<< HEAD
+=======
   logical :: doing_inelastic
+>>>>>>> nulib_recent_pull
 
   !this sets up many cooefficients and creates the energy grid (one
   !zone + log spacing) see nulib.F90:initialize_nulib
   call initialize_nulib(mytable_neutrino_scheme,mytable_number_species,mytable_number_groups)
 
+<<<<<<< HEAD
   !read in weak rates table
 !  call readrates_LMP()
 
+=======
+>>>>>>> nulib_recent_pull
   !read in EOS table & set reference mass
   call readtable(eos_filename)
   m_ref = m_n !for LS200
   
   !set up table
+<<<<<<< HEAD
+  final_table_size_ye = 51
+  final_table_size_rho = 82
+  final_table_size_temp = 65
+  
+=======
   final_table_size_ye = 10
   final_table_size_rho = 10
   final_table_size_temp = 10
@@ -95,23 +124,31 @@ program make_table_example
   final_Itable_size_eta = 10
   final_Itable_size_inE = mytable_number_groups
 
+>>>>>>> nulib_recent_pull
   min_ye = 0.035d0
   max_ye = 0.55d0
   min_logrho = 6.0d0
   max_logrho = 15.8d0
   min_logtemp = log10(0.05d0)
   max_logtemp = log10(200.0d0)
+<<<<<<< HEAD
+=======
   Imin_logtemp = log10(0.05d0)
   Imax_logtemp = log10(200.0d0)
   Imin_logeta = log10(0.1d0)
   Imax_logeta = log10(100.0d0)
+>>>>>>> nulib_recent_pull
   number_output_species = 3
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
   mindx = 1.0d0
   bin_bottom(1) = 0.0d0 !MeV
+<<<<<<< HEAD
+  bin_bottom(2) = 1.0d0 !MeV
+=======
   bin_bottom(2) = 4.0d0 !MeV
+>>>>>>> nulib_recent_pull
   bin_bottom(3) = bin_bottom(2)+mindx
   bin_bottom(number_groups) = 250.0d0
   
@@ -135,12 +172,18 @@ program make_table_example
   allocate(table_rho(final_table_size_rho))
   allocate(table_temp(final_table_size_temp))
 
+<<<<<<< HEAD
+  allocate(table_emission(final_table_size_rho,final_table_size_temp,final_table_size_ye,number_output_species,mytable_number_groups))
+  allocate(table_absopacity(final_table_size_rho,final_table_size_temp,final_table_size_ye,number_output_species,mytable_number_groups))
+  allocate(table_scatopacity(final_table_size_rho,final_table_size_temp,final_table_size_ye,number_output_species,mytable_number_groups))
+=======
   allocate(table_emission(final_table_size_rho,final_table_size_temp, &
        final_table_size_ye,number_output_species,mytable_number_groups))
   allocate(table_absopacity(final_table_size_rho,final_table_size_temp, &
        final_table_size_ye,number_output_species,mytable_number_groups))
   allocate(table_scatopacity(final_table_size_rho,final_table_size_temp, &
        final_table_size_ye,number_output_species,mytable_number_groups))
+>>>>>>> nulib_recent_pull
 
   do iye=1,final_table_size_ye
      table_ye(iye) = min_ye+dble(iye-1)/dble(final_table_size_ye-1)*(max_ye-min_ye)
@@ -156,9 +199,13 @@ program make_table_example
           10.0d0**(min_logtemp+dble(itemp-1)/dble(final_table_size_temp-1)*(max_logtemp-min_logtemp))
   enddo
 
+<<<<<<< HEAD
+  !$OMP PARALLEL DO PRIVATE(itemp,iye,local_emissivity,local_absopacity,local_scatopacity,ns,ng,eos_variables,keytemp,keyerr,matter_prs,matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe)
+=======
   !$OMP PARALLEL DO PRIVATE(itemp,iye,local_emissivity,local_absopacity,local_scatopacity, &
   !$OMP ns,ng,eos_variables,keytemp,keyerr,matter_prs,matter_ent,matter_cs2,matter_dedt, &
   !$OMP matter_dpderho,matter_dpdrhoe)
+>>>>>>> nulib_recent_pull
   !loop over rho,temp,ye of table, do each point
   do irho=1,final_table_size_rho
      !must do declarations here for openmp
@@ -262,6 +309,8 @@ program make_table_example
   enddo!do irho=1,final_table_size_rho
   !$OMP END PARALLEL DO! end do
 
+<<<<<<< HEAD
+=======
   write(*,*) "Finished Opacity Table" 
 
   !now generate the inelastic electron scattering table.  This is
@@ -384,6 +433,7 @@ program make_table_example
 
   endif
 
+>>>>>>> nulib_recent_pull
   !write out table in H5 format
   call date_and_time(DATE=date,VALUES=values)
   write(srho,*) final_table_size_rho
@@ -391,14 +441,24 @@ program make_table_example
   write(sye,*) final_table_size_ye
   write(sng,*) mytable_number_groups
   write(sns,*) number_output_species
+<<<<<<< HEAD
+=======
   write(sItemp,*) final_Itable_size_temp
   write(sIeta,*) final_Itable_size_eta
+>>>>>>> nulib_recent_pull
   timestamp = dble(values(1))*10000.0d0+dble(values(2))*100.0+dble(values(3)) + &
        (dble(values(5))+dble(values(6))/60.0d0 + dble(values(7))/3600.0d0 )/24.0
 
   base="NuLib_LS220"
   vnum="1.0"
 
+<<<<<<< HEAD
+  finaltable_filename = trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
+       "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &
+       "_ng"//trim(adjustl(sng))//"_ns"//trim(adjustl(sns))// &
+       "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//".h5"
+
+=======
   if (doing_inelastic) then
      finaltable_filename = trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
           "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &
@@ -412,6 +472,7 @@ program make_table_example
           "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//".h5"
   endif
   
+>>>>>>> nulib_recent_pull
   call write_h5(finaltable_filename,timestamp)
 
 contains
@@ -597,6 +658,9 @@ contains
     call h5dclose_f(dset_id, error)
     call h5sclose_f(dspace_id, error)  
     cerror = cerror + error   
+<<<<<<< HEAD
+    
+=======
 
     if (doing_inelastic) then
 
@@ -666,6 +730,7 @@ contains
     endif
 
 
+>>>>>>> nulib_recent_pull
     !must close h5 files, check for error
     if (cerror.ne.0) then
        write(*,*) "We have errors on writing HDF5 file", cerror

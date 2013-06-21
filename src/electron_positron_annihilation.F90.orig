@@ -36,7 +36,11 @@ function epannhil_Phi0_BRT06(nu_energy_x,nubar_energy_x,matter_eta,neutrino_spec
   implicit none
 
   !inputs
+<<<<<<< HEAD
+  real*8, intent(in) :: nu_energy_x !nueutrino energy/Temp
+=======
   real*8, intent(in) :: nu_energy_x !neutrino energy/Temp
+>>>>>>> nulib_recent_pull
   real*8, intent(in) :: nubar_energy_x !antineutirno energy/Temp
   real*8, intent(in) :: matter_eta !electron chemical potential/Temp
 
@@ -77,9 +81,15 @@ function epannhil_H0_BRT06(nu_energy,nubar_energy,electron_energy,neutrino_speci
   implicit none
   
   !inputs
+<<<<<<< HEAD
+  real*8, intent(in) :: nu_energy !neutrino energy, MeV
+  real*8, intent(in) :: nubar_energy !antineutrino energy, MeV
+  real*8, intent(in) :: electron_energy !electron energy, MeV
+=======
   real*8, intent(in) :: nu_energy !neutrino energy, MeV, or reduced energy
   real*8, intent(in) :: nubar_energy !antineutrino energy, MeV, or reduced energy
   real*8, intent(in) :: electron_energy !electron energy, MeV, or reduced energy
+>>>>>>> nulib_recent_pull
 
   integer, intent(in) :: neutrino_species 
 
@@ -130,8 +140,11 @@ contains
 
     if (arguement.gt.0.0d0) then
        answer = 1.0d0
+<<<<<<< HEAD
+=======
     else if (arguement.eq.0.0d0) then
        answer = 0.5d0
+>>>>>>> nulib_recent_pull
     else
        answer = 0.0d0
     endif
@@ -179,7 +192,11 @@ contains
     !inputs
     real*8, intent(in) :: E1,E2,E3 !energies
     
+<<<<<<< HEAD
+    !outptu
+=======
     !output
+>>>>>>> nulib_recent_pull
     real*8 :: answer !answer
 
     answer = E1**2*(40.0d0*E2**2+60.0d0*E1*E2+24.0d0*E1**2)/(15.0d0*E2) - &

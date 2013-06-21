@@ -9,37 +9,66 @@
   !absorptions
   logical :: add_nue_absorption_on_n = .true.
   logical :: add_anue_absorption_on_p = .true.
+<<<<<<< HEAD
+  logical :: add_nue_absorption_on_A = .false.
+=======
   logical :: add_nue_absorption_on_A = .true.
+>>>>>>> nulib_recent_pull
 
   !scatterings
   logical :: add_nue_scattering_n = .true.
   logical :: add_nue_scattering_p = .true.
   logical :: add_nue_scattering_heavies = .true.
+<<<<<<< HEAD
+  logical :: add_nue_scattering_electrons = .true.
+=======
   logical :: add_nue_scattering_electrons = .false.
+>>>>>>> nulib_recent_pull
   logical :: add_nue_scattering_alphas = .true.
   logical :: add_anue_scattering_n = .true.
   logical :: add_anue_scattering_p = .true.
   logical :: add_anue_scattering_heavies = .true.
+<<<<<<< HEAD
+  logical :: add_anue_scattering_electrons = .true.
+=======
   logical :: add_anue_scattering_electrons = .false.
+>>>>>>> nulib_recent_pull
   logical :: add_anue_scattering_alphas = .true.
   logical :: add_numu_scattering_n = .true.
   logical :: add_numu_scattering_p = .true.
   logical :: add_numu_scattering_heavies = .true.
+<<<<<<< HEAD
+  logical :: add_numu_scattering_electrons = .true.
+=======
   logical :: add_numu_scattering_electrons = .false.
+>>>>>>> nulib_recent_pull
   logical :: add_numu_scattering_alphas = .true.
   logical :: add_anumu_scattering_n = .true.
   logical :: add_anumu_scattering_p = .true.
   logical :: add_anumu_scattering_heavies = .true.
+<<<<<<< HEAD
+  logical :: add_anumu_scattering_electrons = .true.
+=======
   logical :: add_anumu_scattering_electrons = .false.
+>>>>>>> nulib_recent_pull
   logical :: add_anumu_scattering_alphas = .true.
   logical :: add_nutau_scattering_n = .true.
   logical :: add_nutau_scattering_p = .true.
   logical :: add_nutau_scattering_heavies = .true.
+<<<<<<< HEAD
+  logical :: add_nutau_scattering_electrons = .true.
+=======
   logical :: add_nutau_scattering_electrons = .false.
+>>>>>>> nulib_recent_pull
   logical :: add_nutau_scattering_alphas = .true.
   logical :: add_anutau_scattering_n = .true.
   logical :: add_anutau_scattering_p = .true.
   logical :: add_anutau_scattering_heavies = .true.
+<<<<<<< HEAD
+  logical :: add_anutau_scattering_electrons = .true.
+  logical :: add_anutau_scattering_alphas = .true.
+
+=======
   logical :: add_anutau_scattering_electrons = .false.
   logical :: add_anutau_scattering_alphas = .true.
 
@@ -51,6 +80,7 @@
   logical :: add_nutau_Iscattering_electrons = .true.
   logical :: add_anutau_Iscattering_electrons = .true.
 
+>>>>>>> nulib_recent_pull
   !emissivities
   logical :: add_nue_emission_epannihil = .true.
   logical :: add_anue_emission_epannihil = .true.

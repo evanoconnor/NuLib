@@ -64,16 +64,23 @@ module nulib
   logical :: debug = .false.
   logical :: do_integrated_BB_and_emissivity
 
+<<<<<<< HEAD
+=======
   !nuclei distribution global variables
   integer,allocatable :: hempel_lookup_table(:,:)
 
+>>>>>>> nulib_recent_pull
   include 'constants.inc'
   include 'requested_interactions.inc'
 
   contains
 !#################################################################
     subroutine initialize_nulib(neutrino_scheme_in,number_species_in,number_groups_in)
+<<<<<<< HEAD
+      
+=======
 
+>>>>>>> nulib_recent_pull
       integer :: neutrino_scheme_in
       integer :: number_species_in
       integer :: number_groups_in
@@ -111,6 +118,8 @@ module nulib
          stop "initialize_nulib: neutrino scheme unknown"
       endif
 
+<<<<<<< HEAD
+=======
       if (add_nue_Iscattering_electrons.and.add_nue_scattering_electrons) then
          stop "initialize_nulib: you can't both inelastically and elastically scatter off of electrons: nue"
       endif
@@ -207,13 +216,18 @@ module nulib
 
       endif
 
+>>>>>>> nulib_recent_pull
       !allocate some arrays
       allocate(energies(number_groups))
       allocate(bin_widths(number_groups))
       allocate(bin_bottom(number_groups))
       allocate(bin_top(number_groups))
 
+<<<<<<< HEAD
+      !setup H0_constants for electron positron annihilation
+=======
       !setup H0_constants for electron positron annihilation and inelastic electron scattering
+>>>>>>> nulib_recent_pull
       !standard
       H0_constants(1,1) =  (0.5d0+2.0d0*sin2thetaW + 0.5d0)**2 !(Cv+Ca)^2, electron neutrino
       H0_constants(2,1) =  (0.5d0+2.0d0*sin2thetaW - 0.5d0)**2 !(Cv-Ca)^2, electron neutrino
@@ -548,6 +562,8 @@ module nulib
 
     end subroutine single_point_return_all
 
+<<<<<<< HEAD
+=======
     !calcualates the expansion of the scattering kernal, This is
     !R_{out}, it does not contain the
     !exp(-\beta(\omega-\omega^\prime))
@@ -710,6 +726,7 @@ module nulib
     end subroutine single_Ipoint_return_all
 
 
+>>>>>>> nulib_recent_pull
  end module nulib
 
 

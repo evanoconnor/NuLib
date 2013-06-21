@@ -35,7 +35,10 @@ program point_example
   real*8, allocatable,dimension(:,:) :: local_emissivity
   real*8, allocatable,dimension(:,:) :: local_absopacity
   real*8, allocatable,dimension(:,:) :: local_scatopacity
+<<<<<<< HEAD
+=======
   real*8, allocatable,dimension(:,:) :: local_Phi0, local_Phi1
+>>>>>>> nulib_recent_pull
   real*8, allocatable,dimension(:,:) :: blackbody_spectra
   real*8, allocatable,dimension(:) :: eos_variables
   real*8 :: matter_prs,matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe
@@ -179,6 +182,8 @@ program point_example
      enddo
   enddo
 
+<<<<<<< HEAD
+=======
   if (add_nue_Iscattering_electrons.or.add_anue_Iscattering_electrons.or. &
        add_numu_Iscattering_electrons.or.add_anumu_Iscattering_electrons.or. &
        add_nutau_Iscattering_electrons.or.add_anutau_Iscattering_electrons) then
@@ -201,6 +206,7 @@ program point_example
      enddo
   endif
 
+>>>>>>> nulib_recent_pull
 
 end program point_example
   

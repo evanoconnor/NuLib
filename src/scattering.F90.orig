@@ -423,7 +423,11 @@ function nu_scatter_elastic_heavy_differential(neutrino_energy, &
   endif
   
   electron_number_density = eos_variables(rhoindex)*eos_variables(yeindex)/(m_ref*mev_to_gram) !number /cm^3
+<<<<<<< HEAD
+  fermi_energy = eos_variables(mueindex) !what is this?,  MeV
+=======
   fermi_energy = eos_variables(mueindex)!I think this is the chemical potential,  MeV
+>>>>>>> nulib_recent_pull
   !when far out of equilibrium, matter_mue < m_e.  This is not good, unphysical, and causes errors.
   fermi_energy = max(eos_variables(mueindex),m_e+1.0d-10)
 
@@ -512,7 +516,11 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_nue_scattering_alphas) then
         ! matter temperature, density, transport=1, lepton = 1 
         scattering_opacity = scattering_opacity + &
+<<<<<<< HEAD
+             nu_scatter_elastic_alpha_total(neutrino_energy,1,1,eos_variables)* &
+=======
              nu_scatter_elastic_alpha_total(neutrino_energy,1,1)* &
+>>>>>>> nulib_recent_pull
              (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
