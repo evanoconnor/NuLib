@@ -37,11 +37,7 @@ function nue_absorption_on_n(neutrino_energy,eos_variables) result(crosssection)
   endif
 
   !Note on the exp's.  The Fermi functions and simulated absorption
-<<<<<<< HEAD
-  !terms can be huges/small.  The best way to deal with this is to
-=======
   !terms can be huge/small.  The best way to deal with this is to
->>>>>>> nulib_recent_pull
   !play tricks.  We write them all in terms of the log of the exp, not
   !the fermi functions, and then combine appropiately (taking into
   !account the size of the exp to deal with the +1's appropiately
