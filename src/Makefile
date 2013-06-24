@@ -11,7 +11,7 @@ SOURCES=nulib.F90 \
 	scattering.F90 \
 	weak_magnetism_correction.F90 \
 	weak_rates.F90 \
-    inelastic_electron_scattering.F90 \
+	inelastic_electron_scattering.F90 \
 
 NT_SOURCES=nulibtable.F90 \
 	   nulibtable_reader.F90 \
