@@ -1,0 +1,305 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!                      !!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!   Welcome to NuLib   !!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!                      !!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+DISCLAIMER: 
+-----------
+
+Please note that the routines provided here come with absolutely no
+warranty and we are unable to guarantee that we will be able to
+provide support or help if you run into problems integrating them with
+your simulation code. If you decide to use the provided routines in
+published work, it is YOUR responsibility to check their physical
+correctness and consistency.
+
+If you have any questions or have discovered a bug in our routines,
+please e-mail us at evanoc@tapir.caltech.edu or cott@tapir.caltech.edu
+
+COPYRIGHT:
+----------
+
+While NuLib is open source, its copyright is held by Evan O’Connor and
+Christian Ott. In the absence of suitable open scientific software
+licenses, we release this version of NuLib to the community under the
+Creative Commons attribution-noncommercial-share alike license:
+
+http://creativecommons.org/licenses/by-nc-sa/3.0/us
+
+Essentially, you may use NuLib, but must make reference to our work,
+must not use NuLib for commercial purposes, and any code including or
+using our routines or part of them may be made publically available,
+and if so, only under the same license.
+
+Introduction:
+-------------
+
+<<<<<<< HEAD
+The goal of NuLib is to provide a basic standard set of neutrino
+=======
+The goal of NULIB is to provide a basic standard set of neutrino
+>>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
+matter interaction routines that can be readily incorporated in
+radiation-hydrodynamics codes for physics benchmarking.
+
+NuLib v1.0 includes the basic neutrino emissivities and absorption
+<<<<<<< HEAD
+opacities (including pair processes) as well as neutrino-nucleon,
+eutrino-nucleus elastic scattering processes and neutrino-electron
+inelastic scattering.  Other inelastic processes will also be
+including in future versions.
+=======
+opacities (including pair processes) as well as neutrino-nucleon and
+neutrino-nucleus scattering processes. Inelastic scattering (with
+energy redistribution) is neglected, but will be included in future
+revisions.  Other inelastic processes will also be including in future
+versions.
+>>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
+
+If anyone would like to contribute to the development of NuLib please
+let me know, I'm hosting this on GitHub with this in mind. I am
+currently developing a neutrino transport code that will make use of
+all these interactions, that being said it is not finished and since
+I've never done such a task, it may well be the case that methodlogies
+of coding these interactions will change slightly (and have not been
+fully tested) If you have advice on this front please fill me in, I am
+more than happy to make NuLib as accessible as it needs to be to allow
+others to benefit from it.
+
+NuLib, in its current form, is used by me to make tables of neutrino
+<<<<<<< HEAD
+emissivities, opacities (scattering and absorption), and scattering
+kernels.  It is not yet optimized for on-the-fly calculations of
+quantities.  In fact, the routines are coded in such a way as to be as
+clear and accurate as possble, with little or no regard for
+computational speed.  For example, the weak magnitism correction for
+scattering processes is small but many terms long, I do the full
+calculation.  In the future I hope NuLib will have routines capable of
+on the fly calculations, I expect this is necessary if one whats fully
+differential cross sections (in energy and angle, as a function of
+energy).
+=======
+emissivities and opacities (scattering and absorption).  It is not yet
+optimized for on-the-fly calculations of quantities.  In fact, the
+routines are coded in such a way as to be as clear and accurate as
+possble, with little or no regard for computational speed.  For
+example, the weak magnitism correction for scattering processes is
+small but many terms long, I do the full calculation.  In the future I
+hope NuLib will have routines capable of on the fly calculations, I
+expect this is necessary if one whats fully differential cross
+sections (in energy and angle, as a function of energy).
+>>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
+
+NuLib v1.0 Neutrino Interactions.
+---------------------------------
+
+Emissivities: 
+-------------
+
+1. electron-positron annhilation to \nu - \bar{\nu}, this
+follows Bruenn 1985, only the isotropic case is currently coded but
+the extension to higher legendre mode is trivial as the structure of
+the calculation is laid out.
+
+2. Nucleon-Nucleon Bremsstrahlung, this is an approximation used in
+Burrows Reddy, and Thompson (2006) [BRT06].  A full calculation of
+this reaction would be great!
+
+Scattering Opacities:
+---------------------
+
+For the scattering opacities, I list only the base interactions, the
+neutrino type plays a role in the calculations, see the code for a
+full description of the interaction.  The cross sections all come from
+BRT06 with appropiate corrections (e.g. weak magnetism [has a logical
+flag to turn off if desired])
+
+
+1. neutrino scattering on neutrons
+
+2. neutrino scattering on protons
+
+3. neutrino scattering on heavy nuclei (this includes lots of
+corrections, see BRT06 and the code for details)
+
+4. neutrino scattering on electrons (elastic, Thomspon, T. PhD)
+
+5. neutrino scattering on alphas
+
+Absorption Opacities:
+---------------------
+
+1. \nu_e absorption neutrons: This currently includes a stimulated
+absorption term as described in BRT06, final
+state electron blocking and also final state proton blocking.  Weak
+magnitism, phase space and recoil corrections [optional via flag] are
+applied via Horowitz (2002).
+
+2. \bar{\nu}_e absorption protons: This currently includes a
+stimulated absorption term as described in Burrows, Reddy, and
+Thompson, final state positorn blocking and also final state neutron
+blocking.  Weak magnitism, phase space and recoil corrections
+[optional via flag] are applied via Horowitz (2002).
+
+3. \nu_e absorption on heavy nuclei: This follows the simple treatment
+of Bruenn 85 (among others), placing cuts on the cross section based
+on the average A and average Z of the nucleus.  Much better treatment
+is desired and someday will be implemented.  
+
+<<<<<<< HEAD
+Neutrino-Electron Inelastic Scattering Kernels:
+-----------------------------------------------
+
+For a temperature and electron chemical potential, NuLib calculates
+the first two terms in a Legendre expansion of the scattering kernels
+for neutrinos on electrons.  We essentially follow Bruenn 1985 and
+references there in.  
+
+=======
+>>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
+Sample Executables:
+-------------------
+
+make_table_example: by default this makes a horribly under resolved
+<<<<<<< HEAD
+10x10x10x24 (rho,temp,ye,energy) + (10x10x24*24)
+(temp,eta,energy_in,energy_out) NuLib table in h5 format. The
+calculations takes abut 1 minute to generate.  The table boundaries,
+and number of data points are changable in the make_table_example.F90
+file.  To get enough accuracy in the interpolation I expect at least
+10 points per decade in rho, 20 in temperature and 1 for every 0.01 or
+0.02 in ye.  This makes a table ~1GB in size with 24 energy bins.  The
+energy spacing is changable in nulib.F90, right now it is a 4MeV bin,
+then a logarithmic spacing starting at 1MeV going to ~300MeV, this may
+not be the best choice, if you have a better suggestion, let me know,
+or code up a routine to generate good energy spacing and send a pull
+request (?).
+=======
+10x10x10x24 (rho,temp,ye,energy) NuLib table in h5 format, the
+1000*24*3*3 calculations takes abut 1 minute to generate.  The table
+boundaries, and number of data points are changable in the
+make_table_example.F90 file.  To get enough accuracy in the
+interpolation I expect at least 10 points per decade in rho, 20 in
+temperature and 1 for every 0.01 or 0.02 in ye.  This makes a table
+~1GB in size with 24 energy bins.  The energy spacing is changable in
+nulib.F90, right now it is a 4MeV bin, then a logarithmic spacing
+starting at 1MeV going to ~300MeV, this may not be the best choice, if
+you have a better suggestion, let me know, or code up a routine to
+generate good energy spacing and send a pull request (?). 
+>>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
+
+You must specify an equation of state, NuLib is set up to read in the
+EOS tables on stellarcollapse.org, the filename is set in
+make_table_example.F90.  For each EOS you must set the reference mass,
+this is used to convert the density into a number density for the
+scattering and absorption cross sections.
+
+The main routine that make_table_example.F90 calls is
+single_point_return_all.  This routine takes as input all of the
+equation of state variables and returns the emissivity, absorption
+opacity and scattering opacity for all neutrino species and energies.
+You also must specify the neutrino scheme, this is what sets the
+number of species. Here the comments regarding the different neutrino
+scheme currently available in NuLib, again if you have a request let
+me know, I want to make this as useful as possible.
+
+! many people use different number of species, this is the possible
+! summing scheme NuLib can currently do
+! 
+! mytable_neutrino_scheme = 1 (three output species)
+! species #1: electron neutrino             #2 electron antineutrino
+!         #3: muon+tau neutrino+antineutrino
+! 
+! neutrino_scheme = 2 (four output species)
+! species #1: electron neutrino             #2 electron antineutrino
+!         #3: muon+tau neutrino             #4 mu and tau antineutrino
+!
+! neutrino_scheme = 3 (six output species)
+! species #1: electron neutrino             #2 electron antineutrino
+!         #3: muon neutrino                 #4 mu antineutrino
+!         #5: tau neutrino                  #6 tau antineutrino
+
+single_point_return_all appies Kirchoff's law to the emissivities and
+absorption cross sections.  This adds an contribution to the
+emissivity from the absorption cross section (and vice-versa).  This
+is explained in BRT06 and explicitly showed in the
+<<<<<<< HEAD
+single_point_return_all routine. There is a similar routine for the
+inelastic scattering kernels, single_Ipoint_return_all.  This routine
+only calculates half of the terms, we use symmetry laws to calculate
+the other half.
+=======
+single_point_return_all routine.
+>>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
+
+point_example: this program shows examples of how to call the NuLib
+routines for a single point. Again, the energy spacing is changable in
+nulib.F90, right now it is a 4MeV bin, then a logarithmic spacing
+starting at 1MeV going to ~300MeV, this may not be the best choice, if
+you have a better suggestion, let me know, or code up a routine to
+generate good energy spacing and send a pull request (?). You must
+specify an equation of state, NuLib is set up to read in the EOS
+tables on stellarcollapse.org, the filename is set in
+point_example.F90.  For each EOS you must set the reference mass, this
+is used to convert the density into a number density for the
+scattering and absorption cross sections.
+
+Unlike single_point_return_all, the individual calls to emissivity
+(e.g. return_emissivity_spectra_given_neutrino_scheme) or the cross
+section routines
+(e.g. return_absorption_opacity_spectra_given_neutrino_scheme) do not
+apply Kirchoff's law.  
+
+nulibtable_driver: This routine is a driver routine for reading in a
+NuLib table and using a trilinear interpolation (log rho, log temp,
+ye) routine to interpolate the emissivities and cross sections to any
+rho,temp,ye. This is extermely useful for transport simulations and
+prevents on the fly calculations of the neutrino interaction terms.
+It does not currently interpolate in energy, this would be a useful
+feature to add, it would require slightly adjusting the units of the
+emissivities, in addition to writing a 4th order interpolator.  There
+are several routines available in nulibtable.F90 for accessing the
+table.  The large number of variables can lead to long times spent in
+interpolating. I've tried to optimize this but more could be done I'm
+sure.
+
+Installation.
+-------------
+
+If you are reading this then you are halfway there.  You must set the
+F90 and F90FLAGS compiler variables in the make.inc file in this
+directory to point to your Fortran compiler.  Also, you must have HDF5
+compiled with the _same_ compiler.  This usually means downloading the
+source from http://www.hdfgroup.org/HDF5/release/obtain5.html,
+configuring with your version of:
+
+./configure --enable-fortran FC=ifort --prefix=/Users/evanoc/opt/hdf5-current-ifort12
+
+and then 
+
+make
+make install
+
+the HDF5DIR variable in make.inc would then be set to /Users/evanoc/opt/hdf5-current-ifort12
+
+After this, a simple make should create three executables in the main
+directory, a brief explanation of these is in the section
+`executables' above.
+
+<<<<<<< HEAD
+Extras
+------
+
+There is support in NuLib for using Matthias Hempel's NSE mass
+distributions available from
+http://phys-merger.physik.unibas.ch/~hempel/eos.html.  To enable these
+use must download his code and tables from his website, place them in
+the directory src/extra_code_and_tables/ and enable the preprocessor
+flag NUCLEI_HEMPEL.  We use the SFHo table as an example in the code,
+you can change this by editting nuclei_distribution_helpers.F90
+directly.  Please see this file for more details.
+=======
+>>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
