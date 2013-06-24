@@ -370,7 +370,8 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
   
   !locals
   integer :: ns,ng
-  real*8 emissivity,energy_point,energy_top,energy_bottom
+  real*8 :: emissivity,energy_point,energy_top,energy_bottom
+  real*8 :: temp_emissivity(number_groups)
   real*8 :: eta
 
   !function dec
@@ -391,6 +392,12 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
         call total_emissivities(ns,energy_point,energy_bottom,energy_top,emissivity,eos_variables)
         emissivity_spectra(ns,ng) = emissivity !ergs/cm^3/s/MeV/srad
      enddo
+
+!     call microphysical_electron_capture(ns,temp_emissivity,eos_variables)
+!     do ng=1,number_groups
+!        emissivity_spectra(ns,ng) = emissivity_spectra(ns,ng) + temp_emissivity(ng) !ergs/cm^3/s/MeV/srad
+!     enddo
+
   enddo
   
 end subroutine return_emissivity_spectra_given_neutrino_scheme

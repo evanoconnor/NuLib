@@ -10,7 +10,8 @@ SOURCES=nulib.F90 \
 	emissivities.F90 \
 	scattering.F90 \
 	weak_magnetism_correction.F90 \
-	inelastic_electron_scattering.F90
+	weak_rates.F90 \
+	inelastic_electron_scattering.F90 \
 
 NT_SOURCES=nulibtable.F90 \
 	   nulibtable_reader.F90 \
@@ -27,7 +28,7 @@ EXTRAINCS = $(HDF5INCS) -I./nuc_eos
 EXTRADEPS += nuc_eos/nuc_eos.a
 EXTRAOBJECTS = nuc_eos/nuc_eos.a $(HDF5LIBS)
 
-all: nulibtable_driver point_example make_table_example
+all: nulibtable_driver point_example make_table_example test
 
 nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS)
 	$(F90) $(F90FLAGS) $(MODINC) $(EXTRAINC) -o ../nulibtable_driver nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS)
@@ -37,6 +38,9 @@ point_example:  $(EXTRADEPS) $(OBJECTS) point_example.F90
 
 make_table_example:  $(EXTRADEPS) $(OBJECTS) make_table_example.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o ../make_table_example make_table_example.F90 $(OBJECTS) $(EXTRAOBJECTS)
+
+test: $(EXTRADEPS) $(OBJECTS) test.F90
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o test test.F90 $(OBJECTS)
 
 $(OBJECTS): %.o: %.F90 $(EXTRADEPS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -c $< -o $@
@@ -51,6 +55,7 @@ clean:
 	rm -rf ../make_table_example
 	rm -rf ../point_example
 	rm -rf ../nulibtable_driver
+	rm -rf test
 	rm -rf *.o
 	rm -rf *.mod
 	rm -rf *.a

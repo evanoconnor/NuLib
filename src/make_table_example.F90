@@ -25,7 +25,7 @@ program make_table_example
   integer :: mytable_number_groups = 24
 
   !EOS table
-  character*200 :: eos_filename = "/Users/evanoc/research/eos/LS220.h5"
+  character*200 :: eos_filename = "/projects/ceclub/gr1dnulib/eos/LS220.h5"
 
   !final table parameters
   integer :: final_table_size_ye, final_table_size_rho, final_table_size_temp
@@ -78,6 +78,9 @@ program make_table_example
   !this sets up many cooefficients and creates the energy grid (one
   !zone + log spacing) see nulib.F90:initialize_nulib
   call initialize_nulib(mytable_neutrino_scheme,mytable_number_species,mytable_number_groups)
+
+  !read in weak rates table
+!  call readrates_LMP()
 
   !read in EOS table & set reference mass
   call readtable(eos_filename)
