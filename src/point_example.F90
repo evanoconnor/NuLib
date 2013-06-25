@@ -2,6 +2,7 @@
 program point_example
 
   use nulib
+  use weak_rates
   implicit none
 
   !many people use different number of species, this is to denote how they are devided up.
@@ -29,7 +30,10 @@ program point_example
   integer :: mypoint_number_groups = 24
 
   !EOS table
-  character*200 :: eos_filename = "/Users/evanoc/research/eos/LS220.h5"
+  character*200 :: eos_filename = "/user/sullivan/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
+
+  !Weak rate data (currently LMP rates only)
+  character*200 :: weakrates_filename = "rates-ext.out"
 
   !local variables
   real*8, allocatable,dimension(:,:) :: local_emissivity
@@ -57,7 +61,10 @@ program point_example
 
   !read in EOS table & set reference mass
   call readtable(eos_filename)
-  m_ref = m_n !for LS220
+  m_ref = m_n !for LS220 ????
+
+  !read in weak rates table and build interpolant functions
+  call readrates(weakrates_filename)
 
   !example point
   xrho = 1.0d12 !g/cm^3

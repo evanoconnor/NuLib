@@ -392,11 +392,11 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
         call total_emissivities(ns,energy_point,energy_bottom,energy_top,emissivity,eos_variables)
         emissivity_spectra(ns,ng) = emissivity !ergs/cm^3/s/MeV/srad
      enddo
-     
-     !calculate neutrino emissivity from electron capture on nuclei
-     ns = 1 ! only electron neutrinos contribute to ec_emissivity
-     call microphysical_electron_capture(ns,ec_emissivity,eos_variables)
-     emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity !ergs/cm^3/s/MeV/srad
   enddo
   
+  !calculate neutrino emissivity from electron capture on nuclei
+  !ns = 1 ! only electron neutrinos contribute to ec_emissivity
+  !call microphysical_electron_capture(ns,ec_emissivity,eos_variables)
+  !emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity(:) !ergs/cm^3/s/MeV/srad
+     
 end subroutine return_emissivity_spectra_given_neutrino_scheme

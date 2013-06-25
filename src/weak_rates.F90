@@ -6,13 +6,13 @@
    real*8, allocatable,dimension(:) :: t9dat
    real*8, allocatable,dimension(:) :: rhoYedat
    real*8, allocatable, dimension(:,:,:,:,:,:) :: C ! Matrix of spline coefficients (see desc. below)
-   integer allocatable, dimension(:,:) :: nucleus_index 
+   integer, allocatable, dimension(:,:) :: nucleus_index 
    integer nuc,nrho,nt9,nnuc,nrate,nspecies
 
 
    contains
 
-     subroutine readrates_LMP(filename)
+     subroutine readrates(filename)
   !      real*8, allocatable,dimension(:,:,:) :: eta ! eta(nucleus,energy group, emissivity
        character lindex
        character*200 :: filename,line
@@ -24,9 +24,11 @@
        nt9 = 0
        dim = 1
 
-
+       write(*,*) "Mark before hempel initialize"
        call set_up_Hempel ! set's up EOS for nuclear abundances
+       write(*,*) "Mark before number_of_species"
        call get_Hempel_number_of_species(nspecies) ! returns the total number of nuclei
+       write(*,*) "Mark after hempel in readrates"
        ! Count the dimension of the data in rhoYe and T9
        open(1,file=filename,status='old')
        do
@@ -54,6 +56,7 @@
        allocate(nucspec(nuc,3))
        allocate(t9dat(nt9/nrho))
        allocate(rhoYedat(nrho))
+       allocate(nucleus_index(nspecies,nspecies))
 
        nuc = 0
        lrho = 0.0d0
@@ -93,15 +96,19 @@
              t9dat(nt9)=t9
              rhoYedat(nrho)=lrho
           end if
+          write(*,*) "file read"
        end do
+       write(*,*) "out of loop"
+                    
  20    close(1)
+       write(*,*) "closed"
        write(*,*) "Weak rate data loaded."
 
        ! build array of interpolating spline coefficients
        nnuc = nuc
        call monotonic_interp_2d(dim)
        write(*,*) "Interpolant functions built. Read-in is complete."
-     end subroutine readrates_LMP
+     end subroutine readrates
 
 
   ! #########################################################################
@@ -296,24 +303,30 @@
         end function weakrates
 
         subroutine microphysical_electron_capture(ns,eos_variables,emissivity)
-          integer i
-          integer, allocatable, dimension(nspecies) :: nuclei_A
-          integer, allocatable, dimension(nspecies) :: nuclei_Z
-          real* 8 dimension(number_groups) :: emissivity
-          real* 8 dimension(nspecies) :: number_densities
-          real* 8 dimension(nspecies) :: mass_fractions
+          
+          use nulib, only : total_eos_variables, number_groups
+
+          integer i,ns
+          real*8, intent(in) :: eos_variables(total_eos_variables)
+          integer, dimension(nspecies) :: nuclei_A
+          integer, dimension(nspecies) :: nuclei_Z
+          real*8, dimension(number_groups) :: emissivity
+          real*8, dimension(nspecies) :: number_densities
+          real*8, dimension(nspecies) :: mass_fractions
 
           if (ns == 1) then
-             ! Hempel EOS and number of species are set up in readfile_LMP
+             ! Hempel EOS and number of species are set up in readrates
+             write(*,*) "Mark 1"
              call get_Hempel_As_and_Zs(nuclei_A,nuclei_Z)
+             write(*,*) "Mark 2"
              call nuclei_distribution_Hempel(nspecies,nuclei_A(i),nuclei_Z(i),mass_fractions,number_densities,eos_variables)
+             write(*,*) "Mark 3"
              emissivity = 0.0d0
              do i=1,nspecies
                 emissivity = emissivity + emissivity_from_electron_capture_on_A(nuclei_A(i),nuclei_Z(i),number_densities(i),&
                      eos_variables)
+                write(*,*) i
              enddo
-             
-
           endif
         end subroutine microphysical_electron_capture
 
@@ -365,12 +378,8 @@
           spectra = (eos_variables(tempindex)**5)*spectra
           normalization_constant = (10.0d0**weakrates(A,Z,t9,lrhoYe,1)+10.0d0**weakrates(A,Z,t9,lrhoYe,2))&
                /spectra
-
-
-         write(*,*) "Summed rate (actual) = ",10.0d0**weakrates(A,Z,t9,lrhoYe,1)+10.0d0**weakrates(A,Z,t9,lrhoYe,2)
-         write(*,*) "Nu energy loss rate (actual) = ",10.0d0**weakrates(A,Z,t9,lrhoYe,3)
-
-
+          
+          !
           if (do_integrated_BB_and_emissivity) then
 
           else
@@ -546,8 +555,6 @@
                  dq_number_density_integral)/(number_density_integral*number_density_integral))
          end do
          qec_eff = q
-         write(*,*) "Avg E (actual) = ",avge_spectra
-
        end function qec_solver
 
 end module weak_rates
