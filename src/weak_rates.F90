@@ -28,7 +28,7 @@
        call set_up_Hempel ! set's up EOS for nuclear abundances
        write(*,*) "Mark before number_of_species"
        call get_Hempel_number_of_species(nspecies) ! returns the total number of nuclei
-       write(*,*) "Mark after hempel in readrates"
+       write(*,*) "Mark after hempel in readrates, nspecies is ", nspecies
        ! Count the dimension of the data in rhoYe and T9
        open(1,file=filename,status='old')
        do
@@ -96,7 +96,6 @@
              t9dat(nt9)=t9
              rhoYedat(nrho)=lrho
           end if
-          write(*,*) "file read"
        end do
        write(*,*) "out of loop"
                     

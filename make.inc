@@ -6,6 +6,7 @@ F90FLAGS= -O3 -ffree-line-length-none -fopenmp
 
 MODINC="-I ./"
 OMP_NUM_THREADS=12
+NUCLEI_HEMPEL=1
 
 #You must have a HDF5 version installed with
 #the _same_ compiler, this often means compiling
