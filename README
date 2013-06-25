@@ -37,27 +37,16 @@ and if so, only under the same license.
 Introduction:
 -------------
 
-<<<<<<< HEAD
-The goal of NuLib is to provide a basic standard set of neutrino
-=======
 The goal of NULIB is to provide a basic standard set of neutrino
->>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
 matter interaction routines that can be readily incorporated in
 radiation-hydrodynamics codes for physics benchmarking.
 
 NuLib v1.0 includes the basic neutrino emissivities and absorption
-<<<<<<< HEAD
-opacities (including pair processes) as well as neutrino-nucleon,
-eutrino-nucleus elastic scattering processes and neutrino-electron
-inelastic scattering.  Other inelastic processes will also be
-including in future versions.
-=======
 opacities (including pair processes) as well as neutrino-nucleon and
 neutrino-nucleus scattering processes. Inelastic scattering (with
 energy redistribution) is neglected, but will be included in future
 revisions.  Other inelastic processes will also be including in future
 versions.
->>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
 
 If anyone would like to contribute to the development of NuLib please
 let me know, I'm hosting this on GitHub with this in mind. I am
@@ -70,18 +59,6 @@ more than happy to make NuLib as accessible as it needs to be to allow
 others to benefit from it.
 
 NuLib, in its current form, is used by me to make tables of neutrino
-<<<<<<< HEAD
-emissivities, opacities (scattering and absorption), and scattering
-kernels.  It is not yet optimized for on-the-fly calculations of
-quantities.  In fact, the routines are coded in such a way as to be as
-clear and accurate as possble, with little or no regard for
-computational speed.  For example, the weak magnitism correction for
-scattering processes is small but many terms long, I do the full
-calculation.  In the future I hope NuLib will have routines capable of
-on the fly calculations, I expect this is necessary if one whats fully
-differential cross sections (in energy and angle, as a function of
-energy).
-=======
 emissivities and opacities (scattering and absorption).  It is not yet
 optimized for on-the-fly calculations of quantities.  In fact, the
 routines are coded in such a way as to be as clear and accurate as
@@ -91,7 +68,6 @@ small but many terms long, I do the full calculation.  In the future I
 hope NuLib will have routines capable of on the fly calculations, I
 expect this is necessary if one whats fully differential cross
 sections (in energy and angle, as a function of energy).
->>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
 
 NuLib v1.0 Neutrino Interactions.
 ---------------------------------
@@ -149,35 +125,10 @@ of Bruenn 85 (among others), placing cuts on the cross section based
 on the average A and average Z of the nucleus.  Much better treatment
 is desired and someday will be implemented.  
 
-<<<<<<< HEAD
-Neutrino-Electron Inelastic Scattering Kernels:
------------------------------------------------
-
-For a temperature and electron chemical potential, NuLib calculates
-the first two terms in a Legendre expansion of the scattering kernels
-for neutrinos on electrons.  We essentially follow Bruenn 1985 and
-references there in.  
-
-=======
->>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
 Sample Executables:
 -------------------
 
 make_table_example: by default this makes a horribly under resolved
-<<<<<<< HEAD
-10x10x10x24 (rho,temp,ye,energy) + (10x10x24*24)
-(temp,eta,energy_in,energy_out) NuLib table in h5 format. The
-calculations takes abut 1 minute to generate.  The table boundaries,
-and number of data points are changable in the make_table_example.F90
-file.  To get enough accuracy in the interpolation I expect at least
-10 points per decade in rho, 20 in temperature and 1 for every 0.01 or
-0.02 in ye.  This makes a table ~1GB in size with 24 energy bins.  The
-energy spacing is changable in nulib.F90, right now it is a 4MeV bin,
-then a logarithmic spacing starting at 1MeV going to ~300MeV, this may
-not be the best choice, if you have a better suggestion, let me know,
-or code up a routine to generate good energy spacing and send a pull
-request (?).
-=======
 10x10x10x24 (rho,temp,ye,energy) NuLib table in h5 format, the
 1000*24*3*3 calculations takes abut 1 minute to generate.  The table
 boundaries, and number of data points are changable in the
@@ -189,7 +140,6 @@ nulib.F90, right now it is a 4MeV bin, then a logarithmic spacing
 starting at 1MeV going to ~300MeV, this may not be the best choice, if
 you have a better suggestion, let me know, or code up a routine to
 generate good energy spacing and send a pull request (?). 
->>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
 
 You must specify an equation of state, NuLib is set up to read in the
 EOS tables on stellarcollapse.org, the filename is set in
@@ -226,14 +176,7 @@ single_point_return_all appies Kirchoff's law to the emissivities and
 absorption cross sections.  This adds an contribution to the
 emissivity from the absorption cross section (and vice-versa).  This
 is explained in BRT06 and explicitly showed in the
-<<<<<<< HEAD
-single_point_return_all routine. There is a similar routine for the
-inelastic scattering kernels, single_Ipoint_return_all.  This routine
-only calculates half of the terms, we use symmetry laws to calculate
-the other half.
-=======
 single_point_return_all routine.
->>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
 
 point_example: this program shows examples of how to call the NuLib
 routines for a single point. Again, the energy spacing is changable in
@@ -289,17 +232,3 @@ After this, a simple make should create three executables in the main
 directory, a brief explanation of these is in the section
 `executables' above.
 
-<<<<<<< HEAD
-Extras
-------
-
-There is support in NuLib for using Matthias Hempel's NSE mass
-distributions available from
-http://phys-merger.physik.unibas.ch/~hempel/eos.html.  To enable these
-use must download his code and tables from his website, place them in
-the directory src/extra_code_and_tables/ and enable the preprocessor
-flag NUCLEI_HEMPEL.  We use the SFHo table as an example in the code,
-you can change this by editting nuclei_distribution_helpers.F90
-directly.  Please see this file for more details.
-=======
->>>>>>> 3f541161a90c79c7f07bf6d07b37717da38bc659
