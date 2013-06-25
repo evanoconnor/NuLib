@@ -6,8 +6,8 @@
    real*8, allocatable,dimension(:) :: t9dat
    real*8, allocatable,dimension(:) :: rhoYedat
    real*8, allocatable, dimension(:,:,:,:,:,:) :: C ! Matrix of spline coefficients (see desc. below)
-   integer, dimension(112,112) :: nucleus_index 
-   integer nuc,nrho,nt9,nnuc,nrate
+   integer allocatable, dimension(:,:) :: nucleus_index 
+   integer nuc,nrho,nt9,nnuc,nrate,nspecies
 
 
    contains
@@ -25,6 +25,8 @@
        dim = 1
 
 
+       call set_up_Hempel ! set's up EOS for nuclear abundances
+       call get_Hempel_number_of_species(nspecies) ! returns the total number of nuclei
        ! Count the dimension of the data in rhoYe and T9
        open(1,file=filename,status='old')
        do
@@ -293,11 +295,30 @@
 
         end function weakrates
 
- !       subroutine microphysical_electron_capture()
- !       end subroutine microphysical_electron_capture
+        subroutine microphysical_electron_capture(ns,eos_variables,emissivity)
+          integer i
+          integer, allocatable, dimension(nspecies) :: nuclei_A
+          integer, allocatable, dimension(nspecies) :: nuclei_Z
+          real* 8 dimension(number_groups) :: emissivity
+          real* 8 dimension(nspecies) :: number_densities
+          real* 8 dimension(nspecies) :: mass_fractions
+
+          if (ns == 1) then
+             ! Hempel EOS and number of species are set up in readfile_LMP
+             call get_Hempel_As_and_Zs(nuclei_A,nuclei_Z)
+             call nuclei_distribution_Hempel(nspecies,nuclei_A(i),nuclei_Z(i),mass_fractions,number_densities,eos_variables)
+             emissivity = 0.0d0
+             do i=1,nspecies
+                emissivity = emissivity + emissivity_from_electron_capture_on_A(nuclei_A(i),nuclei_Z(i),number_densities(i),&
+                     eos_variables)
+             enddo
+             
+
+          endif
+        end subroutine microphysical_electron_capture
 
 
-        function  emissivity_from_electron_capture_on_A(A,Z,eos_variables) result(emissivity)
+        function  emissivity_from_electron_capture_on_A(A,Z,number_density,eos_variables) result(emissivity)
 
           use nulib, only : total_eos_variables,energies,number_groups,do_integrated_BB_and_emissivity&
                ,mueindex,rhoindex,tempindex,yeindex,GLQ_n16_roots,GLQ_n16_weights
@@ -306,6 +327,7 @@
           integer A,Z
 
           real*8, intent(in) :: eos_variables(total_eos_variables)
+          real*8, intent(in) :: number_density
           real*8 :: emissivity(number_groups) !final answer in erg/cm^/s/srad/MeV
           real*8 :: avgenergy(2)
           real*8 :: qec_eff                   !effective Qec for the approximate neutrino spectra
@@ -317,6 +339,14 @@
           real*8 :: lrhoYe
           real*8 :: nu_spectrum_eval
           integer i,ng
+
+          ! if there is no data for a nucleus, this should prevent any further calculations for that species
+          if (nucleus_index(A,Z) == 0) then
+             do ng=1,number_groups
+                emissivity(ng) = 0.0d0
+             end do
+             return
+          endif
 
           !set local eos_variables for rate interpolation
           lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
@@ -338,7 +368,6 @@
 
 
          write(*,*) "Summed rate (actual) = ",10.0d0**weakrates(A,Z,t9,lrhoYe,1)+10.0d0**weakrates(A,Z,t9,lrhoYe,2)
-
          write(*,*) "Nu energy loss rate (actual) = ",10.0d0**weakrates(A,Z,t9,lrhoYe,3)
 
 
@@ -348,19 +377,11 @@
              do ng=1,number_groups
                 nu_spectrum_eval =&
                      (eos_variables(tempindex)**4.0d0)*normalization_constant*&
-                     ec_neutrino_spectra(energies(ng)/eos_variables(tempindex),qec_eff,eos_variables(mueindex),eos_variables(tempindex)) ! has to be this line
-                emissivity(ng) = energies(ng)*nuclear_number_density(A,Z)*nu_spectrum_eval/(4.0d0*pi)
+                     ec_neutrino_spectra(energies(ng)/eos_variables(tempindex),qec_eff,eos_variables(mueindex),&
+                     eos_variables(tempindex))
+                emissivity(ng) = energies(ng)*number_density*nu_spectrum_eval/(4.0d0*pi) 
              end do
           endif
-
-         contains
-           ! remove this and call actual abundance calculator routine
-           function nuclear_number_density(A,Z) result(num)
-             integer A,Z
-             real*8 :: num
-             num = 1.0d0
-           end function nuclear_number_density
-
 
         end function emissivity_from_electron_capture_on_A
 
@@ -438,6 +459,14 @@
           real*8 :: spectra
           real*8 :: number_density_integral
           real*8 :: energy_density_integral
+          
+          ! if there is no data for a nucleus, this should prevent any further calculations for that species
+          if (nucleus_index(A,Z) == 0) then
+             do i=1,2
+                avgenergy(i) = 0.0d0
+             end do
+             return
+          endif
 
           !setting local variables from eos_variables
           lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
