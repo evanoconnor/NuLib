@@ -53,7 +53,7 @@ program test
 !  write(*,*) logECs
 !  call microphysical_electron_capture(emissivity)
 !  emissivity = emissivity_from_electron_capture_on_A(A,Z,eos_variables)
-!  call microphysical_electron_capture(1,eos_variables,emissivity)
+  call microphysical_electron_capture(1,eos_variables,emissivity)
   
   write(*,*)  "Avg E from emissivity = ",Sum(emissivity(:)*bin_widths(:))/Sum(emissivity(:)*bin_widths(:)/energies(:))
   write(*,*)  "Summed rate from emissivity = ",Sum(emissivity(:)*bin_widths(:)/energies(:)*4.0d0*pi)
