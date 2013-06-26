@@ -40,19 +40,13 @@ program test
   Z = 32
   query_t9 = 10.0d0
   query_lrYe = 1.0d0
-  rate = 2
+  m_ref = m_amu !for SFHo_EOS (Hempel)
   eos_variables(1) = 2.0d0*10.0d0**10.0d0
   eos_variables(2) = 0.86
   eos_variables(3) = 0.5
   eos_variables(11) = 10.4
 
-  write(*,*) "Mark"
   call readrates(filename)
-  write(*,*) "Mark 0"
-!  logECs =  weakrates(A,Z,query_t9,query_lrYe,rate)
-!  write(*,*) logECs
-!  call microphysical_electron_capture(emissivity)
-!  emissivity = emissivity_from_electron_capture_on_A(A,Z,eos_variables)
   call microphysical_electron_capture(1,eos_variables,emissivity)
   
   write(*,*)  "Avg E from emissivity = ",Sum(emissivity(:)*bin_widths(:))/Sum(emissivity(:)*bin_widths(:)/energies(:))

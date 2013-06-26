@@ -61,7 +61,8 @@ program point_example
 
   !read in EOS table & set reference mass
   call readtable(eos_filename)
-  m_ref = m_n !for LS220 ????
+  m_ref = m_amu !for SFHo_EOS (Hempel)
+  ! m_ref = m_n !for LS220
 
   !read in weak rates table and build interpolant functions
   call readrates(weakrates_filename)

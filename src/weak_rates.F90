@@ -24,11 +24,9 @@
        nt9 = 0
        dim = 1
 
-       write(*,*) "Mark before hempel initialize"
        call set_up_Hempel ! set's up EOS for nuclear abundances
-       write(*,*) "Mark before number_of_species"
        call get_Hempel_number_of_species(nspecies) ! returns the total number of nuclei
-       write(*,*) "Mark after hempel in readrates, nspecies is ", nspecies
+
        ! Count the dimension of the data in rhoYe and T9
        open(1,file=filename,status='old')
        do
@@ -97,10 +95,8 @@
              rhoYedat(nrho)=lrho
           end if
        end do
-       write(*,*) "out of loop"
                     
  20    close(1)
-       write(*,*) "closed"
        write(*,*) "Weak rate data loaded."
 
        ! build array of interpolating spline coefficients
@@ -312,19 +308,17 @@
           real*8, dimension(number_groups) :: emissivity
           real*8, dimension(nspecies) :: number_densities
           real*8, dimension(nspecies) :: mass_fractions
+        
 
           if (ns == 1) then
              ! Hempel EOS and number of species are set up in readrates
-             write(*,*) "Mark 1"
              call get_Hempel_As_and_Zs(nuclei_A,nuclei_Z)
-             write(*,*) "Mark 2"
-             call nuclei_distribution_Hempel(nspecies,nuclei_A(i),nuclei_Z(i),mass_fractions,number_densities,eos_variables)
-             write(*,*) "Mark 3"
+             call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)
+
              emissivity = 0.0d0
              do i=1,nspecies
                 emissivity = emissivity + emissivity_from_electron_capture_on_A(nuclei_A(i),nuclei_Z(i),number_densities(i),&
                      eos_variables)
-                write(*,*) i
              enddo
           endif
         end subroutine microphysical_electron_capture

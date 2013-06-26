@@ -64,12 +64,11 @@ subroutine nuclei_distribution_Hempel(number_nuclei,nuclei_A,nuclei_Z,mass_fract
   t=eos_variables(tempindex)
   ye=eos_variables(yeindex)
   nb=eos_variables(rhoindex)*1.0d-39/(m_ref*mev_to_gram)
-  
+
   sflag = 0
-  
+
   if (maxval(nuclei_A).gt.maxval(az(1:kmax,1))) stop "At least one value of A is too high for Hempel's table"
   if (maxval(nuclei_Z).gt.maxval(az(1:kmax,2))) stop "At least one value of Z is too high for Hempel's table"
-
   call sub_dist_interpol(t,ye,nb,xaz,xn,xp,naz,nn,np,sflag)
 
   if (sflag.eq.1) then
