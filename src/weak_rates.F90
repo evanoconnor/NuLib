@@ -258,7 +258,7 @@
           return
         end subroutine monotonic_interp_2d
 
-        function weakrates(A,Z,query1,query2,rate_of_interest) result(interp_val) ! Efficiency consideration******
+        function weakrates(A,Z,query1,query2,rate_of_interest) result(interp_val) 
 
           real*8, allocatable, dimension(:,:) :: Data2d
           real*8 :: query1,query2,value,interp_val
@@ -296,32 +296,6 @@
           call interpolant(2,1,interp_val)
 
         end function weakrates
-
-        subroutine microphysical_electron_capture(ns,eos_variables,emissivity)
-          
-          use nulib, only : total_eos_variables, number_groups
-
-          integer i,ns
-          real*8, intent(in) :: eos_variables(total_eos_variables)
-          integer, dimension(nspecies) :: nuclei_A
-          integer, dimension(nspecies) :: nuclei_Z
-          real*8, dimension(number_groups) :: emissivity
-          real*8, dimension(nspecies) :: number_densities
-          real*8, dimension(nspecies) :: mass_fractions
-        
-
-          if (ns == 1) then
-             ! Hempel EOS and number of species are set up in readrates
-             call get_Hempel_As_and_Zs(nuclei_A,nuclei_Z)
-             call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)
-
-             emissivity = 0.0d0
-             do i=1,nspecies
-                emissivity = emissivity + emissivity_from_electron_capture_on_A(nuclei_A(i),nuclei_Z(i),number_densities(i),&
-                     eos_variables)
-             enddo
-          endif
-        end subroutine microphysical_electron_capture
 
 
         function  emissivity_from_electron_capture_on_A(A,Z,number_density,eos_variables) result(emissivity)
@@ -372,16 +346,17 @@
           normalization_constant = (10.0d0**weakrates(A,Z,t9,lrhoYe,1)+10.0d0**weakrates(A,Z,t9,lrhoYe,2))&
                /spectra
           
-          !
+          !Either integrate over energy bin or take central value of bin and multiply by the bin width
           if (do_integrated_BB_and_emissivity) then
-
+             !To be added
+             stop "Integration is not yet supported for ec neutrino emissivities"
           else
              do ng=1,number_groups
                 nu_spectrum_eval =&
                      (eos_variables(tempindex)**4.0d0)*normalization_constant*&
                      ec_neutrino_spectra(energies(ng)/eos_variables(tempindex),qec_eff,eos_variables(mueindex),&
                      eos_variables(tempindex))
-                emissivity(ng) = energies(ng)*number_density*nu_spectrum_eval/(4.0d0*pi) 
+                emissivity(ng) = (energies(ng)*mev_to_erg)*(number_density*1.0d39)*nu_spectrum_eval/(4.0d0*pi) !erg/cm^3/s/MeV/srad
              end do
           endif
 
@@ -551,3 +526,46 @@
        end function qec_solver
 
 end module weak_rates
+
+
+subroutine microphysical_electron_capture(ns,eos_variables,emissivity)
+
+  use nulib, only : total_eos_variables, number_groups, tempindex
+  use weak_rates
+  
+  integer i,ns
+  real*8, intent(in) :: eos_variables(total_eos_variables)
+  integer, dimension(nspecies) :: nuclei_A
+  integer, dimension(nspecies) :: nuclei_Z
+  real*8, dimension(number_groups) :: emissivity
+  real*8, dimension(nspecies) :: number_densities
+  real*8, dimension(nspecies) :: mass_fractions
+  
+  if (ns == 1) then
+     ! Hempel EOS and number of species are set up in readrates
+     call get_Hempel_As_and_Zs(nuclei_A,nuclei_Z)
+     call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)
+     
+     emissivity = 0.0d0
+     do i=1,nspecies
+        emissivity = emissivity + emissivity_from_electron_capture_on_A(nuclei_A(i),nuclei_Z(i),number_densities(i),&
+             eos_variables)
+     enddo
+  endif
+end subroutine microphysical_electron_capture
+
+! use this function to calculate the emissivity for a particular nucleus in your own test programs
+function  return_emissivity_from_electron_capture_on_A(A,Z,number_density,eos_variables) result(emissivity)
+
+  use weak_rates
+  use nulib, only : number_groups, total_eos_variables
+
+  integer A,Z
+
+  real*8, intent(in) :: eos_variables(total_eos_variables)
+  real*8, intent(in) :: number_density
+  real*8 :: emissivity(number_groups) !final answer in erg/cm^/s/srad/MeV
+
+  emissivity = emissivity_from_electron_capture_on_A(A,Z,number_density,eos_variables)
+
+end function return_emissivity_from_electron_capture_on_A

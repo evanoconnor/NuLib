@@ -5,7 +5,7 @@ program test
   use nulib
   implicit none
 
-  character*200 :: filename = "rates-ext.out"
+  character*200 :: filename = "/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/rates-ext.out"
   real*8 :: query_t9,query_lrYe,logECs,eos_variables(14)!,emissivity(number_groups)
   real*8, allocatable, dimension(:) :: emissivity
   real*8 dxfac,mindx
@@ -15,6 +15,7 @@ program test
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
+  add_nue_emission_weakinteraction_ecap = .true.
   mindx = 1.0d0
   bin_bottom(1) = 0.0d0 !MeV
   bin_bottom(2) = 1.0d0 !MeV
@@ -44,11 +45,15 @@ program test
   eos_variables(1) = 2.0d0*10.0d0**10.0d0
   eos_variables(2) = 0.86
   eos_variables(3) = 0.5
-  eos_variables(11) = 10.4
+  eos_variables(11) = 10.901772220438655
 
   call readrates(filename)
   call microphysical_electron_capture(1,eos_variables,emissivity)
   
+  do i=1,number_groups
+     write(*,*) energies(i),emissivity(i)
+  end do
+
   write(*,*)  "Avg E from emissivity = ",Sum(emissivity(:)*bin_widths(:))/Sum(emissivity(:)*bin_widths(:)/energies(:))
   write(*,*)  "Summed rate from emissivity = ",Sum(emissivity(:)*bin_widths(:)/energies(:)*4.0d0*pi)
   write(*,*)  "Nu energy loss rate from emissivity = ",Sum(emissivity(:)*bin_widths(:)*4.0d0*pi)

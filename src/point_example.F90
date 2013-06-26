@@ -33,7 +33,7 @@ program point_example
   character*200 :: eos_filename = "/user/sullivan/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
 
   !Weak rate data (currently LMP rates only)
-  character*200 :: weakrates_filename = "rates-ext.out"
+  character*200 :: weakrates_filename = "/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/rates-ext.out"
 
   !local variables
   real*8, allocatable,dimension(:,:) :: local_emissivity
@@ -68,15 +68,15 @@ program point_example
   call readrates(weakrates_filename)
 
   !example point
-  xrho = 1.0d12 !g/cm^3
-  xtemp = 1.5d0 !MeV
-  xye = 0.35d0 !dimensionless
+  xrho = 2.0d10 !g/cm^3
+  xtemp = 0.86d0 !MeV
+  xye = 0.5d0 !dimensionless
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
   mindx = 1.0d0
   bin_bottom(1) = 0.0d0 !MeV
-  bin_bottom(2) = 4.0d0 !MeV
+  bin_bottom(2) = 1.0d0 !MeV
   bin_bottom(3) = bin_bottom(2)+mindx
   bin_bottom(number_groups) = 250.0d0
   
@@ -128,20 +128,20 @@ program point_example
   !values based on the mypoint_neutrino_scheme this assumes detailed
   !balance and uses the opacities to fullying calculate the
   !emissivities and vice versa, see single_point_return_all.
-  call single_point_return_all(eos_variables, &
-       local_emissivity,local_absopacity,local_scatopacity, &
-       mypoint_neutrino_scheme)
+!  call single_point_return_all(eos_variables, &
+!       local_emissivity,local_absopacity,local_scatopacity, &
+!       mypoint_neutrino_scheme)
 
-  write(*,*) "Example of a single point call with returning all emissivity, absorptive opacity, and scattering opacity"
-  write(*,*) 
-  do i=1,mypoint_number_output_species
-     do j=1,mypoint_number_groups
-        write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j),local_scatopacity(i,j)
-     enddo
-  enddo
+!   write(*,*) "Example of a single point call with returning all emissivity, absorptive opacity, and scattering opacity"
+!   write(*,*) 
+!   do i=1,mypoint_number_output_species
+!      do j=1,mypoint_number_groups
+!         write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j),local_scatopacity(i,j)
+!      enddo
+!   enddo
 
-  write(*,*) 
-  write(*,*) 
+!   write(*,*) 
+!   write(*,*) 
 
 
   !these calls return all six neutrinos so arrays must match, also
@@ -158,17 +158,18 @@ program point_example
   allocate(local_absopacity(mypoint_number_species,mypoint_number_groups))
   allocate(local_scatopacity(mypoint_number_species,mypoint_number_groups))
 
+  write(*,*) "Mu_e: ",eos_variables(mueindex)
   write(*,*) "Example of single point but only emissivity"
   write(*,*) 
   call return_emissivity_spectra_given_neutrino_scheme(local_emissivity,eos_variables)
 
-  write(*,*) "Example of single point but only absorptive opacity"
-  write(*,*) 
-  call return_absorption_opacity_spectra_given_neutrino_scheme(local_absopacity,eos_variables)
+!   write(*,*) "Example of single point but only absorptive opacity"
+!   write(*,*) 
+!   call return_absorption_opacity_spectra_given_neutrino_scheme(local_absopacity,eos_variables)
 
-  write(*,*) "Example of single point but only scattering opacity"
-  write(*,*) 
-  call return_scattering_opacity_spectra_given_neutrino_scheme(local_scatopacity,eos_variables)
+!   write(*,*) "Example of single point but only scattering opacity"
+!   write(*,*) 
+!   call return_scattering_opacity_spectra_given_neutrino_scheme(local_scatopacity,eos_variables)
 
   do i=1,mypoint_number_output_species
      do j=1,mypoint_number_groups
@@ -178,36 +179,36 @@ program point_example
 
   write(*,*)
   write(*,*)
-  write(*,*) "black body function"
+!   write(*,*) "black body function"
   
-  call return_blackbody_spectra(blackbody_spectra,eos_variables)
-  do i=1,mypoint_number_output_species
-     do j=1,mypoint_number_groups
-        write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),blackbody_spectra(i,j),blackbody_spectra(i,j),blackbody_spectra(i,j)
-     enddo
-  enddo
+!   call return_blackbody_spectra(blackbody_spectra,eos_variables)
+!   do i=1,mypoint_number_output_species
+!      do j=1,mypoint_number_groups
+!         write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),blackbody_spectra(i,j),blackbody_spectra(i,j),blackbody_spectra(i,j)
+!      enddo
+!   enddo
 
-  if (add_nue_Iscattering_electrons.or.add_anue_Iscattering_electrons.or. &
-       add_numu_Iscattering_electrons.or.add_anumu_Iscattering_electrons.or. &
-       add_nutau_Iscattering_electrons.or.add_anutau_Iscattering_electrons) then
+!  if (add_nue_Iscattering_electrons.or.add_anue_Iscattering_electrons.or. &
+!       add_numu_Iscattering_electrons.or.add_anumu_Iscattering_electrons.or. &
+!       add_nutau_Iscattering_electrons.or.add_anutau_Iscattering_electrons) then
 
-     write(*,*)
-     write(*,*)
-     write(*,*) "inelastic call"
+!      write(*,*)
+!      write(*,*)
+!      write(*,*) "inelastic call"
      
-     allocate(local_Phi0(mypoint_number_output_species,mypoint_number_groups))
-     allocate(local_Phi1(mypoint_number_output_species,mypoint_number_groups))
+!      allocate(local_Phi0(mypoint_number_output_species,mypoint_number_groups))
+!      allocate(local_Phi1(mypoint_number_output_species,mypoint_number_groups))
      
-     call single_Ipoint_return_all(mypoint_number_groups,eos_variables(mueindex)/eos_variables(tempindex), &
-          eos_variables(tempindex),local_Phi0,local_Phi1,mypoint_neutrino_scheme)              
+!      call single_Ipoint_return_all(mypoint_number_groups,eos_variables(mueindex)/eos_variables(tempindex), &
+!           eos_variables(tempindex),local_Phi0,local_Phi1,mypoint_neutrino_scheme)              
      
-     write(*,*) "sample scattering kernel for energy",energies(mypoint_number_groups)
-     do i=1,mypoint_number_output_species
-        do j=1,mypoint_number_groups
-           write(*,*) energies(mypoint_number_groups),energies(j),local_Phi0(i,j),local_Phi1(i,j)
-        enddo
-     enddo
-  endif
+!      write(*,*) "sample scattering kernel for energy",energies(mypoint_number_groups)
+!      do i=1,mypoint_number_output_species
+!         do j=1,mypoint_number_groups
+!            write(*,*) energies(mypoint_number_groups),energies(j),local_Phi0(i,j),local_Phi1(i,j)
+!         enddo
+!      enddo
+!   endif
 
 
 end program point_example
