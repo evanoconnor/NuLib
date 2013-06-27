@@ -2,11 +2,13 @@
  module weak_rates
    implicit none
    real*8, allocatable,dimension(:,:,:,:) :: rates  ! rates[nuc,T,rhoYe,rates+uf(indexed by nrate)]
-   real*8, allocatable,dimension(:,:) :: nucspec ! nucspec[nucleus, (Q, A, Z)]
+   real*8, allocatable,dimension(:,:) :: nuclear_species ! nuclear_species[nucleus, (Q, A, Z)]
+   integer, allocatable,dimension(:) :: nuclei_A ! Hempel EOS nuclei
+   integer, allocatable,dimension(:) :: nuclei_Z ! Hempel EOS nuclei
    real*8, allocatable,dimension(:) :: t9dat
    real*8, allocatable,dimension(:) :: rhoYedat
-   real*8, allocatable, dimension(:,:,:,:,:,:) :: C ! Matrix of spline coefficients (see desc. below)
-   integer, allocatable, dimension(:,:) :: nucleus_index 
+   real*8, allocatable,dimension(:,:,:,:,:,:) :: C ! Matrix of spline coefficients (see desc. below)
+   integer, allocatable,dimension(:,:) :: nucleus_index 
    integer nuc,nrho,nt9,nnuc,nrate,nspecies
 
 
@@ -24,8 +26,13 @@
        nt9 = 0
        dim = 1
 
+       ! Initialize Hempel EOS dependencies 
        call set_up_Hempel ! set's up EOS for nuclear abundances
        call get_Hempel_number_of_species(nspecies) ! returns the total number of nuclei
+       allocate(nuclei_A(nspecies))
+       allocate(nuclei_Z(nspecies))
+       call get_Hempel_As_and_Zs(nuclei_A,nuclei_Z)
+
 
        ! Count the dimension of the data in rhoYe and T9
        open(1,file=filename,status='old')
@@ -51,7 +58,7 @@
 
        ! allocate the array's based on dimension
        allocate(rates(nuc,nt9/nrho,nrho,7))
-       allocate(nucspec(nuc,3))
+       allocate(nuclear_species(nuc,3))
        allocate(t9dat(nt9/nrho))
        allocate(rhoYedat(nrho))
        allocate(nucleus_index(nspecies,nspecies))
@@ -67,11 +74,11 @@
           read(line,*) lindex
           if (lindex.eq.'n') then
              nuc = nuc + 1
-             read(line(index(line(1:),"Q= ")+3:index(line(1:),"Q= ")+10),*) nucspec(nuc,1)
-             read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+4),*) nucspec(nuc,2)
-             A = nucspec(nuc,2)
-             read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nucspec(nuc,3)
-             Z = nucspec(nuc,3)
+             read(line(index(line(1:),"Q= ")+3:index(line(1:),"Q= ")+10),*) nuclear_species(nuc,1)
+             read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+4),*) nuclear_species(nuc,2)
+             A = nuclear_species(nuc,2)
+             read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nuclear_species(nuc,3)
+             Z = nuclear_species(nuc,3)
              nucleus_index(A,Z) = nuc
              nrho = 0 
              nt9 = 0
@@ -298,7 +305,7 @@
         end function weakrates
 
 
-        function  emissivity_from_electron_capture_on_A(A,Z,number_density,eos_variables) result(emissivity)
+        function emissivity_from_weak_interaction_rates(A,Z,number_density,eos_variables,neutrino_species) result(emissivity)
 
           use nulib, only : total_eos_variables,energies,number_groups,do_integrated_BB_and_emissivity&
                ,mueindex,rhoindex,tempindex,yeindex,GLQ_n16_roots,GLQ_n16_weights
@@ -308,6 +315,7 @@
 
           real*8, intent(in) :: eos_variables(total_eos_variables)
           real*8, intent(in) :: number_density
+          integer, intent(in) :: neutrino_species
           real*8 :: emissivity(number_groups) !final answer in erg/cm^/s/srad/MeV
           real*8 :: avgenergy(2)
           real*8 :: qec_eff                   !effective Qec for the approximate neutrino spectra
@@ -320,7 +328,14 @@
           real*8 :: nu_spectrum_eval
           integer i,ng
 
+          !local rate variables
+          real*8 :: lbeta      !beta decay rate (plus or minus depending on neutrino species)
+          real*8 :: lcap       !capture rate (electron or positron for nue or anue)
+          real*8 :: lnu        !nue or anue energy loss rate
+
           ! if there is no data for a nucleus, this should prevent any further calculations for that species
+          ! this is here if looping over the hempel species is desired, instead of species for which data is
+          ! available. In principle, it could be removed and added later for testing.
           if (nucleus_index(A,Z) == 0) then
              do ng=1,number_groups
                 emissivity(ng) = 0.0d0
@@ -332,19 +347,46 @@
           lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
           t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  ! Conversion from MeV to GK
 
-          !avgenergy(1) calculated from rates, avgenergy(2) calculated from the eff neutrino spectrum
-          qec_eff = nucspec(nucleus_index(A,Z),1) !using Qgs from LMP table as seed
-          avgenergy = average_energy(A,Z,qec_eff,eos_variables)
+          !interpolating rates for given eos_variables and calculating average neutrino energy from rates
+          !for nue, emissivities are from the betaplus direction; for anue, emissivities in the betaminus direction
+          if (neutrino_species.eq.1) then
+             lbeta = weakrates(A,Z,t9,lrhoYe,1)
+             lcap = weakrates(A,Z,t9,lrhoYe,2)
+             lnu = weakrates(A,Z,t9,lrhoYe,3)         
+             qec_eff = nuclear_species(nucleus_index(A,Z),1) !using Qgs from LMP table as seed
+             avgenergy(1) = 10.0d0**lnu/(10.0d0**lcap + 10.0d0**lbeta)          
+             avgenergy(2) = qec_eff !only necessary so as to fulfill the first comparison in qec_solver
+          else if (neutrino_species.eq.2) then
+             lbeta = weakrates(A,Z,t9,lrhoYe,4)
+             lcap = weakrates(A,Z,t9,lrhoYe,5)
+             lnu = weakrates(A,Z,t9,lrhoYe,6)         
+             qec_eff = -nuclear_species(nucleus_index(A,Z),1) !not the exact Q, but sufficient
+!             write(*,*) "Qec_eff seed : ",qec_eff
+             avgenergy(1) = -10.0d0**lnu/(10.0d0**lcap + 10.0d0**lbeta)   ! should be negative??????????????????
+             avgenergy(2) = qec_eff
+!             write(*,*) "AVGE ",avgenergy(1)
+          else
+             stop "Weak interactions are only nontrivial for electron neutrinos and antineutrinos. Exiting."
+          endif
+          
+          !solve for the eff Qec that constrains the effective neutrino spectra to produce the correct avg. energy
           qec_eff = qec_solver(avgenergy,qec_eff,eos_variables)
+!          write(*,*) "Qec_eff: ",qec_eff
+          
 
           !calculate normalization constant using effective neutrino spectra
           do i=1,16
              spectra = spectra + GLQ_n16_weights(i)*ec_neutrino_spectra(GLQ_n16_roots(i),qec_eff,eos_variables(mueindex),&
                   eos_variables(tempindex))
           end do
-          spectra = (eos_variables(tempindex)**5)*spectra
-          normalization_constant = (10.0d0**weakrates(A,Z,t9,lrhoYe,1)+10.0d0**weakrates(A,Z,t9,lrhoYe,2))&
-               /spectra
+          spectra = (eos_variables(tempindex)**5)*spectra          
+          if (neutrino_species.eq.1) then
+             normalization_constant = (10.0d0**weakrates(A,Z,t9,lrhoYe,1)+10.0d0**weakrates(A,Z,t9,lrhoYe,2))&
+                  /spectra
+          else if (neutrino_species.eq.2) then
+             normalization_constant = (10.0d0**weakrates(A,Z,t9,lrhoYe,4)+10.0d0**weakrates(A,Z,t9,lrhoYe,5))&
+                  /spectra
+          end if
           
           !Either integrate over energy bin or take central value of bin and multiply by the bin width
           if (do_integrated_BB_and_emissivity) then
@@ -360,7 +402,7 @@
              end do
           endif
 
-        end function emissivity_from_electron_capture_on_A
+        end function emissivity_from_weak_interaction_rates
 
         function ec_neutrino_spectra(nu_energy_per_T,q,uf,T) result(nu_spectra)
           !definition: n(E) = (T^4)*N*ec_neutrino_spectra, where N is the normalization constant
@@ -495,7 +537,7 @@
           avge_spectra = avgenergy(2)
 
           !Newton-Raphson technique to find zero (in q) of f(q) = <E>_rates - <E(q)>_spectra
-          do while (abs(avge_rates - avge_spectra)/avge_rates > 1.0d-8) 
+          do while (abs((avge_rates - avge_spectra)/avge_rates) > 1.0d-8) 
              energy_density_integral=0.0d0 
              number_density_integral=0.0d0
              dq_energy_density_integral=0.0d0
@@ -516,56 +558,57 @@
                      nu_spectra*nu_spectra_deriv_coef
                 dq_number_density_integral=dq_number_density_integral+GLQ_n16_weights(i)*nu_spectra*&
                     nu_spectra_deriv_coef
+
+!                write(*,*) nu_spectra, nu_spectra_deriv_coef,energy_density_integral,number_density_integral,dq_number_density_integral,dq_energy_density_integral
             end do 
             avge_spectra = eos_variables(tempindex)*(energy_density_integral/number_density_integral)
             q = q + (avge_rates - avge_spectra)/&
                  ((dq_energy_density_integral*number_density_integral-energy_density_integral*&
                  dq_number_density_integral)/(number_density_integral*number_density_integral))
+!            write(*,*)"##############", avgenergy(1),avgenergy(2),avge_spectra,q,"##############"
          end do
          qec_eff = q
+!         stop "onetime"
        end function qec_solver
 
 end module weak_rates
 
+!#################################################################################################!
 
-subroutine microphysical_electron_capture(ns,eos_variables,emissivity)
+subroutine microphysical_electron_capture(neutrino_species,eos_variables,emissivity)
 
-  use nulib, only : total_eos_variables, number_groups, tempindex
+  use nulib, only : total_eos_variables, number_groups, tempindex, hempel_lookup_table
   use weak_rates
   
-  integer i,ns
+  integer i
+  integer, intent(in) :: neutrino_species
   real*8, intent(in) :: eos_variables(total_eos_variables)
-  integer, dimension(nspecies) :: nuclei_A
-  integer, dimension(nspecies) :: nuclei_Z
   real*8, dimension(number_groups) :: emissivity
   real*8, dimension(nspecies) :: number_densities
   real*8, dimension(nspecies) :: mass_fractions
   
-  if (ns == 1) then
-     ! Hempel EOS and number of species are set up in readrates
-     call get_Hempel_As_and_Zs(nuclei_A,nuclei_Z)
-     call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)
-     
-     emissivity = 0.0d0
-     do i=1,nspecies
-        emissivity = emissivity + emissivity_from_electron_capture_on_A(nuclei_A(i),nuclei_Z(i),number_densities(i),&
-             eos_variables)
-     enddo
-  endif
+  ! Hempel EOS and number of species are set up in readrates
+  call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)
+  emissivity = 0.0d0
+  do i=1,nnuc
+     emissivity = emissivity + emissivity_from_weak_interaction_rates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),&
+          number_densities(hempel_lookup_table(int(nuclear_species(i,2)),int(nuclear_species(i,3)))),eos_variables,neutrino_species)       
+  end do
+
 end subroutine microphysical_electron_capture
 
+
 ! use this function to calculate the emissivity for a particular nucleus in your own test programs
-function  return_emissivity_from_electron_capture_on_A(A,Z,number_density,eos_variables) result(emissivity)
+function  return_emissivity_from_electron_capture_on_A(A,Z,number_density,eos_variables,neutrino_species) result(emissivity)
 
   use weak_rates
   use nulib, only : number_groups, total_eos_variables
 
-  integer A,Z
-
+  integer A,Z,neutrino_species
   real*8, intent(in) :: eos_variables(total_eos_variables)
   real*8, intent(in) :: number_density
   real*8 :: emissivity(number_groups) !final answer in erg/cm^/s/srad/MeV
 
-  emissivity = emissivity_from_electron_capture_on_A(A,Z,number_density,eos_variables)
+  emissivity = emissivity_from_weak_interaction_rates(A,Z,number_density,eos_variables,neutrino_species)
 
 end function return_emissivity_from_electron_capture_on_A

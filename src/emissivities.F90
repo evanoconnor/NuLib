@@ -392,14 +392,14 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
         call total_emissivities(ns,energy_point,energy_bottom,energy_top,emissivity,eos_variables)
         emissivity_spectra(ns,ng) = emissivity !ergs/cm^3/s/MeV/srad
      enddo
-
      !calculate neutrino emissivity from electron and positron capture on nuclei
      if (add_nue_emission_weakinteraction_ecap.and.ns.eq.1) then
         call microphysical_electron_capture(ns,eos_variables,ec_emissivity)
-        emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity(:) !ergs/cm^3/s/MeV/srad
+        emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity(:) !erg/cm^3/s/MeV/srad
      end if
      if (add_anue_emission_weakinteraction_poscap.and.ns.eq.2) then
-        stop "Weak interaction positron capture is not yet configured, please turn off in requested_interactions.inc"
+        call microphysical_electron_capture(ns,eos_variables,ec_emissivity)
+        emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity(:) !erg/cm^3/s/MeV/srad
      end if
   enddo
      
