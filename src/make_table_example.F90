@@ -2,6 +2,7 @@
 program make_table_example
 
   use nulib
+  use weak_rates
   implicit none
 
   !many people use different number of species, this is to denote how they are devided up.
@@ -25,7 +26,10 @@ program make_table_example
   integer :: mytable_number_groups = 24
 
   !EOS table
-  character*200 :: eos_filename = "/projects/ceclub/gr1dnulib/eos/LS220.h5"
+  character*200 :: eos_filename = "/user/sullivan/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
+
+  !Weak rate data (currently LMP rates only)
+  character*200 :: weakrates_filename = "/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/rates-ext.out"
 
   !final table parameters
   integer :: final_table_size_ye, final_table_size_rho, final_table_size_temp
@@ -84,8 +88,12 @@ program make_table_example
 
   !read in EOS table & set reference mass
   call readtable(eos_filename)
-  m_ref = m_n !for LS200
+  m_ref = m_amu !for SFHo_EOS (Hempel)
+  ! m_ref = m_n !for LS200
   
+  !read in weak rates table and build interpolant functions
+  call readrates(weakrates_filename)
+
   !set up table
   final_table_size_ye = 10
   final_table_size_rho = 10
@@ -111,9 +119,14 @@ program make_table_example
   do_integrated_BB_and_emissivity = .false.
   mindx = 1.0d0
   bin_bottom(1) = 0.0d0 !MeV
-  bin_bottom(2) = 4.0d0 !MeV
+  bin_bottom(2) = 1.0d0 !MeV
   bin_bottom(3) = bin_bottom(2)+mindx
   bin_bottom(number_groups) = 250.0d0
+  !mindx = 1.0d0
+  !bin_bottom(1) = 0.0d0 !MeV
+  !bin_bottom(2) = 4.0d0 !MeV
+  !bin_bottom(3) = bin_bottom(2)+mindx
+  !bin_bottom(number_groups) = 250.0d0
   
   call nulib_series2(number_groups-1,bin_bottom(2),bin_bottom(number_groups),mindx,dxfac)
   do i=4,number_groups
