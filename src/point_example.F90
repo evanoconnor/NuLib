@@ -128,20 +128,20 @@ program point_example
   !values based on the mypoint_neutrino_scheme this assumes detailed
   !balance and uses the opacities to fullying calculate the
   !emissivities and vice versa, see single_point_return_all.
-!  call single_point_return_all(eos_variables, &
-!       local_emissivity,local_absopacity,local_scatopacity, &
-!       mypoint_neutrino_scheme)
+  call single_point_return_all(eos_variables, &
+       local_emissivity,local_absopacity,local_scatopacity, &
+       mypoint_neutrino_scheme)
 
-!   write(*,*) "Example of a single point call with returning all emissivity, absorptive opacity, and scattering opacity"
-!   write(*,*) 
-!   do i=1,mypoint_number_output_species
-!      do j=1,mypoint_number_groups
-!         write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j),local_scatopacity(i,j)
-!      enddo
-!   enddo
+  write(*,*) "Example of a single point call with returning all emissivity, absorptive opacity, and scattering opacity"
+  write(*,*) 
+  do i=1,mypoint_number_output_species
+     do j=1,mypoint_number_groups
+        write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j),local_scatopacity(i,j)
+     enddo
+  enddo
 
-!   write(*,*) 
-!   write(*,*) 
+  write(*,*) 
+  write(*,*) 
 
 
   !these calls return all six neutrinos so arrays must match, also
@@ -163,22 +163,22 @@ program point_example
   write(*,*) 
   call return_emissivity_spectra_given_neutrino_scheme(local_emissivity,eos_variables)
 
-!   write(*,*) "Example of single point but only absorptive opacity"
-!   write(*,*) 
-!   call return_absorption_opacity_spectra_given_neutrino_scheme(local_absopacity,eos_variables)
+  !write(*,*) "Example of single point but only absorptive opacity"
+  !write(*,*) 
+  !call return_absorption_opacity_spectra_given_neutrino_scheme(local_absopacity,eos_variables)
 
-!   write(*,*) "Example of single point but only scattering opacity"
-!   write(*,*) 
-!   call return_scattering_opacity_spectra_given_neutrino_scheme(local_scatopacity,eos_variables)
+  !write(*,*) "Example of single point but only scattering opacity"
+  !write(*,*) 
+  !call return_scattering_opacity_spectra_given_neutrino_scheme(local_scatopacity,eos_variables)
 
   do i=1,mypoint_number_output_species
-     do j=1,mypoint_number_groups
-        write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j),local_scatopacity(i,j)
-     enddo
+    do j=1,mypoint_number_groups
+       write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j),local_scatopacity(i,j)
+    enddo
   enddo
 
-  write(*,*)
-  write(*,*)
+  !write(*,*)
+  !write(*,*)
 !   write(*,*) "black body function"
   
 !   call return_blackbody_spectra(blackbody_spectra,eos_variables)
