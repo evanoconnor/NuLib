@@ -65,7 +65,7 @@ program point_example
   ! m_ref = m_n !for LS220
 
   !read in weak rates table and build interpolant functions
-  call readrates(weakrates_filename)
+  call readrates(weakrates_filename,table_bounds)
 
   !example point
   xrho = 2.0d10 !g/cm^3

@@ -47,7 +47,7 @@ program test
   eos_variables(3) = 0.5
   eos_variables(11) = 10.901772220438655
 
-  call readrates(filename)
+  call readrates(filename,table_bounds)
   call microphysical_electron_capture(1,eos_variables,emissivity)
   
   do i=1,number_groups
