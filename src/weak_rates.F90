@@ -37,7 +37,7 @@
 
        !Set rhoYe and T9 bounds for LMP rates
        table_bounds(1)=1.0d0     !min lrhoYe
-       table_bounds(2)=0.01d0    !min t9 (=0.01 for LMP, =0.1 for nuc_dist_hempel)
+       table_bounds(2)=1.12d0    !min t9 (=0.01 for LMP, =0.1 for nuc_dist_hempel)
        table_bounds(3)=12.5d0    !max lrhoYe
        table_bounds(4)=100.0d0   !max t9
 
@@ -378,8 +378,6 @@
           
           !solve for the eff Qec that constrains the effective neutrino spectra to produce the correct avg. energy
           qec_eff = qec_solver(avgenergy,qec_eff,eos_variables)
-!          write(*,*) "Qec_eff: ",qec_eff
-          
 
           !calculate normalization constant using effective neutrino spectra
           do i=1,16
@@ -489,6 +487,7 @@
           avge_rates = avgenergy(1)
           avge_spectra = avgenergy(2)
 
+          write(*,*) avge_spectra
           !Newton-Raphson technique to find zero (in q) of f(q) = <E>_rates - <E(q)>_spectra
           do while (abs((avge_rates - avge_spectra)/avge_rates) > 1.0d-8) 
              energy_density_integral=0.0d0 
@@ -510,71 +509,74 @@
                 dq_energy_density_integral=dq_energy_density_integral+GLQ_n16_weights(i)*GLQ_n16_roots(i)*&
                      nu_spectra*nu_spectra_deriv_coef
                 dq_number_density_integral=dq_number_density_integral+GLQ_n16_weights(i)*nu_spectra*&
-                    nu_spectra_deriv_coef
+                     nu_spectra_deriv_coef                
+                write(*,*) nu_spectra,nu_spectra_deriv_coef,energy_density_integral,&
+                     number_density_integral,dq_energy_density_integral,dq_number_density_integral
+             end do
+             avge_spectra = eos_variables(tempindex)*(energy_density_integral/number_density_integral)
+             q = q + (avge_rates - avge_spectra)/&
+                  ((dq_energy_density_integral*number_density_integral-energy_density_integral*&
+                  dq_number_density_integral)/(number_density_integral*number_density_integral))
+             write(*,*) "######",avge_rates,avge_spectra,q,nu_spectra
 
-            end do 
-            avge_spectra = eos_variables(tempindex)*(energy_density_integral/number_density_integral)
-            q = q + (avge_rates - avge_spectra)/&
-                 ((dq_energy_density_integral*number_density_integral-energy_density_integral*&
-                 dq_number_density_integral)/(number_density_integral*number_density_integral))
-         end do
-         qec_eff = q
-       end function qec_solver
+          end do
+          qec_eff = q
+        end function qec_solver
+        
+        function average_energy(A,Z,qec_eff,eos_variables) result(avgenergy)
+          
+          use nulib
 
-       function average_energy(A,Z,qec_eff,eos_variables) result(avgenergy)
+          integer A,Z
+          real*8, intent(in) :: eos_variables(total_eos_variables)
 
-         use nulib
+          !local rate variables
+          real*8 :: lbetap
+          real*8 :: leps
+          real*8 :: lnu
+          real*8 :: lrhoYe
+          real*8 :: t9
+          real*8 :: mu_e ! electron chem.pot.
 
-         integer A,Z
-         real*8, intent(in) :: eos_variables(total_eos_variables)
+          !local integration variables
+          integer :: i
+          real*8 :: avgenergy(2)
+          real*8 :: qec_eff
+          real*8 :: spectra
+          real*8 :: number_density_integral
+          real*8 :: energy_density_integral
 
-         !local rate variables
-         real*8 :: lbetap
-         real*8 :: leps
-         real*8 :: lnu
-         real*8 :: lrhoYe
-         real*8 :: t9
-         real*8 :: mu_e ! electron chem.pot.
+          ! if there is no data for a nucleus, this should prevent any further calculations for that species
+          if (nucleus_index(A,Z) == 0) then
+             do i=1,2
+                avgenergy(i) = 0.0d0
+             end do
+             return
+          endif
 
-         !local integration variables
-         integer :: i
-         real*8 :: avgenergy(2)
-         real*8 :: qec_eff
-         real*8 :: spectra
-         real*8 :: number_density_integral
-         real*8 :: energy_density_integral
+          !setting local variables from eos_variables
+          lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
+          t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  ! Conversion from MeV to GK
+          mu_e = eos_variables(mueindex)-m_e
 
-         ! if there is no data for a nucleus, this should prevent any further calculations for that species
-         if (nucleus_index(A,Z) == 0) then
-            do i=1,2
-               avgenergy(i) = 0.0d0
-            end do
-            return
-         endif
+          !interpolating rates for given eos_variables and calculating average neutrino energy
+          lbetap = weakrates(A,Z,t9,lrhoYe,1)
+          leps = weakrates(A,Z,t9,lrhoYe,2)
+          lnu = weakrates(A,Z,t9,lrhoYe,3)         
+          avgenergy(1) = 10.0d0**lnu/(10.0d0**leps + 10.0d0**lbetap)
 
-         !setting local variables from eos_variables
-         lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
-         t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  ! Conversion from MeV to GK
-         mu_e = eos_variables(mueindex)-m_e
+          !set weights and roots for quadrature integration, then calculate <E>
+          avgenergy(2)=0.0d0
+          energy_density_integral=0.0d0
+          number_density_integral=0.0d0
+          do i=1,16
+             spectra = ec_neutrino_spectra(GLQ_n16_roots(i),qec_eff,mu_e,eos_variables(tempindex))
+             energy_density_integral=energy_density_integral+GLQ_n16_weights(i)*GLQ_n16_roots(i)*spectra
+             number_density_integral=number_density_integral+GLQ_n16_weights(i)*spectra
+          end do
+          avgenergy(2) = (eos_variables(tempindex))*(energy_density_integral/number_density_integral)
 
-         !interpolating rates for given eos_variables and calculating average neutrino energy
-         lbetap = weakrates(A,Z,t9,lrhoYe,1)
-         leps = weakrates(A,Z,t9,lrhoYe,2)
-         lnu = weakrates(A,Z,t9,lrhoYe,3)         
-         avgenergy(1) = 10.0d0**lnu/(10.0d0**leps + 10.0d0**lbetap)
-
-         !set weights and roots for quadrature integration, then calculate <E>
-         avgenergy(2)=0.0d0
-         energy_density_integral=0.0d0
-         number_density_integral=0.0d0
-         do i=1,16
-            spectra = ec_neutrino_spectra(GLQ_n16_roots(i),qec_eff,mu_e,eos_variables(tempindex))
-            energy_density_integral=energy_density_integral+GLQ_n16_weights(i)*GLQ_n16_roots(i)*spectra
-            number_density_integral=number_density_integral+GLQ_n16_weights(i)*spectra
-         end do
-         avgenergy(2) = (eos_variables(tempindex))*(energy_density_integral/number_density_integral)
-
-       end function average_energy
+        end function average_energy
 
 
 end module weak_rates
@@ -598,6 +600,8 @@ subroutine microphysical_electron_capture(neutrino_species,eos_variables,emissiv
   do i=1,nnuc
      emissivity = emissivity + emissivity_from_weak_interaction_rates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),&
           number_densities(hempel_lookup_table(int(nuclear_species(i,2)),int(nuclear_species(i,3)))),eos_variables,neutrino_species)       
+     write(*,*) "press enter to continue"
+     read(*,*)
   end do
 end subroutine microphysical_electron_capture
 
