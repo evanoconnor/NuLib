@@ -172,6 +172,45 @@ function anue_absorption_on_p(neutrino_energy,eos_variables) result(crosssection
 
 end function anue_absorption_on_p
 
+function nux_absorption_on_n_and_p(neutrino_energy,eos_variables) result(crosssection)
+
+  use nulib
+  implicit none
+
+  real*8, intent(in) :: eos_variables(total_eos_variables)  
+  real*8, intent(in) :: neutrino_energy !MeV
+  real*8  :: crosssection !final answer in cm^2
+
+  real*8 :: entfactor,rhofactor
+
+  !only want heating in certain regions, smoothly cut it off outside
+  !that region.  We'll follow Fischer's choice; s>6, rho<1e10, we'll
+  !smooth it.
+
+  if (eos_variables(entropyindex).gt.6.0d0) then
+     entfactor = 1.0d0
+  else if (eos_variables(entropyindex).gt.4.0d0) then
+     entfactor = (eos_variables(entropyindex)-4.0d0)/2.0d0
+  else
+     entfactor = 0.0d0
+  endif
+
+  if (eos_variables(rhoindex).lt.1.0d10) then
+     rhofactor = 1.0d0
+  else if (eos_variables(rhoindex).lt.2.0d10) then
+     rhofactor = 2.0d0-eos_variables(rhoindex)/1.0d10
+  else
+     rhofactor = 0.0d0
+  endif
+  
+  crosssection = sigma0 * & !cm^2
+       (1.0d0+3.0d0*gA**2) / 4.0d0 * & !dimensionless
+       (neutrino_energy/m_e)**2 !dimensionless
+
+  crosssection = crosssection*entfactor*rhofactor*adhoc_nux_factor
+
+end function nux_absorption_on_n_and_p
+
 function nue_absorption_on_A(neutrino_energy,eos_variables) result(crosssection)
 
   use nulib
@@ -301,6 +340,7 @@ subroutine total_absorption_opacities(neutrino_species,neutrino_energy,absorptio
   real*8 :: nue_absorption_on_n !function declaration
   real*8 :: anue_absorption_on_p !function declaration
   real*8 :: nue_absorption_on_A !function declaration
+  real*8 :: nux_absorption_on_n_and_p !function declaration
 
   neutron_number_density = max(1.0d-20,eos_variables(xnindex))* &
        eos_variables(rhoindex)/(m_ref*mev_to_gram) !# neutrons/cm^3
@@ -359,6 +399,16 @@ subroutine total_absorption_opacities(neutrino_species,neutrino_energy,absorptio
      absorption_opacity = absorption_opacity + &  !total opacity, dimensions cm^-1
           nue_absorption_on_A(neutrino_energy,eos_variables)* &  
           heavy_number_density ! # heavies/cm^3
+  endif
+
+  !add in the adhoc nux absorption on neutrons and protons
+  if (add_nux_absorption_on_n_and_p.and.(neutrino_species.eq.3.or.neutrino_species.eq.4 &
+       .or.neutrino_species.eq.5.or.neutrino_species.eq.6)) then
+
+     absorption_opacity = absorption_opacity + &  !total opacity, dimensions cm^-1
+          nux_absorption_on_n_and_p(neutrino_energy,eos_variables)* & !cm^2  
+          (neutron_number_density+proton_number_density) ! # nucleons/cm^3
+
   endif
 
 end subroutine total_absorption_opacities

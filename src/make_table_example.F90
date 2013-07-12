@@ -81,8 +81,11 @@ program make_table_example
 
   !read in EOS table & set reference mass
   call readtable(eos_filename)
-  m_ref = m_n !for LS200
-  
+  m_ref = m_n !m_n for LS200
+ 
+  adhoc_nux_factor = 0.0d0 !increase for adhoc nux heating (also set
+                           !add_nux_absorption_on_n_and_p to true)
+ 
   !set up table
   final_table_size_ye = 10
   final_table_size_rho = 10
@@ -178,7 +181,7 @@ program make_table_example
            keyerr = 0
            call nuc_eos_full(eos_variables(rhoindex),eos_variables(tempindex), &
                 eos_variables(yeindex),eos_variables(energyindex),matter_prs, &
-                matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe, &
+                eos_variables(entropyindex),matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe, &
                 eos_variables(xaindex),eos_variables(xhindex),eos_variables(xnindex), &
                 eos_variables(xpindex),eos_variables(abarindex),eos_variables(zbarindex), &
                 eos_variables(mueindex),eos_variables(munindex),eos_variables(mupindex), &
