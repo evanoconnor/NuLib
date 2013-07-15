@@ -65,12 +65,20 @@ program point_example
   ! m_ref = m_n !for LS220
 
   !read in weak rates table and build interpolant functions
-  call readrates(weakrates_filename)
+  call readrates(weakrates_filename,table_bounds)
 
   !example point
-  xrho = 2.0d10 !g/cm^3
-  xtemp = 0.86d0 !MeV
-  xye = 0.5d0 !dimensionless
+!  xrho = 2.0d10 !g/cm^3
+!  xtemp = 0.86d0 !MeV
+!  xye = 0.5d0 !dimensionless
+
+!  xrho = 49131273878.3 !g/cm^3
+!  xtemp = 0.1059 !MeV
+!  xye = 0.035d0 !dimensionless
+  
+  xrho = 28627941656.659451
+  xtemp = 0.12002732895443471
+  xye = 0.035
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.

@@ -376,7 +376,15 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
 
   !function dec
   real*8 :: get_fermi_integral
-  
+
+  !bounds checking       
+  real*8 :: t9
+  real*8 :: lrhoYe
+
+  lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
+  t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)
+
+
   if (size(emissivity_spectra,1).ne.number_species) then
      stop "return_emissivity_spectra_given_neutrino_scheme:provided array has wrong number of species"
   endif
@@ -392,15 +400,23 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
         call total_emissivities(ns,energy_point,energy_bottom,energy_top,emissivity,eos_variables)
         emissivity_spectra(ns,ng) = emissivity !ergs/cm^3/s/MeV/srad
      enddo
-     !calculate neutrino emissivity from electron and positron capture on nuclei
-     if (add_nue_emission_weakinteraction_ecap.and.ns.eq.1) then
-        call microphysical_electron_capture(ns,eos_variables,ec_emissivity)
-        emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity(:) !erg/cm^3/s/MeV/srad
+ 
+    !first conditions require rho,T,Ye grid point to be within phase space of the tabulated weak rates
+     if (lrhoYe.ge.table_bounds(1).and.lrhoYe.le.table_bounds(3)&
+          .and.t9.ge.table_bounds(2).and.t9.le.table_bounds(4)) then
+
+        !calculate neutrino emissivity from electron and positron capture on nuclei
+        if (add_nue_emission_weakinteraction_ecap.and.ns.eq.1) then
+           call microphysical_electron_capture(ns,eos_variables,ec_emissivity)
+           emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity(:) !erg/cm^3/s/MeV/srad
+        end if
+        if (add_anue_emission_weakinteraction_poscap.and.ns.eq.2) then
+           call microphysical_electron_capture(ns,eos_variables,ec_emissivity)
+           emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity(:) !erg/cm^3/s/MeV/srad
+        end if
+
      end if
-     if (add_anue_emission_weakinteraction_poscap.and.ns.eq.2) then
-        call microphysical_electron_capture(ns,eos_variables,ec_emissivity)
-        emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity(:) !erg/cm^3/s/MeV/srad
-     end if
+
   enddo
      
 end subroutine return_emissivity_spectra_given_neutrino_scheme

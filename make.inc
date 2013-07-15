@@ -1,11 +1,11 @@
 F90=gfortran
-F90FLAGS= -O3 -ffree-line-length-none -fopenmp
+F90FLAGS= -O3 -ffree-line-length-none #-fopenmp
 
 #if you want to take advantage of openmp use this flag
 #F90FLAGS= -O3 -openmp
 
 MODINC="-I ./"
-OMP_NUM_THREADS=12
+#OMP_NUM_THREADS=12
 NUCLEI_HEMPEL=1
 
 #You must have a HDF5 version installed with

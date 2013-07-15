@@ -92,12 +92,12 @@ program make_table_example
   ! m_ref = m_n !for LS200
   
   !read in weak rates table and build interpolant functions
-  call readrates(weakrates_filename)
+  call readrates(weakrates_filename,table_bounds)
 
   !set up table
-  final_table_size_ye = 10
-  final_table_size_rho = 10
-  final_table_size_temp = 10
+  final_table_size_ye = 51
+  final_table_size_rho = 82
+  final_table_size_temp = 65
   
   final_Itable_size_temp = 10
   final_Itable_size_eta = 10
@@ -106,11 +106,11 @@ program make_table_example
   min_ye = 0.035d0
   max_ye = 0.55d0
   min_logrho = 6.0d0
-  max_logrho = 15.8d0
+  max_logrho = 15.5d0
   min_logtemp = log10(0.05d0)
-  max_logtemp = log10(200.0d0)
+  max_logtemp = log10(150.0d0)
   Imin_logtemp = log10(0.05d0)
-  Imax_logtemp = log10(200.0d0)
+  Imax_logtemp = log10(150.0d0)
   Imin_logeta = log10(0.1d0)
   Imax_logeta = log10(100.0d0)
   number_output_species = 3
