@@ -483,7 +483,7 @@
           real*8 :: avge_spectra
           real*8 :: qec_eff
           real*8 :: q
-          integer i
+          integer i,N
 
           !integration variables
           real*8 :: energy_density_integral
@@ -500,8 +500,10 @@
           real*8 :: tolerance
           integer limiter,nmax_bisections
           
-          real*8 :: qout,avgeout
+          character(60) :: qec_solver_log_file,rho_string,t_string,ye_string,mue_string !for logging errors
+          real*8 :: qout,avgeout !temporary
 
+          qec_solver_log_file="qec_solver_log_file"
           avge_rates = avgenergy(1)
           avge_spectra = avgenergy(2)
           tolerance = 0.1d0
@@ -531,22 +533,78 @@
                 dq_number_density_integral=dq_number_density_integral+GLQ_n64_weights(i)*nu_spectra*&
                      nu_spectra_deriv_coef                
              end do
-             avge_spectra = eos_variables(tempindex)*(energy_density_integral/number_density_integral)
-             q = q + (avge_rates - avge_spectra)/&
-                  ((dq_energy_density_integral*number_density_integral-energy_density_integral*&
-                  dq_number_density_integral)/(number_density_integral*number_density_integral))
+             
+             if (number_density_integral.eq.0.0d0.and.energy_density_integral.eq.0.0d0) then
+                avge_spectra = eos_variables(tempindex)*1.0d0
+                q = q + (avge_rates - avge_spectra)/1.0d0
+             else
+                avge_spectra = eos_variables(tempindex)*(energy_density_integral/number_density_integral)
+                q = q + (avge_rates - avge_spectra)/&
+                     ((dq_energy_density_integral*number_density_integral-energy_density_integral*&
+                     dq_number_density_integral)/(number_density_integral*number_density_integral))
+             end if
 
-!              write(*,*) "ListPlot[{"
-!              do i=1,201 ! -50 to +50 in steps of 0.5
-!                 qout = dble(i)
-!                 qout = (qout-101)/2
-!                 avgeout = average_energy(qout,eos_variables) !ec_neutrino_spectra(qout/eos_variables(2),-8.0d0,eos_variables(11),eos_variables(2))
-!                 write(*,*) "{",qout,",",avgeout,"},"
-!              end do
-!              write(*,*) "}]"
-!              write(*,*)
-!              write(*,*) avge_rates,eos_variables(1),eos_variables(2),eos_variables(3),eos_variables(11)
-!              stop
+             !Bisection fail safe if newton-raphson diverges
+             if (q.gt.20.0d0.or.q.lt.-20.0d0) then                
+1               lower_bound = -20.0d0
+                upper_bound = 20.0d0
+                avge_spectra_boundary = average_energy(lower_bound,eos_variables)
+                N=0
+                !low resolution in the LMP rates can cause the interpolation to produce an
+                !average nu energy below the asymptotic limit of <E>_spectra, below is a patch.
+                if(avge_spectra_boundary.ge.avge_rates) then
+                   q = lower_bound
+                   avge_spectra = avge_rates
+                   N = nmax_bisections + 1
+                   open(1,file=qec_solver_log_file,status='old',POSITION='APPEND')
+                     write(rho_string,'(f10.5)') eos_variables(1)
+                     write(t_string,'(f10.5)') eos_variables(2)
+                     write(ye_string,'(f10.5)') eos_variables(3)
+                     write(mue_string,'(f10.5)') eos_variables(11)
+                     write(1,'(a)') "rho: ",rho_string,"T: ",t_string,"Ye: ",ye_string,"Mu_e: ",mue_string
+                     write(1,'(a)') " "
+                   close(1)                   
+                   write(*,*) "Possible interpolation failure, setting q = -20.0d0"
+                   write(*,*) eos_variables(1),eos_variables(2),eos_variables(3),eos_variables(11)
+                end if
+                do while (N < nmax_bisections)
+!                   if(nmax_bisections.eq.1000.and.N.gt.300)then
+!                      write(*,*) eos_variables(1),eos_variables(2),eos_variables(3),eos_variables(11)
+!                      write(*,*) q,avge_rates,avge_spectra                      
+!                      stop "limit reached"
+!                   endif
+                   q = (lower_bound + upper_bound)/2
+                   avge_spectra = average_energy(q,eos_variables)                   
+                   if (abs(avge_rates - avge_spectra)/avge_rates.le.tolerance) then
+                      N = nmax_bisections + 1 !to exit loop
+                      avge_spectra = avgenergy(2)
+                      tolerance = tolerance / 10
+                      cycle
+                   end if
+                   if (sign(1.0d0,(avge_rates-avge_spectra)).eq.sign(1.0d0,(avge_rates-avge_spectra_boundary))) then
+                      lower_bound = q
+                   else
+                      upper_bound = q
+                   end if
+                   N = N + 1                   
+                end do
+             endif
+             limiter = limiter + 1
+
+             if (limiter > 500) then
+                write(*,*) "Limited ", avge_rates
+                stop
+!                avge_spectra=avge_rates 
+!                nmax_bisections = 1000
+!                tolerance = 1.0d-8
+!                limiter = 0
+!                goto 1
+             endif
+
+
+
+
+
 
           end do
           qec_eff = q
