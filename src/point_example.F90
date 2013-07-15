@@ -77,7 +77,7 @@ program point_example
 !  xye = 0.035d0 !dimensionless
   
   xrho = 28627941656.659451
-  xtemp = 0.12002732895443471
+  xtemp = 0.10591320785487254
   xye = 0.035
 
   !set up energies bins
@@ -136,20 +136,20 @@ program point_example
   !values based on the mypoint_neutrino_scheme this assumes detailed
   !balance and uses the opacities to fullying calculate the
   !emissivities and vice versa, see single_point_return_all.
-  call single_point_return_all(eos_variables, &
-       local_emissivity,local_absopacity,local_scatopacity, &
-       mypoint_neutrino_scheme)
+  ! call single_point_return_all(eos_variables, &
+!        local_emissivity,local_absopacity,local_scatopacity, &
+!        mypoint_neutrino_scheme)
 
-  write(*,*) "Example of a single point call with returning all emissivity, absorptive opacity, and scattering opacity"
-  write(*,*) 
-  do i=1,mypoint_number_output_species
-     do j=1,mypoint_number_groups
-        write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j),local_scatopacity(i,j)
-     enddo
-  enddo
+!   write(*,*) "Example of a single point call with returning all emissivity, absorptive opacity, and scattering opacity"
+!   write(*,*) 
+!   do i=1,mypoint_number_output_species
+!      do j=1,mypoint_number_groups
+!         write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j),local_scatopacity(i,j)
+!      enddo
+!   enddo
 
-  write(*,*) 
-  write(*,*) 
+!   write(*,*) 
+!   write(*,*) 
 
 
   !these calls return all six neutrinos so arrays must match, also
