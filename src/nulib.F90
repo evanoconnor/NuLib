@@ -37,6 +37,7 @@ module nulib
   real*8 :: GLQ_n16_weights(16), GLQ_n16_roots(16) !weights and roots for n=16
   real*8 :: GLQ_n32_weights(32), GLQ_n32_roots(32) !weights and roots for n=32
   real*8 :: GLQ_n64_weights(64), GLQ_n64_roots(64) !weights and roots for n=64
+  real*8 :: GLQ_n128_weights(128), GLQ_n128_roots(128) !weights and roots for n=128
 
   real*8 :: GPQ_n4_weights(4), GPQ_n4_roots(4) !weights and roots for n=4
   real*8 :: GPQ_n16_weights(16), GPQ_n16_roots(16) !weights and roots for n=16
@@ -266,6 +267,7 @@ module nulib
       call GaussLaguerreQuadrature_roots_and_weights(16,GLQ_n16_roots,GLQ_n16_weights)
       call GaussLaguerreQuadrature_roots_and_weights(32,GLQ_n32_roots,GLQ_n32_weights)
       call GaussLaguerreQuadrature_roots_and_weights(64,GLQ_n64_roots,GLQ_n64_weights)
+      call GaussLaguerreQuadrature_roots_and_weights(128,GLQ_n128_roots,GLQ_n128_weights)
 
       call GaussLegendreQuadrature_weights_and_roots(4,GPQ_n4_roots,GPQ_n4_weights)
       call GaussLegendreQuadrature_weights_and_roots(16,GPQ_n16_roots,GPQ_n16_weights)
