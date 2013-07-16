@@ -10,6 +10,7 @@
   logical :: add_nue_absorption_on_n = .true.
   logical :: add_anue_absorption_on_p = .true.
   logical :: add_nue_absorption_on_A = .true.
+  logical :: add_nux_absorption_on_n_and_p = .false.
 
   !scatterings
   logical :: add_nue_scattering_n = .true.

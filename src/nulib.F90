@@ -46,7 +46,7 @@ module nulib
 
   !EOS variables index holders, we carry this around with us to
   !instead of globally setting it for easy parallization
-  integer :: total_eos_variables = 14
+  integer :: total_eos_variables = 15
   integer :: rhoindex =1
   integer :: tempindex = 2
   integer :: yeindex = 3
@@ -61,12 +61,16 @@ module nulib
   integer :: munindex = 12
   integer :: mupindex = 13
   integer :: muhatindex = 14
+  integer :: entropyindex = 15
 
   logical :: debug = .false.
   logical :: do_integrated_BB_and_emissivity
 
   !nuclei distribution global variables
   integer,allocatable :: hempel_lookup_table(:,:)
+
+  !special terms
+  real*8 :: adhoc_nux_factor = 0.0d0
 
   include 'constants.inc'
   include 'requested_interactions.inc'
