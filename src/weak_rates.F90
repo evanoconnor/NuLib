@@ -509,7 +509,7 @@
           tolerance = 0.1d0
           nmax_bisections = 15
           limiter = 0
-
+        
           !Newton-Raphson technique to find zero (in q) of f(q) = <E>_rates - <E(q)>_spectra
           do while (abs((avge_rates - avge_spectra)/avge_rates) > 1.0d-8) 
              energy_density_integral=0.0d0 
@@ -545,7 +545,7 @@
              end if
 
              !Bisection fail safe if newton-raphson diverges
-             if (q.gt.20.0d0.or.q.lt.-20.0d0) then                
+             if (q.gt.20.0d0.or.q.lt.-20.0d0) then          
 1               lower_bound = -20.0d0
                 upper_bound = 20.0d0
                 avge_spectra_boundary = average_energy(lower_bound,eos_variables)
@@ -568,11 +568,11 @@
                    write(*,*) eos_variables(1),eos_variables(2),eos_variables(3),eos_variables(11)
                 end if
                 do while (N < nmax_bisections)
-!                   if(nmax_bisections.eq.1000.and.N.gt.300)then
-!                      write(*,*) eos_variables(1),eos_variables(2),eos_variables(3),eos_variables(11)
+                   if(nmax_bisections.eq.1000.and.N.gt.800)then
+                      write(*,*) eos_variables(1),eos_variables(2),eos_variables(3),eos_variables(11)
 !                      write(*,*) q,avge_rates,avge_spectra                      
-!                      stop "limit reached"
-!                   endif
+                      stop "bisection limit reached"
+                   endif
                    q = (lower_bound + upper_bound)/2
                    avge_spectra = average_energy(q,eos_variables)                   
                    if (abs(avge_rates - avge_spectra)/avge_rates.le.tolerance) then
@@ -590,21 +590,16 @@
                 end do
              endif
              limiter = limiter + 1
-
-             if (limiter > 500) then
+             
+             !if the newton-raphson fails to converge after 25 iterations, fall back to bisection method
+             if (limiter > 25) then
                 write(*,*) "Limited ", avge_rates
-                stop
-!                avge_spectra=avge_rates 
-!                nmax_bisections = 1000
-!                tolerance = 1.0d-8
-!                limiter = 0
-!                goto 1
+                write(*,*) avge_rates, q
+                nmax_bisections = 1000
+                tolerance = 1.0d-8
+                limiter = 0
+                goto 1
              endif
-
-
-
-
-
 
           end do
           qec_eff = q

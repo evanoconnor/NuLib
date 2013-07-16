@@ -78,7 +78,7 @@ program point_example
   
   xrho = 28627941656.659451
   xtemp = 0.10591320785487254
-  xye = 0.035
+  xye = 0.30
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.

@@ -48,15 +48,15 @@ program test
   eos_variables(11) = 10.901772220438655
 
   call readrates(filename,table_bounds)
-  call microphysical_electron_capture(1,eos_variables,emissivity)
+!   call microphysical_electron_capture(1,eos_variables,emissivity)
   
-  do i=1,number_groups
-     write(*,*) energies(i),emissivity(i)
-  end do
+!   do i=1,number_groups
+!      write(*,*) energies(i),emissivity(i)
+!   end do
 
-  write(*,*)  "Avg E from emissivity = ",Sum(emissivity(:)*bin_widths(:))/Sum(emissivity(:)*bin_widths(:)/energies(:))
-  write(*,*)  "Summed rate from emissivity = ",Sum(emissivity(:)*bin_widths(:)/energies(:)*4.0d0*pi)
-  write(*,*)  "Nu energy loss rate from emissivity = ",Sum(emissivity(:)*bin_widths(:)*4.0d0*pi)
+!   write(*,*)  "Avg E from emissivity = ",Sum(emissivity(:)*bin_widths(:))/Sum(emissivity(:)*bin_widths(:)/energies(:))
+!   write(*,*)  "Summed rate from emissivity = ",Sum(emissivity(:)*bin_widths(:)/energies(:)*4.0d0*pi)
+!   write(*,*)  "Nu energy loss rate from emissivity = ",Sum(emissivity(:)*bin_widths(:)*4.0d0*pi)
   
   
 

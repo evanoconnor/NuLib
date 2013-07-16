@@ -173,7 +173,7 @@ program make_table_example
   !$OMP ns,ng,eos_variables,keytemp,keyerr,matter_prs,matter_ent,matter_cs2,matter_dedt, &
   !$OMP matter_dpderho,matter_dpdrhoe)
   !loop over rho,temp,ye of table, do each point
-  do irho=1,final_table_size_rho
+  do irho=47,final_table_size_rho
      !must do declarations here for openmp
      allocate(local_emissivity(number_output_species,mytable_number_groups))
      allocate(local_absopacity(number_output_species,mytable_number_groups))
