@@ -340,15 +340,14 @@
           real*8 :: lcap       !capture rate (electron or positron for nue or anue)
           real*8 :: lnu        !nue or anue energy loss rate
 
-          ! if there is no data for a nucleus, this should prevent any further calculations for that species
-          ! this is here if looping over the hempel species is desired, instead of species for which data is
-          ! available. In principle, it could be removed and added later for testing as we currently loop
-          ! nuclei for which we have data, and not the whole distribution.
+          !if LMP data is not provided for a given nucleus, we will use the rates for 56Ni
           if (nucleus_index(A,Z) == 0) then
              do ng=1,number_groups
                 emissivity(ng) = 0.0d0
              end do
              return
+!             A = 56
+!             Z = 28
           endif
 
           !set local eos_variables for rate interpolation
@@ -675,9 +674,13 @@ subroutine microphysical_electron_capture(neutrino_species,eos_variables,emissiv
   !Hempel EOS and number of species are set up in readrates
   call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)
   emissivity = 0.0d0
-  do i=1,nnuc
+  do i=1,nnuc !nnuc for only looping over LMP rates
      emissivity = emissivity + emissivity_from_weak_interaction_rates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),&
           number_densities(hempel_lookup_table(int(nuclear_species(i,2)),int(nuclear_species(i,3)))),eos_variables,neutrino_species)       
+      !use this when i=1,nspecies
+!     emissivity = emissivity + emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&
+!          eos_variables,neutrino_species)
+!     write(*,*) i
   end do
 end subroutine microphysical_electron_capture
 
