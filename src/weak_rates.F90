@@ -342,12 +342,14 @@
 
           !if LMP data is not provided for a given nucleus, we will use the rates for 56Ni
           if (nucleus_index(A,Z) == 0) then
-             do ng=1,number_groups
-                emissivity(ng) = 0.0d0
-             end do
-             return
-!             A = 56
-!             Z = 28
+!             do ng=1,number_groups
+!                emissivity(ng) = 0.0d0
+!             end do
+!             return
+             A = 56
+             Z = 28
+          else
+!             write(*,*) "Nucleus number ",nucleus_index(A,Z), A , Z
           endif
 
           !set local eos_variables for rate interpolation
@@ -674,13 +676,12 @@ subroutine microphysical_electron_capture(neutrino_species,eos_variables,emissiv
   !Hempel EOS and number of species are set up in readrates
   call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)
   emissivity = 0.0d0
-  do i=1,nnuc !nnuc for only looping over LMP rates
-     emissivity = emissivity + emissivity_from_weak_interaction_rates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),&
-          number_densities(hempel_lookup_table(int(nuclear_species(i,2)),int(nuclear_species(i,3)))),eos_variables,neutrino_species)       
+  do i=1,nspecies !nnuc for only looping over LMP rates
+!     emissivity = emissivity + emissivity_from_weak_interaction_rates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),&
+!          number_densities(hempel_lookup_table(int(nuclear_species(i,2)),int(nuclear_species(i,3)))),eos_variables,neutrino_species)       
       !use this when i=1,nspecies
-!     emissivity = emissivity + emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&
-!          eos_variables,neutrino_species)
-!     write(*,*) i
+     emissivity = emissivity + emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&
+          eos_variables,neutrino_species)
   end do
 end subroutine microphysical_electron_capture
 
