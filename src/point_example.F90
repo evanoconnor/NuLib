@@ -75,10 +75,10 @@ program point_example
 !  xrho = 49131273878.3 !g/cm^3
 !  xtemp = 0.1059 !MeV
 !  xye = 0.035d0 !dimensionless
-  
-  xrho = 28627941656.659451
+
+  xrho = 958255854960.26392
   xtemp = 0.10591320785487254
-  xye = 0.30
+  xye = 0.035
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
