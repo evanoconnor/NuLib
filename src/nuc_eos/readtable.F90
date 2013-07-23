@@ -22,6 +22,8 @@ subroutine readtable(eos_filename)
   real*8 buffer1,buffer2,buffer3,buffer4
   accerr=0
 
+  eos_filename_stored = eos_filename
+
   write(*,*) "Reading Ott EOS Table"
 
   call h5open_f(error)
@@ -233,3 +235,60 @@ subroutine readtable(eos_filename)
 end subroutine readtable
 
 
+subroutine add_index(string_to_add,index_in_alltables)
+  
+  use eosmodule
+  use hdf5
+  implicit none
+
+  character(*) string_to_add
+  integer index_in_alltables
+
+  real*8, allocatable :: temp_table(:,:,:,:)
+
+  ! HDF5 vars
+  integer(HID_T) file_id,dset_id
+  integer(HSIZE_T) dims3(3)
+  integer error,accerr
+
+  !set index of newest table member
+  index_in_alltables = nvars+1
+  
+  !increase table size
+  nvars = nvars+1
+
+  !increase size of alltables
+  allocate(temp_table(nrho,ntemp,nye,nvars))
+  temp_table(:,:,:,1:nvars-1) = alltables
+  deallocate(alltables)
+  allocate(alltables(nrho,ntemp,nye,nvars))
+  alltables = temp_table
+  deallocate(temp_table)
+
+  !reopen hdf5 file
+  accerr=0
+
+  write(*,*) "Reading Ott EOS Table again to add index", index_in_alltables
+
+  call h5open_f(error)
+
+  call h5fopen_f (trim(adjustl(eos_filename_stored)), H5F_ACC_RDONLY_F, file_id, error)
+
+  dims3(1)=nrho
+  dims3(2)=ntemp
+  dims3(3)=nye
+  call h5dopen_f(file_id, trim(adjustl(string_to_add)), dset_id, error)
+  call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, alltables(:,:,:,index_in_alltables), dims3, error)
+  call h5dclose_f(dset_id,error)
+  accerr=accerr+error
+
+  if(accerr.ne.0) then
+    stop "Problem reading EOS table file"
+  endif
+
+
+  call h5fclose_f (file_id,error)
+
+  call h5close_f (error)
+
+end subroutine add_index 
