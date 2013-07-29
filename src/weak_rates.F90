@@ -340,18 +340,6 @@
           real*8 :: lcap       !capture rate (electron or positron for nue or anue)
           real*8 :: lnu        !nue or anue energy loss rate
 
-          !if LMP data is not provided for a given nucleus, we will use the rates for 56Ni
-          if (nucleus_index(A,Z) == 0) then
-!             do ng=1,number_groups
-!                emissivity(ng) = 0.0d0
-!             end do
-!             return
-             A = 56
-             Z = 28
-          else
-!             write(*,*) "Nucleus number ",nucleus_index(A,Z), A , Z
-          endif
-
           !set local eos_variables for rate interpolation
           lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
           t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  ! Conversion from MeV to GK
@@ -381,6 +369,7 @@
           qec_eff = qec_solver(avgenergy,qec_eff,eos_variables)
 
           !calculate normalization constant using effective neutrino spectra
+          spectra = 0.0d0
           do i=1,128
              spectra = spectra + GLQ_n128_weights(i)*ec_neutrino_spectra(GLQ_n128_roots(i),qec_eff,eos_variables(mueindex)-m_e,&
                   eos_variables(tempindex))
@@ -404,7 +393,7 @@
                      (eos_variables(tempindex)**4.0d0)*normalization_constant*&
                      ec_neutrino_spectra(energies(ng)/eos_variables(tempindex),qec_eff,eos_variables(mueindex)-m_e,&
                      eos_variables(tempindex))
-                emissivity(ng) = (energies(ng)*mev_to_erg)*(number_density*1.0d39)*nu_spectrum_eval/(4.0d0*pi) !erg/cm^3/s/MeV/srad
+                emissivity(ng) = (energies(ng)*mev_to_erg)*(1.0d39*number_density)*nu_spectrum_eval/(4.0d0*pi) !erg/cm^3/s/MeV/srad
              end do
           endif
 
@@ -418,7 +407,7 @@
           !local variables
           real*8 :: T
           real*8 :: nu_energy_per_T
-          real*8 :: q
+          real*8, intent(in) :: q
           real*8 :: uf
           real*8 :: nu_spectra
           real*8 :: q_T
@@ -449,7 +438,7 @@
           !local variables
           real*8 :: T !must be passed in with units of MeV
           real*8 :: nu_energy_per_T
-          real*8 :: q
+          real*8, intent(in) :: q
           real*8 :: uf
           real*8 :: nu_spectra_derivative
           real*8 :: q_T
@@ -471,7 +460,7 @@
 
         end function ec_neutrino_spectra_q_derivative
 
-        function qec_solver(avgenergy,q,eos_variables) result(qec_eff)
+        function qec_solver(avgenergy,qin,eos_variables) result(qec_eff)
           use nulib, only : GLQ_n128_roots, GLQ_n128_weights, total_eos_variables, mueindex, tempindex
           include 'constants.inc'
 
@@ -485,6 +474,7 @@
           real*8 :: qec_eff
           real*8 :: q_newton_raphson
           real*8 :: q
+          real*8, intent(in)  :: qin
           integer i,N
 
           !integration variables
@@ -510,6 +500,7 @@
           tolerance = 0.1d0
           nmax_bisections = 15
           limiter = 0
+          q = qin
 
           !Newton-Raphson technique to find zero (in q) of f(q) = <E>_rates - <E(q)>_spectra
           do while (abs((avge_rates - avge_spectra)/avge_rates) > 1.0d-8) 
@@ -550,13 +541,13 @@
 
              !for low T, extrapolate the average energy curve linearly
              if(eos_variables(tempindex).le.0.15d0.and.avge_rates.ge.40.0d0) then
-                q = avge_rates*35/average_energy(-(eos_variables(mueindex)-m_e)+35,eos_variables)-(eos_variables(mueindex)-m_e)
+                q = avge_rates*35/average_energy(-eos_variables(mueindex)+35,eos_variables)-(eos_variables(mueindex)-m_e)
                 avge_spectra = avge_rates
                 write(*,*) "Extrapolating, q = ", q
              end if
 
              !Bisection fail safe if newton-raphson diverges
-             if (q.gt.20.0d0.or.q.lt.-20.0d0.or.nmax_bisections.eq.1000) then          
+             if (q.gt.30.0d0.or.q.lt.-30.0d0) then          
 1               lower_bound = -50.0d0
                 upper_bound = 50.0d0
                 avge_spectra_boundary = average_energy(lower_bound,eos_variables)
@@ -582,6 +573,7 @@
                    if (abs(avge_rates - avge_spectra)/avge_rates.le.tolerance) then
                       N = nmax_bisections + 1 !to exit loop
                       if (tolerance.eq.1.0d-8) then
+                         qec_eff = q
                          return !this will only be reached if the newton-raphson failed 25 times and
                          !the bisection method was used to attain a precision of 1.0d-8 in <E>
                       else
@@ -623,7 +615,6 @@
           !local rate variables
           real*8 :: lrhoYe
           real*8 :: t9
-          real*8 :: mu_e ! electron chem.pot.
 
           !local integration variables
           integer :: i
@@ -636,14 +627,14 @@
           !setting local variables from eos_variables
           lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
           t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  ! Conversion from MeV to GK
-          mu_e = eos_variables(mueindex)-m_e
 
           !set weights and roots for quadrature integration, then calculate <E>
           avgenergy=0.0d0
           energy_density_integral=0.0d0
           number_density_integral=0.0d0
+          spectra = 0.0d0
           do i=1,128
-             spectra = ec_neutrino_spectra(GLQ_n128_roots(i),qec_eff,mu_e,eos_variables(tempindex))
+             spectra = ec_neutrino_spectra(GLQ_n128_roots(i),qec_eff,eos_variables(mueindex)-m_e,eos_variables(tempindex))
              energy_density_integral=energy_density_integral+GLQ_n128_weights(i)*GLQ_n128_roots(i)*spectra
              number_density_integral=number_density_integral+GLQ_n128_weights(i)*spectra
           end do
@@ -670,6 +661,8 @@ subroutine microphysical_electron_capture(neutrino_species,eos_variables,emissiv
   integer, intent(in) :: neutrino_species
   real*8, intent(in) :: eos_variables(total_eos_variables)
   real*8, dimension(number_groups) :: emissivity
+  real*8, dimension(number_groups) :: emissivity_temp
+  real*8, dimension(number_groups) :: emissivity_ni56
   real*8, dimension(nspecies) :: number_densities
   real*8, dimension(nspecies) :: mass_fractions
 
@@ -680,8 +673,19 @@ subroutine microphysical_electron_capture(neutrino_species,eos_variables,emissiv
 !     emissivity = emissivity + emissivity_from_weak_interaction_rates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),&
 !          number_densities(hempel_lookup_table(int(nuclear_species(i,2)),int(nuclear_species(i,3)))),eos_variables,neutrino_species)       
       !use this when i=1,nspecies
-     emissivity = emissivity + emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&
-          eos_variables,neutrino_species)
+
+     if(i.eq.1)then !if LMP data is not provided for a given nucleus, we will use the rates for 56Ni
+         emissivity_ni56 = emissivity_from_weak_interaction_rates(56,28,1.0d0,eos_variables,neutrino_species) 
+      endif
+
+      if(nucleus_index(nuclei_A(i),nuclei_Z(i)) == 0)then
+         emissivity = emissivity(:) + emissivity_ni56(:)*number_densities(i)
+      else
+        emissivity_temp = emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&
+             eos_variables,neutrino_species)
+        emissivity = emissivity + emissivity_temp
+     end if
+
   end do
 end subroutine microphysical_electron_capture
 
