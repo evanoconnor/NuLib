@@ -38,7 +38,7 @@
        !Set rhoYe and T9 bounds for LMP rates
        table_bounds(1)=1.0d0     !min lrhoYe
        table_bounds(2)=1.12d0    !min t9 (=0.01 for LMP, =0.1 for nuc_dist_hempel)
-       table_bounds(3)=12.5d0    !max lrhoYe
+       table_bounds(3)=15.0d0    !max lrhoYe
        table_bounds(4)=100.0d0   !max t9
 
        ! Count the dimension of the data in rhoYe and T9
