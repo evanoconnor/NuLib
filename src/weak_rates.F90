@@ -239,7 +239,17 @@
                         C(nuc,nrate,dim,spl,i-1,4)
                    exit
                 end if
+             !extrapolate to lrhoYe at most, consider adding extrapolate flag
+             else if (query.gt.rhoYedat(i).and.i.eq.nrho) then
+                if(query.le.15.0d0)then
+                   result = C(nuc,nrate,dim,spl,i-1,1)*(query-rhoYedat(i-1))**3 +&
+                        C(nuc,nrate,dim,spl,i-1,2)*(query-rhoYedat(i-1))**2 +&
+                        C(nuc,nrate,dim,spl,i-1,3)*(query-rhoYedat(i-1)) +&
+                        C(nuc,nrate,dim,spl,i-1,4)
+                   exit
+                end if
              end if
+
           end do
 
           query = result
