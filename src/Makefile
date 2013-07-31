@@ -69,6 +69,7 @@ nuc_eos/nuc_eos.a: nuc_eos/*.F90 nuc_eos/*.f
 clean:
 	rm -rf ../make_table_example
 	rm -rf ../point_example
+	rm -rf ../point_example_deltaye
 	rm -rf ../nulibtable_driver
 	rm -rf test
 	rm -rf *.o

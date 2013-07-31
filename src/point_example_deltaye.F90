@@ -52,6 +52,11 @@ program point_example
   real*8, allocatable,dimension(:) :: mass_fractions
   real*8, allocatable,dimension(:) :: number_densities
   real*8, allocatable,dimension(:) :: probability_dist
+  real*8, allocatable,dimension(:) :: emissivity_ni56
+  real*8, allocatable,dimension(:) :: blackbody_spectrum
+  real*8, allocatable,dimension(:,:) :: emissivity
+  real*8, allocatable,dimension(:) :: dye
+  real*8, allocatable,dimension(:) :: normalized_dye
 
   logical :: cont
   character*200 :: time_string
@@ -60,6 +65,7 @@ program point_example
   real*8 :: current_energy
   integer :: IO
 
+  real*8 :: fermidirac_dimensionless
 
   !allocate the arrays for the point values
   allocate(local_emissivity(mypoint_number_output_species,mypoint_number_groups))
@@ -82,6 +88,11 @@ program point_example
   allocate(mass_fractions(nspecies))
   allocate(number_densities(nspecies))
   allocate(probability_dist(number_groups))
+  allocate(emissivity(nspecies,number_groups))
+  allocate(blackbody_spectrum(number_groups))
+  allocate(emissivity_ni56(number_groups))
+  allocate(dye(nspecies))
+  allocate(normalized_dye(nspecies))
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
@@ -120,69 +131,19 @@ program point_example
   nindex = 0
 
   do while(cont)
-     !read eos vars from gr1d evolution
-
+     !read profile vars from gr1d evolution
+     read(1,*) xtime,xrho,xtemp,xye
+     !match with line from nue_enspectra_cen file
      read(time_string(index(time_string(1:),"= ")+5:index(time_string(1:),"= ")+28),*) current_time
      if(current_time.gt.1.0d0) stop
 
      do i=1,number_groups
         read(3,*) current_energy,probability_dist(i)
-     end do   
-     read(3,*)
-     read(3,*)
-     
-     !calculate the blackbody function (dimensionless fermi function in this 
-     !case because other terms cancel in the division of E/B (f_avg / f_neq)     
-     do i=1,number_groups 
-        blackbody_spectrum(i) = fermidirac_dimensionless(energies(i)/eos_variables(tempindex),eos_variables(mueindex)/eos_variables(tempindex))
      end do
-     !!insert emmisivity code from microphysical_ec
+     read(3,*)
+     read(3,*)
 
-
-  integer, intent(in) :: neutrino_species
-  real*8, dimension(nspecies,number_groups) :: emissivity
-  real*8, dimension(number_groups) :: emissivity_ni56
-  real*8, dimension(number_groups) :: blackbody_spectrum
-
-  !Hempel EOS and number of species are set up in readrates
-  call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)
-  emissivity = 0.0d0
-  emissivity = 0.0d0
-  emissivity_ni56 = 0.0d0
-  do i=1,nspecies
-     if(i.eq.1)then !if LMP data is not provided for a given nucleus, we will use the rates for 56Ni
-         emissivity_ni56(:) = emissivity_from_weak_interaction_rates(56,28,1.0d0,eos_variables,neutrino_species) 
-      endif
-      if(nucleus_index(nuclei_A(i),nuclei_Z(i)) == 0)then
-         emissivity(i,:) = emissivity_ni56(:)*number_densities(i)
-      else
-        emissivity(i,:) = emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&
-             eos_variables,neutrino_species)
-     end if
-  end do
-
-
-
-     !!then calculate f_eq
-     !!then crunch deltaYe
-     
-
-     !read next time and stop if at EOF
-     read(3,"(A)",IOSTAT=IO) time_string
-     if (IO.lt.0) cont = .false.
-     
-  enddo
-
-  close(1)
-  close(2)
-  close(3)
-
-  stop
-
-
-
-
-
+     !setup eos_variables
      eos_variables = 0.0d0
      eos_variables(rhoindex) = xrho
      eos_variables(tempindex) = xtemp
@@ -209,19 +170,59 @@ program point_example
         eos_variables(xhindex) = 0.0d0
      endif
 
-!     write(2,*) eos_variables(abarindex);
+     !calculate the blackbody function (dimensionless fermi function in this 
+     !case because other terms cancel in the division of E/B (f_avg / f_neq)     
+     do i=1,number_groups 
+        blackbody_spectrum(i) = fermidirac_dimensionless(energies(i)/eos_variables(tempindex),&
+             eos_variables(mueindex)/eos_variables(tempindex))
+     end do
+
+     !begin emissivity calculation for each nucleus
+     !Hempel EOS and number of species are set up in readrates
      call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)
+     emissivity = 0.0d0
+     emissivity = 0.0d0
+     emissivity_ni56 = 0.0d0
+     do i=1,nspecies
+        if(i.eq.1)then !if LMP data is not provided for a given nucleus, we will use the rates for 56Ni
+           emissivity_ni56(:) = emissivity_from_weak_interaction_rates(56,28,1.0d0,eos_variables,1) 
+        endif
+        if(nucleus_index(nuclei_A(i),nuclei_Z(i)) == 0)then
+           emissivity(i,:) = emissivity_ni56(:)*number_densities(i)
+        else
+           emissivity(i,:) = emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&
+                eos_variables,1)
+        end if
+     end do
+
+     !calculate deltaYe
+     dye = 0.0d0
+     do i=1,nspecies
+        dye(i)=Sum(bin_widths(:)*emissivity(i,:)*(1-probability_dist(:)/blackbody_spectrum(:))/energies(:))
+     end do     
+     normalized_dye(:)=dye(:)/Sum(dye(:))
      
-     write(2,*) Sum(nuclei_A(:)*number_densities(:))/Sum(number_densities(:))
+     !write to file
+     write(2,*) xtime,xrho,xtemp,xye
+     do i=1,nspecies
+        write(2,*) nuclei_A(i),nuclei_Z(i),dye(i),normalized_dye(i),mass_fractions(i),normalized_dye(i)/mass_fractions(i)
+     end do
+     write(2,*)
+     write(2,*)
+
+     nindex = nindex + 1
+     write(*,*) nindex
+
+     !read next time and stop if at EOF
+     read(3,"(A)",IOSTAT=IO) time_string
+     if(nindex.ge.1000) cont = .false.
+!     if (IO.lt.0) cont = .false.
      
+  enddo
 
-
-
-
-10 close(1)
+  close(1)
   close(2)
-
-
-
+  close(3)
+    
 end program point_example
   
