@@ -544,12 +544,14 @@
                 q = avge_rates*35/average_energy(-eos_variables(mueindex)+35,eos_variables)-(eos_variables(mueindex)-m_e)
                 avge_spectra = avge_rates
                 write(*,*) "Extrapolating, q = ", q
+                qec_eff = q
+                return
              end if
 
              !Bisection fail safe if newton-raphson diverges
-             if (q.gt.30.0d0.or.q.lt.-30.0d0) then          
-1               lower_bound = -50.0d0
-                upper_bound = 50.0d0
+             if (q.gt.50.0d0.or.q.lt.-50.0d0) then          
+1               lower_bound = -100.0d0
+                upper_bound = 100.0d0
                 avge_spectra_boundary = average_energy(lower_bound,eos_variables)
                 N=0
                 !low resolution in the LMP rates can cause the interpolation to produce an
