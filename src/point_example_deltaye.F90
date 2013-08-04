@@ -199,10 +199,11 @@ program point_example
      !calculate deltaYe
      dye = 0.0d0
      do i=1,nspecies
-        dye(i)=Sum(bin_widths(:)*emissivity(i,:)*(1-probability_dist(:)/blackbody_spectrum(:))/energies(:))
+        dye(i)=-Sum((4.0d0*pi/6.02214129d23)*bin_widths(:)*(emissivity(i,:)/mev_to_erg)*(1-probability_dist(:)/blackbody_spectrum(:))/energies(:))
+!        if (nindex.ge.1605) write(*,*) Sum(emissivity(i,:)), mass_fractions(i)
      end do     
-     normalized_dye(:)=dye(:)/Sum(dye(:))
-     
+     normalized_dye(:)=dye(:)/eos_variables(rhoindex)
+
      !write to file
      normalized_dye_bin = 0.0d0
      do i=1,nspecies
@@ -262,11 +263,11 @@ program point_example
      write(2,*) xtime,normalized_dye_bin(1),normalized_dye_bin(2),normalized_dye_bin(3),normalized_dye_bin(4),normalized_dye_bin(5),normalized_dye_bin(6),normalized_dye_bin(7),normalized_dye_bin(8),normalized_dye_bin(9),normalized_dye_bin(10),normalized_dye_bin(11),normalized_dye_bin(12),normalized_dye_bin(13),normalized_dye_bin(14),normalized_dye_bin(15),normalized_dye_bin(16),normalized_dye_bin(17),normalized_dye_bin(18),normalized_dye_bin(19),normalized_dye_bin(20),normalized_dye_bin(21),normalized_dye_bin(22),normalized_dye_bin(23),normalized_dye_bin(24),normalized_dye_bin(25)
 
      nindex = nindex + 1
-     write(*,*) nindex
+     write(*,*) nindex,log10(eos_variables(rhoindex)*eos_variables(yeindex)),eos_variables(tempindex)
 
      !read next time and stop if at EOF
      read(3,"(A)",IOSTAT=IO) time_string
-     !if(nindex.ge.16000) cont = .false.
+     if(Sum(mass_fractions(:)).le.0.1d0) cont = .false.
      if (IO.lt.0) cont = .false.
      
   enddo
