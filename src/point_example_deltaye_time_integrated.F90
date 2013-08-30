@@ -66,8 +66,13 @@ program point_example
   integer :: IO
 
   real*8 :: fermidirac_dimensionless
-  real*8, dimension(26,1608) :: dye_bin
-  real*8, dimension(25,1608) :: dye_bin_runningsum
+  real*8, dimension(27,1610) :: dye_bin
+  real*8, dimension(1610) :: dyesum
+  real*8, dimension(1610) :: dyesum_time
+  real*8 :: time
+  real*8, dimension(1610) :: dye_hydro
+  real*8, dimension(26,1610) :: dye_bin_runningsum
+  real*8, dimension(1610) :: dyesum_int
 
   !allocate the arrays for the point values
   allocate(local_emissivity(mypoint_number_output_species,mypoint_number_groups))
@@ -123,34 +128,73 @@ program point_example
   allocate(eos_variables(total_eos_variables))
 
 
-  open(1,file="../../analysis_sandbox/dyeperrho_shells_pers_pernucleon.dat",status='old')
-  open(2,file="../../analysis_sandbox/integrated_dyeperrho.dat")
+  open(1,file="src/extra_code_and_tables/dye.dat",status='old')
+  open(2,file="src/extra_code_and_tables/integrated_dyedt.dat")
+  open(3,file="src/extra_code_and_tables/dyedt_hydro_c_t.dat",status='old')
+  open(4,file="src/extra_code_and_tables/dyesum.dat",status='old')
+  open(5,file="src/extra_code_and_tables/ye_from_int.dat")
   cont = .true.
   nindex = 1
 
   do while(cont)
-     read(1,*)dye_bin(1,nindex),dye_bin(2,nindex),dye_bin(3,nindex),dye_bin(4,nindex),dye_bin(5,nindex),dye_bin(6,nindex),dye_bin(7,nindex),dye_bin(8,nindex),dye_bin(9,nindex),dye_bin(10,nindex),dye_bin(11,nindex),dye_bin(12,nindex),dye_bin(13,nindex),dye_bin(14,nindex),dye_bin(15,nindex),dye_bin(16,nindex),dye_bin(17,nindex),dye_bin(18,nindex),dye_bin(19,nindex),dye_bin(20,nindex),dye_bin(21,nindex),dye_bin(22,nindex),dye_bin(23,nindex),dye_bin(24,nindex),dye_bin(25,nindex),dye_bin(26,nindex)
+     write(*,*) nindex
+     read(1,*)dye_bin(1,nindex),dye_bin(2,nindex),dye_bin(3,nindex),dye_bin(4,nindex),dye_bin(5,nindex),dye_bin(6,nindex),dye_bin(7,nindex),dye_bin(8,nindex),dye_bin(9,nindex),dye_bin(10,nindex),dye_bin(11,nindex),dye_bin(12,nindex),dye_bin(13,nindex),dye_bin(14,nindex),dye_bin(15,nindex),dye_bin(16,nindex),dye_bin(17,nindex),dye_bin(18,nindex),dye_bin(19,nindex),dye_bin(20,nindex),dye_bin(21,nindex),dye_bin(22,nindex),dye_bin(23,nindex),dye_bin(24,nindex),dye_bin(25,nindex),dye_bin(26,nindex),dye_bin(27,nindex)
+     read(3,*)time,dye_hydro(nindex)
+     read(4,*)dyesum_time(nindex),dyesum(nindex)
      nindex = nindex + 1
-     if (nindex.ge.1607) cont = .false.     
+     if (nindex.ge.1610) cont = .false.     
   enddo
   
-  !time integrated
+  do i=2,27
+     dye_bin(i,:) = dye_bin(i,:) + dye_hydro(:)/26
+  end do
+  dyesum(:) = dyesum(:) + dye_hydro(:)
+  
+  !time integration of binned dyedt
+  ! dye_bin_runningsum = 0.0d0
+  ! do i=2,26
+  !    do j=1,nindex-1
+  !       do k=1,j
+  !          dye_bin_runningsum(i-1,j) = dye_bin_runningsum(i-1,j) + dye_bin(i,k)*(dye_bin(1,k+1)-dye_bin(1,k))
+  !       end do
+  !    end do
+  ! end do
+
+  !time integration of binned dyedt
   dye_bin_runningsum = 0.0d0
-  do i=2,26
-     do j=1,nindex-1
-        do k=1,j
-           dye_bin_runningsum(i-1,j) = dye_bin_runningsum(i-1,j) + dye_bin(i,k)*(dye_bin(1,k+1)-dye_bin(1,k))
-        end do
+  do j=1,1609
+     do i=2,27
+        if(j.eq.1)then
+           dye_bin_runningsum(i-1,j) = dye_bin(i,j)*(dye_bin(1,j+1)-dye_bin(1,j)) 
+        else
+           dye_bin_runningsum(i-1,j) = dye_bin(i,j)*(dye_bin(1,j+1)-dye_bin(1,j))+dye_bin_runningsum(i-1,j-1)
+        end if
      end do
   end do
 
-  dye_bin_runningsum(:,:) = dye_bin_runningsum(:,:) + 4.222262676d-01
+  !time integration of summed dyedt
+  dyesum_int = 0.0d0
+  do i=1,1609
+     if(i.eq.1)then
+        dyesum_int(i) = dyesum(i)*(dyesum_time(i+1)-dyesum_time(i))
+     else
+        dyesum_int(i) = dyesum(i)*(dyesum_time(i+1)-dyesum_time(i))+dyesum_int(i-1)
+     end if
+  end do
+  
+  dyesum_int(:) = dyesum_int(:) + 4.222262676d-1
+
   do i=1,nindex-1
-     write(2,*) dye_bin(1,i),dye_bin_runningsum(1,i),dye_bin_runningsum(2,i),dye_bin_runningsum(3,i),dye_bin_runningsum(4,i),dye_bin_runningsum(5,i),dye_bin_runningsum(6,i),dye_bin_runningsum(7,i),dye_bin_runningsum(8,i),dye_bin_runningsum(9,i),dye_bin_runningsum(10,i),dye_bin_runningsum(11,i),dye_bin_runningsum(12,i),dye_bin_runningsum(13,i),dye_bin_runningsum(14,i),dye_bin_runningsum(15,i),dye_bin_runningsum(16,i),dye_bin_runningsum(17,i),dye_bin_runningsum(18,i),dye_bin_runningsum(19,i),dye_bin_runningsum(20,i),dye_bin_runningsum(21,i),dye_bin_runningsum(22,i),dye_bin_runningsum(23,i),dye_bin_runningsum(24,i),dye_bin_runningsum(25,i)
+     write(2,*) dye_bin(1,i),dye_bin_runningsum(1,i),dye_bin_runningsum(2,i),dye_bin_runningsum(3,i),dye_bin_runningsum(4,i),dye_bin_runningsum(5,i),dye_bin_runningsum(6,i),dye_bin_runningsum(7,i),dye_bin_runningsum(8,i),dye_bin_runningsum(9,i),dye_bin_runningsum(10,i),dye_bin_runningsum(11,i),dye_bin_runningsum(12,i),dye_bin_runningsum(13,i),dye_bin_runningsum(14,i),dye_bin_runningsum(15,i),dye_bin_runningsum(16,i),dye_bin_runningsum(17,i),dye_bin_runningsum(18,i),dye_bin_runningsum(19,i),dye_bin_runningsum(20,i),dye_bin_runningsum(21,i),dye_bin_runningsum(22,i),dye_bin_runningsum(23,i),dye_bin_runningsum(24,i),dye_bin_runningsum(25,i),dye_bin_runningsum(26,i)
+     write(5,*) dye_bin(1,i),dyesum_int(i)
   end do
 
 
   close(1)
+  close(2)
+  close(3)
+  close(4)
+  close(5)
 
     
 end program point_example

@@ -36,7 +36,7 @@ EXTRAINCS = $(HDF5INCS) -I./nuc_eos
 EXTRADEPS += nuc_eos/nuc_eos.a
 EXTRAOBJECTS = nuc_eos/nuc_eos.a $(HDF5LIBS)
 
-all: nulibtable_driver point_example make_table_example test point_example_deltaye_time_integrated
+all: nulibtable_driver point_example make_table_example test point_example_deltaye point_example_deltaye_time_integrated
 
 nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) 
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINC) -o ../nulibtable_driver nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS)

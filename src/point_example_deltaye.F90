@@ -66,7 +66,11 @@ program point_example
   integer :: IO
 
   real*8 :: fermidirac_dimensionless
-  real*8, dimension(25) :: normalized_dye_bin
+  real*8, dimension(25) :: dye_bin
+  real*8 :: dye_bin_sum
+  real*8 :: dyedt_hydro
+  real*8 :: dyedt_ecfreep
+  logical :: spectralogical
 
   !allocate the arrays for the point values
   allocate(local_emissivity(mypoint_number_output_species,mypoint_number_groups))
@@ -95,6 +99,7 @@ program point_example
   allocate(dye(nspecies))
   allocate(normalized_dye(nspecies))
 
+
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
   mindx = 1.0d0
@@ -122,27 +127,34 @@ program point_example
   allocate(eos_variables(total_eos_variables))
 
 
-  open(1,file="src/extra_code_and_tables/rho_temp_ye_c.dat",status='old')
-  open(2,file="src/extra_code_and_tables/dye.dat")
-  open(3,file="src/extra_code_and_tables/M1_nue_enspectra_cen.xg",status='old')
+  open(11,file="src/extra_code_and_tables/rho_temp_ye_c.dat",status='old')
+  open(22,file="src/extra_code_and_tables/dye.dat")
+  open(33,file="src/extra_code_and_tables/M1_nue_enspectra_cenprime.xg",status='old')
+  open(44,file="src/extra_code_and_tables/dyesum.dat")
+  open(55,file="src/extra_code_and_tables/dyedt_hydro_c_t.dat",status='old')
+  open(66,file="src/extra_code_and_tables/nue_enspectra.dat")
+  open(77,file="src/extra_code_and_tables/xp_c_t.dat")
 
 
   cont = .true.
-  read(3,"(A)") time_string
+  read(33,"(A)") time_string
   nindex = 1
+  spectralogical = .true.
 
   do while(cont)
      !read profile vars from gr1d evolution
-     read(1,*) xtime,xrho,xtemp,xye
+     read(55,*) xtime,dyedt_hydro
+     read(11,*) xtime,xrho,xtemp,xye
+
      !match with line from nue_enspectra_cen file
      read(time_string(index(time_string(1:),"= ")+5:index(time_string(1:),"= ")+28),*) current_time
      if(current_time.gt.1.0d0) stop
 
      do i=1,number_groups
-        read(3,*) current_energy,probability_dist(i)
+        read(33,*) current_energy,probability_dist(i)
      end do
-     read(3,*)
-     read(3,*)
+     read(33,*)
+     read(33,*)
 
      !setup eos_variables
      eos_variables = 0.0d0
@@ -175,8 +187,11 @@ program point_example
      !case because other terms cancel in the division of E/B (f_avg / f_neq)     
      do i=1,number_groups 
         blackbody_spectrum(i) = fermidirac_dimensionless(energies(i)/eos_variables(tempindex),&
-             eos_variables(mueindex)/eos_variables(tempindex))
+             (eos_variables(mueindex)+eos_variables(mupindex)-eos_variables(munindex))/eos_variables(tempindex))
      end do
+
+
+
 
      !begin emissivity calculation for each nucleus
      !Hempel EOS and number of species are set up in readrates
@@ -196,85 +211,115 @@ program point_example
         end if
      end do
 
-     !calculate deltaYe
+     !calculate emissivity for electron capture on free protons
+     call single_point_return_all(eos_variables, &
+          local_emissivity,local_absopacity,local_scatopacity, &
+          mypoint_neutrino_scheme)
+     
+
+     !calculate dyedt for each nucleus
      dye = 0.0d0
      do i=1,nspecies
-        dye(i)=-Sum((4.0d0*pi/6.02214129d23)*bin_widths(:)*(emissivity(i,:)/mev_to_erg)*(1-probability_dist(:)/blackbody_spectrum(:))/energies(:))
+!        dye(i)=-Sum((4.0d0*pi/6.02214129d23)*bin_widths(:)*(emissivity(i,:)/mev_to_erg)*(1-probability_dist(:)/blackbody_spectrum(:))/energies(:))
+        dye(i)=-Sum((4.0d0*pi/6.02214129d23)*bin_widths(:)*(emissivity(i,:)/mev_to_erg)*probability_dist(:)/energies(:))
 !        if (nindex.ge.1605) write(*,*) Sum(emissivity(i,:)), mass_fractions(i)
      end do     
      normalized_dye(:)=dye(:)/eos_variables(rhoindex)
+    
+     !calculate dyedt for free protons
+     dyedt_ecfreep = -Sum((4.0d0*pi/6.02214129d23)*bin_widths(:)*(local_emissivity(1,:)/mev_to_erg)*probability_dist(:)/energies(:))/eos_variables(rhoindex)
+     
 
      !write to file
-     normalized_dye_bin = 0.0d0
+     dye_bin = 0.0d0
+     dye_bin_sum = 0.0d0
      do i=1,nspecies
         if(nuclei_A(i).le.5) then
-           normalized_dye_bin(1) = normalized_dye_bin(1) + normalized_dye(i)
+           dye_bin(1) = dye_bin(1) + normalized_dye(i)
         else if(nuclei_A(i).ge.5.and.nuclei_A(i).lt.25) then
-           normalized_dye_bin(2) = normalized_dye_bin(2) + normalized_dye(i)
+           dye_bin(2) = dye_bin(2) + normalized_dye(i)
         else if(nuclei_A(i).ge.25.and.nuclei_A(i).lt.45) then 
-           normalized_dye_bin(3) = normalized_dye_bin(3) + normalized_dye(i)
+           dye_bin(3) = dye_bin(3) + normalized_dye(i)
         else if(nuclei_A(i).ge.45.and.nuclei_A(i).le.65) then
-           normalized_dye_bin(4) = normalized_dye_bin(4) + normalized_dye(i)
+           dye_bin(4) = dye_bin(4) + normalized_dye(i)
         else if(nuclei_A(i).gt.65.and.nuclei_A(i).lt.85) then
-           normalized_dye_bin(5) = normalized_dye_bin(5) + normalized_dye(i)
+           dye_bin(5) = dye_bin(5) + normalized_dye(i)
         else if(nuclei_A(i).ge.85.and.nuclei_A(i).lt.105) then
-           normalized_dye_bin(6) = normalized_dye_bin(6) + normalized_dye(i)
+           dye_bin(6) = dye_bin(6) + normalized_dye(i)
         else if(nuclei_A(i).ge.105.and.nuclei_A(i).lt.125) then
-           normalized_dye_bin(7) = normalized_dye_bin(7) + normalized_dye(i)
+           dye_bin(7) = dye_bin(7) + normalized_dye(i)
         else if(nuclei_A(i).ge.125.and.nuclei_A(i).lt.145) then
-           normalized_dye_bin(8) = normalized_dye_bin(8) + normalized_dye(i)
+           dye_bin(8) = dye_bin(8) + normalized_dye(i)
         else if(nuclei_A(i).ge.145.and.nuclei_A(i).lt.165) then
-           normalized_dye_bin(9) = normalized_dye_bin(9) + normalized_dye(i)
+           dye_bin(9) = dye_bin(9) + normalized_dye(i)
         else if(nuclei_A(i).ge.165.and.nuclei_A(i).lt.185) then
-           normalized_dye_bin(10) = normalized_dye_bin(10) + normalized_dye(i)
+           dye_bin(10) = dye_bin(10) + normalized_dye(i)
         else if(nuclei_A(i).ge.185.and.nuclei_A(i).lt.205) then
-           normalized_dye_bin(11) = normalized_dye_bin(11) + normalized_dye(i)
+           dye_bin(11) = dye_bin(11) + normalized_dye(i)
         else if(nuclei_A(i).ge.205.and.nuclei_A(i).lt.225) then
-           normalized_dye_bin(12) = normalized_dye_bin(12) + normalized_dye(i)
+           dye_bin(12) = dye_bin(12) + normalized_dye(i)
         else if(nuclei_A(i).ge.225.and.nuclei_A(i).lt.245) then
-           normalized_dye_bin(13) = normalized_dye_bin(13) + normalized_dye(i)
+           dye_bin(13) = dye_bin(13) + normalized_dye(i)
         else if(nuclei_A(i).ge.245.and.nuclei_A(i).lt.265) then
-           normalized_dye_bin(14) = normalized_dye_bin(14) + normalized_dye(i)
+           dye_bin(14) = dye_bin(14) + normalized_dye(i)
         else if(nuclei_A(i).ge.265.and.nuclei_A(i).lt.285) then
-           normalized_dye_bin(15) = normalized_dye_bin(15) + normalized_dye(i)
+           dye_bin(15) = dye_bin(15) + normalized_dye(i)
         else if(nuclei_A(i).ge.285.and.nuclei_A(i).lt.305) then
-           normalized_dye_bin(16) = normalized_dye_bin(16) + normalized_dye(i)
+           dye_bin(16) = dye_bin(16) + normalized_dye(i)
         else if(nuclei_A(i).ge.305.and.nuclei_A(i).lt.325) then
-           normalized_dye_bin(17) = normalized_dye_bin(17) + normalized_dye(i)
+           dye_bin(17) = dye_bin(17) + normalized_dye(i)
         else if(nuclei_A(i).ge.325.and.nuclei_A(i).lt.345) then
-           normalized_dye_bin(18) = normalized_dye_bin(18) + normalized_dye(i)
+           dye_bin(18) = dye_bin(18) + normalized_dye(i)
         else if(nuclei_A(i).ge.345.and.nuclei_A(i).lt.365) then
-           normalized_dye_bin(19) = normalized_dye_bin(19) + normalized_dye(i)
+           dye_bin(19) = dye_bin(19) + normalized_dye(i)
         else if(nuclei_A(i).ge.365.and.nuclei_A(i).lt.385) then
-           normalized_dye_bin(20) = normalized_dye_bin(20) + normalized_dye(i)
+           dye_bin(20) = dye_bin(20) + normalized_dye(i)
         else if(nuclei_A(i).ge.385.and.nuclei_A(i).lt.405) then
-           normalized_dye_bin(21) = normalized_dye_bin(21) + normalized_dye(i)
+           dye_bin(21) = dye_bin(21) + normalized_dye(i)
         else if(nuclei_A(i).ge.425.and.nuclei_A(i).lt.445) then
-           normalized_dye_bin(22) = normalized_dye_bin(22) + normalized_dye(i)
+           dye_bin(22) = dye_bin(22) + normalized_dye(i)
         else if(nuclei_A(i).ge.445.and.nuclei_A(i).lt.465) then
-           normalized_dye_bin(23) = normalized_dye_bin(23) + normalized_dye(i)
+           dye_bin(23) = dye_bin(23) + normalized_dye(i)
         else if(nuclei_A(i).ge.465.and.nuclei_A(i).lt.485) then
-           normalized_dye_bin(24) = normalized_dye_bin(24) + normalized_dye(i)
+           dye_bin(24) = dye_bin(24) + normalized_dye(i)
         else if(nuclei_A(i).ge.485.and.nuclei_A(i).lt.505) then
-           normalized_dye_bin(25) = normalized_dye_bin(25) + normalized_dye(i)
+           dye_bin(25) = dye_bin(25) + normalized_dye(i)
         end if         
-        !write(2,*) nuclei_A(i),nuclei_Z(i),dye(i),normalized_dye(i),mass_fractions(i),normalized_dye(i)/mass_fractions(i)
      end do
-     write(2,*) xtime,normalized_dye_bin(1),normalized_dye_bin(2),normalized_dye_bin(3),normalized_dye_bin(4),normalized_dye_bin(5),normalized_dye_bin(6),normalized_dye_bin(7),normalized_dye_bin(8),normalized_dye_bin(9),normalized_dye_bin(10),normalized_dye_bin(11),normalized_dye_bin(12),normalized_dye_bin(13),normalized_dye_bin(14),normalized_dye_bin(15),normalized_dye_bin(16),normalized_dye_bin(17),normalized_dye_bin(18),normalized_dye_bin(19),normalized_dye_bin(20),normalized_dye_bin(21),normalized_dye_bin(22),normalized_dye_bin(23),normalized_dye_bin(24),normalized_dye_bin(25)
+     dye_bin_sum = Sum(dye_bin(:)) + dyedt_ecfreep
 
-     nindex = nindex + 1
-     write(*,*) nindex,log10(eos_variables(rhoindex)*eos_variables(yeindex)),eos_variables(tempindex)
+     !write to binned file
+     write(22,*) xtime,dye_bin(1),dye_bin(2),dye_bin(3),dye_bin(4),dye_bin(5),dye_bin(6),dye_bin(7),dye_bin(8),dye_bin(9),dye_bin(10),dye_bin(11),dye_bin(12),dye_bin(13),dye_bin(14),dye_bin(15),dye_bin(16),dye_bin(17),dye_bin(18),dye_bin(19),dye_bin(20),dye_bin(21),dye_bin(22),dye_bin(23),dye_bin(24),dye_bin(25),dyedt_ecfreep
+
+     !write to sum file
+     write(44,*) xtime,dye_bin_sum
+
+     !write to sum file
+     write(77,*) xtime,eos_variables(xpindex)
+     
+     if(xtime.ge.8.5d-2.and.spectralogical) then
+        write(66,*) xtime
+        do i=1,number_groups
+           write(66,*) energies(i) , probability_dist(i), blackbody_spectrum(i), (1-probability_dist(i)/blackbody_spectrum(i))
+        end do
+        spectralogical = .false.
+        close(66)
+     endif
 
      !read next time and stop if at EOF
-     read(3,"(A)",IOSTAT=IO) time_string
+     nindex = nindex + 1
+     write(*,*) nindex
+     read(33,"(A)",IOSTAT=IO) time_string
      if(Sum(mass_fractions(:)).le.0.1d0) cont = .false.
-     if (IO.lt.0) cont = .false.
-     
+     if (IO.lt.0) cont = .false.     
   enddo
 
-  close(1)
-  close(2)
-  close(3)
+  close(11)
+  close(22)
+  close(33)
+  close(44)
+  close(55)
+  close(77)
     
 end program point_example
   
