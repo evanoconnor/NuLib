@@ -30,8 +30,8 @@ program driver
   write(*,*) "bin tops:", nulibtable_etop
   
   write(*,*) "Units are: emissivity, ergs/cm^3/s/srad (I multiplied through the bin width for you..)"
-  write(*,*) "Units are: absorption opacity, cm^1"
-  write(*,*) "Units are: scattering opacity, cm^1"
+  write(*,*) "Units are: absorption opacity, cm^-1"
+  write(*,*) "Units are: scattering opacity, cm^-1"
 
   if (.true.) then
      !example of single energy single species call, here I loop over rho
