@@ -3,8 +3,8 @@ module nulibtable
 
   implicit none
 
-  integer :: nulibtable_number_species
-  integer :: nulibtable_number_groups
+  integer, save :: nulibtable_number_species
+  integer, save :: nulibtable_number_groups
   
   real*8, allocatable,save :: nulibtable_logrho(:)
   real*8, allocatable,save :: nulibtable_logtemp(:)
@@ -20,20 +20,20 @@ module nulibtable
   real*8, allocatable,save :: nulibtable_absopacity(:,:,:,:)
   real*8, allocatable,save :: nulibtable_scatopacity(:,:,:,:)
 
-  integer :: nulibtable_nrho
-  integer :: nulibtable_ntemp
-  integer :: nulibtable_nye
+  integer, save :: nulibtable_nrho
+  integer, save :: nulibtable_ntemp
+  integer, save :: nulibtable_nye
 
-  real*8 :: nulibtable_logrho_min
-  real*8 :: nulibtable_logrho_max
+  real*8, save :: nulibtable_logrho_min
+  real*8, save :: nulibtable_logrho_max
 
-  real*8 :: nulibtable_logtemp_min
-  real*8 :: nulibtable_logtemp_max
+  real*8, save :: nulibtable_logtemp_min
+  real*8, save :: nulibtable_logtemp_max
 
-  real*8 :: nulibtable_ye_min
-  real*8 :: nulibtable_ye_max
+  real*8, save :: nulibtable_ye_min
+  real*8, save :: nulibtable_ye_max
 
-  integer :: nulibtable_number_easvariables
+  integer, save :: nulibtable_number_easvariables
 
 end module nulibtable
 

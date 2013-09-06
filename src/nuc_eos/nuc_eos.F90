@@ -299,6 +299,54 @@ subroutine nuc_eos_short(xrho,xtemp,xye,xenr,xprs,xent,xcs2,xdedt,&
 
 end subroutine nuc_eos_short
 
+subroutine nuc_eos_one(xrho,xtemp,xye,xvalue,index)
+
+  use eosmodule
+  implicit none
+
+  real*8, intent(in)    :: xye,xrho,xtemp
+  real*8, intent(out)   :: xvalue
+  integer, intent(in)    :: index
+
+  ! local variables
+  real*8 :: lr,lt,y
+  real*8 :: ff(1)
+
+  if(xrho.gt.eos_rhomax) then
+     stop "nuc_eos: rho > rhomax"
+  endif
+
+  if(xrho.lt.eos_rhomin) then
+     stop "nuc_eos: rho < rhomin"
+  endif
+
+  if(xye.gt.eos_yemax) then
+     stop "nuc_eos: ye > yemax"
+  endif
+
+  if(xye.lt.eos_yemin) then
+     stop "nuc_eos: ye < yemin"
+  endif
+
+  if(xtemp.gt.eos_tempmax) then
+     stop "nuc_eos: temp > tempmax"
+  endif
+
+  if(xtemp.lt.eos_tempmin) then
+     stop "nuc_eos: temp < tempmin"
+  endif
+
+  lr = log10(xrho)
+  lt = log10(xtemp)
+  y = xye
+
+  ! have rho,temp,ye; proceed:
+  call findone(lr,lt,y,ff,index)
+
+  xvalue = ff(1)
+
+end subroutine nuc_eos_one
+
 subroutine findthis(lr,lt,y,value,array,d1,d2,d3)
 
   use eosmodule
@@ -356,3 +404,21 @@ subroutine findall_short(lr,lt,y,ff)
   ff(:) = ffx(:,1)
 
 end subroutine findall_short
+
+subroutine findone(lr,lt,y,ff,index)
+
+  use eosmodule
+  implicit none
+
+  real*8 ffx(1,1)
+  real*8 ff(1)
+  real*8 lr,lt,y
+  integer index
+  
+
+! Ewald's interpolator           
+  call intp3d_many(lr,lt,y,ffx,1,alltables(:,:,:,index), &
+       nrho,ntemp,nye,1,logrho,logtemp,ye)
+  ff(:) = ffx(:,1)
+
+end subroutine findone

@@ -37,6 +37,7 @@ module nulib
   real*8 :: GLQ_n16_weights(16), GLQ_n16_roots(16) !weights and roots for n=16
   real*8 :: GLQ_n32_weights(32), GLQ_n32_roots(32) !weights and roots for n=32
   real*8 :: GLQ_n64_weights(64), GLQ_n64_roots(64) !weights and roots for n=64
+  real*8 :: GLQ_n128_weights(128), GLQ_n128_roots(128) !weights and roots for n=128
 
   real*8 :: GPQ_n4_weights(4), GPQ_n4_roots(4) !weights and roots for n=4
   real*8 :: GPQ_n16_weights(16), GPQ_n16_roots(16) !weights and roots for n=16
@@ -135,77 +136,77 @@ module nulib
       endif
 
       if (neutrino_scheme.eq.1) then
-         if (add_numu_Iscattering_electrons.neqv.add_anumu_Iscattering_electrons.or. &
-              add_numu_Iscattering_electrons.neqv.add_nutau_Iscattering_electrons.or. &
-              add_numu_Iscattering_electrons.neqv.add_anutau_Iscattering_electrons) then
+         if ((add_numu_Iscattering_electrons.neqv.add_anumu_Iscattering_electrons).or. &
+              (add_numu_Iscattering_electrons.neqv.add_nutau_Iscattering_electrons).or. &
+              (add_numu_Iscattering_electrons.neqv.add_anutau_Iscattering_electrons)) then
             stop "With neutrino scheme 1, all 4 heavy lepton inelastic scattering must be the same"
          endif
-         if (add_numu_scattering_n.neqv.add_anumu_scattering_n.or. &
-              add_numu_scattering_n.neqv.add_nutau_scattering_n.or. &
-              add_numu_scattering_n.neqv.add_anutau_scattering_n) then
+         if ((add_numu_scattering_n.neqv.add_anumu_scattering_n).or. &
+              (add_numu_scattering_n.neqv.add_nutau_scattering_n).or. &
+              (add_numu_scattering_n.neqv.add_anutau_scattering_n)) then
             stop "With neutrino scheme 1, all 4 heavy lepton n-scattering must be the same"
          endif
-         if (add_numu_scattering_p.neqv.add_anumu_scattering_p.or. &
-              add_numu_scattering_p.neqv.add_nutau_scattering_p.or. &
-              add_numu_scattering_p.neqv.add_anutau_scattering_p) then
+         if ((add_numu_scattering_p.neqv.add_anumu_scattering_p).or. &
+              (add_numu_scattering_p.neqv.add_nutau_scattering_p).or. &
+              (add_numu_scattering_p.neqv.add_anutau_scattering_p)) then
             stop "With neutrino scheme 1, all 4 heavy lepton p-scattering must be the same"
          endif
-         if (add_numu_scattering_heavies.neqv.add_anumu_scattering_heavies.or. &
-              add_numu_scattering_heavies.neqv.add_nutau_scattering_heavies.or. &
-              add_numu_scattering_heavies.neqv.add_anutau_scattering_heavies) then
+         if ((add_numu_scattering_heavies.neqv.add_anumu_scattering_heavies).or. &
+              (add_numu_scattering_heavies.neqv.add_nutau_scattering_heavies).or. &
+              (add_numu_scattering_heavies.neqv.add_anutau_scattering_heavies)) then
             stop "With neutrino scheme 1, all 4 heavy lepton havy-scattering must be the same"
          endif
-         if (add_numu_scattering_electrons.neqv.add_anumu_scattering_electrons.or. &
-              add_numu_scattering_electrons.neqv.add_nutau_scattering_electrons.or. &
-              add_numu_scattering_electrons.neqv.add_anutau_scattering_electrons) then
+         if ((add_numu_scattering_electrons.neqv.add_anumu_scattering_electrons).or. &
+              (add_numu_scattering_electrons.neqv.add_nutau_scattering_electrons).or. &
+              (add_numu_scattering_electrons.neqv.add_anutau_scattering_electrons)) then
             stop "With neutrino scheme 1, all 4 heavy lepton electron-scattering must be the same"
          endif
-         if (add_numu_scattering_alphas.neqv.add_anumu_scattering_alphas.or. &
-              add_numu_scattering_alphas.neqv.add_nutau_scattering_alphas.or. &
-              add_numu_scattering_alphas.neqv.add_anutau_scattering_alphas) then
+         if ((add_numu_scattering_alphas.neqv.add_anumu_scattering_alphas).or. &
+              (add_numu_scattering_alphas.neqv.add_nutau_scattering_alphas).or. &
+              (add_numu_scattering_alphas.neqv.add_anutau_scattering_alphas)) then
             stop "With neutrino scheme 1, all 4 heavy lepton alpha-scattering must be the same"
          endif
-         if (add_numu_emission_epannihil.neqv.add_anumu_emission_epannihil.or. &
-              add_numu_emission_epannihil.neqv.add_nutau_emission_epannihil.or. &
-              add_numu_emission_epannihil.neqv.add_anutau_emission_epannihil) then
+         if ((add_numu_emission_epannihil.neqv.add_anumu_emission_epannihil).or. &
+              (add_numu_emission_epannihil.neqv.add_nutau_emission_epannihil).or. &
+              (add_numu_emission_epannihil.neqv.add_anutau_emission_epannihil)) then
             stop "With neutrino scheme 1, all 4 heavy lepton epannihils must be the same"
          endif
-         if (add_numu_emission_NNBrems.neqv.add_anumu_emission_NNBrems.or. &
-              add_numu_emission_NNBrems.neqv.add_nutau_emission_NNBrems.or. &
-              add_numu_emission_NNBrems.neqv.add_anutau_emission_NNBrems) then
+         if ((add_numu_emission_NNBrems.neqv.add_anumu_emission_NNBrems).or. &
+              (add_numu_emission_NNBrems.neqv.add_nutau_emission_NNBrems).or. &
+              (add_numu_emission_NNBrems.neqv.add_anutau_emission_NNBrems)) then
             stop "With neutrino scheme 1, all 4 heavy lepton NBrems must be the same"
          endif
       else if (neutrino_scheme.eq.2) then
-         if (add_numu_Iscattering_electrons.neqv.add_nutau_Iscattering_electrons.or. &
-              add_anumu_Iscattering_electrons.neqv.add_anutau_Iscattering_electrons) then
+         if ((add_numu_Iscattering_electrons.neqv.add_nutau_Iscattering_electrons).or. &
+              (add_anumu_Iscattering_electrons.neqv.add_anutau_Iscattering_electrons)) then
             stop "With neutrino scheme 2, each heavy lepton nu/anu inelastic scattering must be the same"
          endif
-         if (add_numu_scattering_n.neqv.add_nutau_scattering_n.or. &
-              add_anumu_scattering_n.neqv.add_anutau_scattering_n) then
+         if ((add_numu_scattering_n.neqv.add_nutau_scattering_n).or. &
+              (add_anumu_scattering_n.neqv.add_anutau_scattering_n)) then
             stop "With neutrino scheme 2, each heavy lepton nu/anu n-scattering must be the same"
          endif
-         if (add_numu_scattering_p.neqv.add_nutau_scattering_p.or. &
-              add_anumu_scattering_p.neqv.add_anutau_scattering_p) then
+         if ((add_numu_scattering_p.neqv.add_nutau_scattering_p).or. &
+              (add_anumu_scattering_p.neqv.add_anutau_scattering_p)) then
             stop "With neutrino scheme 2, each heavy lepton nu/anu p-scattering must be the same"
          endif
-         if (add_numu_scattering_heavies.neqv.add_nutau_scattering_heavies.or. &
-              add_anumu_scattering_heavies.neqv.add_anutau_scattering_heavies) then
+         if ((add_numu_scattering_heavies.neqv.add_nutau_scattering_heavies).or. &
+              (add_anumu_scattering_heavies.neqv.add_anutau_scattering_heavies)) then
             stop "With neutrino scheme 2, each heavy lepton nu/anu havy-scattering must be the same"
          endif
-         if (add_numu_scattering_electrons.neqv.add_nutau_scattering_electrons.or. &
-              add_anumu_scattering_electrons.neqv.add_anutau_scattering_electrons) then
+         if ((add_numu_scattering_electrons.neqv.add_nutau_scattering_electrons).or. &
+              (add_anumu_scattering_electrons.neqv.add_anutau_scattering_electrons)) then
             stop "With neutrino scheme 2, each heavy lepton nu/anu electron-scattering must be the same"
          endif
-         if (add_numu_scattering_alphas.neqv.add_nutau_scattering_alphas.or. &
-              add_anumu_scattering_alphas.neqv.add_anutau_scattering_alphas) then
+         if ((add_numu_scattering_alphas.neqv.add_nutau_scattering_alphas).or. &
+              (add_anumu_scattering_alphas.neqv.add_anutau_scattering_alphas)) then
             stop "With neutrino scheme 2, each heavy lepton nu/anu alpha-scattering must be the same"
          endif
-         if (add_numu_emission_epannihil.neqv.add_nutau_emission_epannihil.or. &
-              add_anumu_emission_epannihil.neqv.add_anutau_emission_epannihil) then
+         if ((add_numu_emission_epannihil.neqv.add_nutau_emission_epannihil).or. &
+              (add_anumu_emission_epannihil.neqv.add_anutau_emission_epannihil)) then
             stop "With neutrino scheme 2, each heavy lepton nu/anu epannihils must be the same"
          endif
-         if (add_numu_emission_NNBrems.neqv.add_nutau_emission_NNBrems.or. &
-              add_anumu_emission_NNBrems.neqv.add_anutau_emission_NNBrems) then
+         if ((add_numu_emission_NNBrems.neqv.add_nutau_emission_NNBrems).or. &
+              (add_anumu_emission_NNBrems.neqv.add_anutau_emission_NNBrems)) then
             stop "With neutrino scheme 2, each heavy lepton nu/anu NBrems must be the same"
          endif
 
@@ -270,6 +271,7 @@ module nulib
       call GaussLaguerreQuadrature_roots_and_weights(16,GLQ_n16_roots,GLQ_n16_weights)
       call GaussLaguerreQuadrature_roots_and_weights(32,GLQ_n32_roots,GLQ_n32_weights)
       call GaussLaguerreQuadrature_roots_and_weights(64,GLQ_n64_roots,GLQ_n64_weights)
+      call GaussLaguerreQuadrature_roots_and_weights(128,GLQ_n128_roots,GLQ_n128_weights)
 
       call GaussLegendreQuadrature_weights_and_roots(4,GPQ_n4_roots,GPQ_n4_weights)
       call GaussLegendreQuadrature_weights_and_roots(16,GPQ_n16_roots,GPQ_n16_weights)
