@@ -46,7 +46,7 @@
        do
           read(1,'(A)',end=10) line
           read(line,*) lindex
-          if (lindex.eq.'n') then
+          if (lindex.eq.'p') then
              nuc = nuc + 1
              nrho = 0 
              nt9 = 0
@@ -79,9 +79,9 @@
        do
           read(1,'(A)',end=20) line
           read(line,*) lindex
-          if (lindex.eq.'n') then
+          if (lindex.eq.'p') then
              nuc = nuc + 1
-             read(line(index(line(1:),"Q= ")+3:index(line(1:),"Q= ")+10),*) nuclear_species(nuc,1)
+             read(line(index(line(1:),"Q=")+2:index(line(1:),"Q=")+9),*) nuclear_species(nuc,1)
              read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+4),*) nuclear_species(nuc,2)
              A = nuclear_species(nuc,2)
              read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nuclear_species(nuc,3)
@@ -659,6 +659,7 @@
              avgenergy = (eos_variables(tempindex))*(energy_density_integral/number_density_integral)
           end if
         end function average_energy
+        
 
 
 end module weak_rates
@@ -715,3 +716,26 @@ function  return_emissivity_from_electron_capture_on_A(A,Z,number_density,eos_va
 
   emissivity = emissivity_from_weak_interaction_rates(A,Z,number_density,eos_variables,neutrino_species)
 end function return_emissivity_from_electron_capture_on_A
+
+function analytic_weakrates(temperature,q_gs,mue) result(rate)
+
+  use nulib
+
+  real*8 :: rate
+  real*8 :: temperature
+  real*8 :: chi
+  real*8 :: eta
+  real*8 :: q_gs
+  real*8 :: mue
+  real*8 :: complete_fermi_integral
+
+  chi = (q_gs-2.5d0)/temperature
+  eta = mue/temperature + chi
+
+  rate = log(2.0d0)*4.6d0/6146.0d0*(temperature/m_e)**5.0d0*(complete_fermi_integral(4,eta)-2.0d0*chi*complete_fermi_integral(3,eta)+&
+       chi**2.0d0*complete_fermi_integral(2,eta))
+
+!  write(*,*) chi,eta,rate,complete_fermi_integral(4,eta),2.0d0*chi*complete_fermi_integral(3,eta),chi**2.0d0*complete_fermi_integral(2,eta)
+!  write(*,*) complete_fermi_integral(4,eta),complete_fermi_integral(3,eta),complete_fermi_integral(2,eta)
+
+end function analytic_weakrates
