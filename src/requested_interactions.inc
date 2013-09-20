@@ -53,19 +53,19 @@
   logical :: add_anutau_Iscattering_electrons = .false.
 
   !emissivities
-  logical :: add_nue_emission_epannihil = .false.
-  logical :: add_anue_emission_epannihil = .false.
-  logical :: add_numu_emission_epannihil = .false.
-  logical :: add_anumu_emission_epannihil = .false.
-  logical :: add_nutau_emission_epannihil = .false.
-  logical :: add_anutau_emission_epannihil = .false.
+  logical :: add_nue_emission_epannihil = .true.
+  logical :: add_anue_emission_epannihil = .true.
+  logical :: add_numu_emission_epannihil = .true.
+  logical :: add_anumu_emission_epannihil = .true.
+  logical :: add_nutau_emission_epannihil = .true.
+  logical :: add_anutau_emission_epannihil = .true.
 
-  logical :: add_nue_emission_NNBrems = .false.
-  logical :: add_anue_emission_NNBrems = .false.
-  logical :: add_numu_emission_NNBrems = .false.
-  logical :: add_anumu_emission_NNBrems = .false.
-  logical :: add_nutau_emission_NNBrems = .false.
-  logical :: add_anutau_emission_NNBrems = .false.	
+  logical :: add_nue_emission_NNBrems = .true.
+  logical :: add_anue_emission_NNBrems = .true.
+  logical :: add_numu_emission_NNBrems = .true.
+  logical :: add_anumu_emission_NNBrems = .true.
+  logical :: add_nutau_emission_NNBrems = .true.
+  logical :: add_anutau_emission_NNBrems = .true.	
 
-  logical :: add_nue_emission_weakinteraction_ecap = .false.
+  logical :: add_nue_emission_weakinteraction_ecap = .true.
   logical :: add_anue_emission_weakinteraction_poscap = .false.

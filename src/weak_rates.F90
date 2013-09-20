@@ -554,16 +554,17 @@
              end if
 
              !for low T, extrapolate the average energy curve linearly
-             if(eos_variables(tempindex).le.0.15d0.and.avge_rates.ge.40.0d0) then
-                q = avge_rates*35/average_energy(-eos_variables(mueindex)+35,eos_variables)-(eos_variables(mueindex)-m_e)
-                avge_spectra = avge_rates
-                write(*,*) "Extrapolating, q = ", q
+             if(eos_variables(tempindex).le.0.5d0.and.avge_rates.ge.40.0d0) then 
+                !this extrapolation needs to be redone. 35 should be scaled in some way by mue..
+2               q = avge_rates*35/average_energy(-eos_variables(mueindex)+35,eos_variables)-(eos_variables(mueindex)-m_e)
+                !avge_spectra = avge_rates
+!                write(*,*) "Extrapolating, q = ", q,avge_rates,eos_variables(3)
                 qec_eff = q
                 return
              end if
 
              !Bisection fail safe if newton-raphson diverges
-             if (q.gt.50.0d0.or.q.lt.-50.0d0) then          
+             if (q.gt.30.0d0.or.q.lt.-30.0d0) then          
 1               lower_bound = -100.0d0
                 upper_bound = 100.0d0
                 avge_spectra_boundary = average_energy(lower_bound,eos_variables)
@@ -603,7 +604,10 @@
                    else
                       upper_bound = q
                    end if
-                   N = N + 1                   
+                   N = N + 1   
+                   if(N.ge.500)then
+                      goto 2
+                   endif
                 end do
              endif
              limiter = limiter + 1
