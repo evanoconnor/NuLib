@@ -85,6 +85,7 @@
              read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+4),*) nuclear_species(nuc,2)
              A = nuclear_species(nuc,2)
              read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nuclear_species(nuc,3)
+             nuclear_species(nuc,3)=nuclear_species(nuc,3)+1 !Currently reading in z of daughter which is 1 less that of parent, hence the addition of one
              Z = nuclear_species(nuc,3)
              nucleus_index(A,Z) = nuc
              nrho = 0 
