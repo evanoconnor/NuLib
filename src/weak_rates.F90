@@ -247,6 +247,9 @@
                         C(nuc,nrate,dim,spl,i-1,3)*(query-rhoYedat(i-1)) +&
                         C(nuc,nrate,dim,spl,i-1,4)
                    exit
+                else
+                   result = 0.0d0
+                   exit
                 end if
              end if
 
