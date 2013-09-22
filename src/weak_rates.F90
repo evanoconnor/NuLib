@@ -15,7 +15,9 @@
    contains
 
      subroutine readrates(filename,table_bounds)
-  !      real*8, allocatable,dimension(:,:,:) :: eta ! eta(nucleus,energy group, emissivity
+       
+       use nulib, only : weakrates_density_extrapolation
+       
        character lindex
        character*200 :: filename,line
        real*8, dimension(4) :: table_bounds
@@ -34,12 +36,13 @@
        allocate(nuclei_A(nspecies))
        allocate(nuclei_Z(nspecies))
        call get_Hempel_As_and_Zs(nuclei_A,nuclei_Z)
-
+       
        !Set rhoYe and T9 bounds for LMP rates
        table_bounds(1)=1.0d0     !min lrhoYe
        table_bounds(2)=1.12d0    !min t9 (=0.01 for LMP, =0.1 for nuc_dist_hempel)
-       table_bounds(3)=15.0d0    !max lrhoYe
+       table_bounds(3)=12.5d0    !max lrhoYe
        table_bounds(4)=100.0d0   !max t9
+       if(weakrates_density_extrapolation) table_bounds(3)=15.0d0
 
        ! Count the dimension of the data in rhoYe and T9
        open(1,file=filename,status='old')
@@ -661,8 +664,6 @@
 
           if (number_density_integral.eq.0.0d0.and.energy_density_integral.eq.0.0d0) then             
              avgenergy = (eos_variables(tempindex))*1.0d0
-             write(*,*) "Zero integral"
-             stop
           else
              avgenergy = (eos_variables(tempindex))*(energy_density_integral/number_density_integral)
           end if

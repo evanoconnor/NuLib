@@ -83,16 +83,15 @@ program make_table_example
   !zone + log spacing) see nulib.F90:initialize_nulib
   call initialize_nulib(mytable_neutrino_scheme,mytable_number_species,mytable_number_groups)
 
-  !read in weak rates table
-  !call readrates_LMP()
-
   !read in EOS table & set reference mass
   call readtable(eos_filename)
   m_ref = m_amu !for SFHo_EOS (Hempel)
   ! m_ref = m_n !for LS200
   
   !read in weak rates table and build interpolant functions
+  weakrates_density_extrapolation = .false.
   call readrates(weakrates_filename,table_bounds)
+  
 
   adhoc_nux_factor = 0.0d0 !increase for adhoc nux heating (also set
                            !add_nux_absorption_on_n_and_p to true)

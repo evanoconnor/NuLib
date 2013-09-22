@@ -65,6 +65,7 @@ program point_example
   ! m_ref = m_n !for LS220
 
   !read in weak rates table and build interpolant functions
+  weakrates_density_extrapolation = .true.
   call readrates(weakrates_filename,table_bounds)
 
   !example point
