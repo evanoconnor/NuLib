@@ -1,0 +1,76 @@
+####### Weak interaction parameters #######
+lmp_rates     		= 	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/lmp.dat"
+lmsh_rates		= 	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/lmsh.dat"
+oda_rates		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/oda_hires.dat"
+ffn_rates		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/ffn_hires.dat"
+
+## Priority ##
+ilmp			=	1	# 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, it will be ignored.
+ilmsh			=	0	# 0 indicates the table will not be used
+ioda			=	3
+iffn			=	2
+iapprox			=	0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ####### EOS parameters #######
+# #eos_table_name 		= 	"/projects/ceclub/gr1dnulib/eos/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
+# #
+# ####### Output parameters #######
+# #outdir			=	"./tables/"		# output directory, must exist
+# #tablename		=	"mytestjob"
+# #
+# ####### Neutrino Transport - M1 #######
+# #number_species		=	3			#number of neutrino species, limited 
+# #							#options will work, must be comensurate with table
+# #number_groups		=	24			#number of energy groups, limited 
+# #							#options will work, must be comensurate with table
+# #opacity_table 		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/tables/NuLib_LS220_rho82_temp65_ye51_ng24_ns3_version1.0_20130925.h5"          	           #opacity table name
+# #number_eas		=	3			#number of opacity variables to read in
+

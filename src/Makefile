@@ -12,7 +12,8 @@ SOURCES=nulib.F90 \
 	weak_magnetism_correction.F90 \
 	weak_rates.F90 \
 	inelastic_electron_scattering.F90 \
-	nuclei_distribution_helpers.F90
+	nuclei_distribution_helpers.F90 \
+	input_parser.F90
 
 NT_SOURCES=nulibtable.F90 \
 	   nulibtable_reader.F90 \

@@ -29,7 +29,8 @@ program make_table_example
   character*200 :: eos_filename = "/user/sullivan/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
 
   !Weak rate data (currently LMP rates only)
-  character*200 :: weakrates_filename = "/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/rates-ext.out"
+  character*200 :: parameters_filename = "/projects/ceclub/gr1dnulib/GitHub/NuLib/parameters"
+
 
   !final table parameters
   integer :: final_table_size_ye, final_table_size_rho, final_table_size_temp
@@ -90,7 +91,7 @@ program make_table_example
   
   !read in weak rates table and build interpolant functions
   weakrates_density_extrapolation = .false.
-  call readrates(weakrates_filename,table_bounds)
+  call readrates(parameters_filename,table_bounds)
   
 
   adhoc_nux_factor = 0.0d0 !increase for adhoc nux heating (also set

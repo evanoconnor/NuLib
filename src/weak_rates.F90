@@ -1,34 +1,52 @@
  !-*-f90-*- 
  module weak_rates
+
    implicit none
+
    real*8, allocatable,dimension(:,:,:,:) :: rates  ! rates[nuc,T,rhoYe,rates+uf(indexed by nrate)]
+   real*8, allocatable,dimension(:,:,:,:,:,:) :: C ! Matrix of spline coefficients (see desc. below)
    real*8, allocatable,dimension(:,:) :: nuclear_species ! nuclear_species[nucleus, (Q, A, Z)]
-   integer, allocatable,dimension(:) :: nuclei_A ! Hempel EOS nuclei
-   integer, allocatable,dimension(:) :: nuclei_Z ! Hempel EOS nuclei
    real*8, allocatable,dimension(:) :: t9dat
    real*8, allocatable,dimension(:) :: rhoYedat
-   real*8, allocatable,dimension(:,:,:,:,:,:) :: C ! Matrix of spline coefficients (see desc. below)
-   integer, allocatable,dimension(:,:) :: nucleus_index 
+
+   integer, allocatable,dimension(:) :: nuclei_A ! Hempel EOS nuclei
+   integer, allocatable,dimension(:) :: nuclei_Z ! Hempel EOS nuclei
+   integer, allocatable,dimension(:,:) :: nucleus_index ! output array index for a given (A,Z)
+
+   ! various counters
    integer nuc,nrho,nt9,nnuc,nrate,nspecies
 
+   ! weak interaction rate data table file names
+   character*200 :: ffn_rates,oda_rates,lmp_rates,lmsh_rates
+   character*200, dimension(4) :: files_to_load
+   integer, dimension(4) :: ifiles
+   integer iprior
+   
+   ! table priorities
+   integer, dimension(5) :: file_priority
 
    contains
 
-     subroutine readrates(filename,table_bounds)
+     subroutine readrates(params,table_bounds)
        
        use nulib, only : weakrates_density_extrapolation
        
        character lindex
-       character*200 :: filename,line
+       character*200 :: filename,line,params
+       character*200, dimension(4) :: filenames
        real*8, dimension(4) :: table_bounds
-       integer i,dim,A,Z
+       integer i,j,dim,A,Z,nfile
        real*8 :: t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu
-       real*8 :: lrho_prior
+       real*8 :: lrho_prior,nucA,nucZ,nucQ
+       logical continue_reading
        nuc = 0
        nrho = 0
        nt9 = 0
        dim = 1
-
+       
+       ! Read and set user designated initialization parameters
+       call input_parser(params)
+       filename = lmp_rates
 
        ! Initialize Hempel EOS dependencies 
        call set_up_Hempel ! set's up EOS for nuclear abundances
@@ -44,26 +62,65 @@
        table_bounds(4)=100.0d0   !max t9
        if(weakrates_density_extrapolation) table_bounds(3)=15.0d0
 
-       ! Count the dimension of the data in rhoYe and T9
-       open(1,file=filename,status='old')
-       do
-          read(1,'(A)',end=10) line
-          read(line,*) lindex
-          if (lindex.eq.'p') then
-             nuc = nuc + 1
-             nrho = 0 
-             nt9 = 0
-          end if
-          if (index('0123456789',lindex).ne.0) then
-             lrho_prior = lrho
-             read(line,*) t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu            
-             if (lrho.ne.lrho_prior) then
-                nrho = nrho + 1
-             end if
-             nt9 = nt9 + 1
-          end if
+       ! if(ilmp.gt.0) files_to_load(ilmp)=lmp_rates
+       ! if(ilmsh.gt.0) files_to_load(ilmsh)=lmsh_rates
+       ! if(iffn.gt.0) files_to_load(iffn)=ffn_rates
+       ! if(ioda.gt.0) files_to_load(ioda)=oda_rates
+
+       nfile = 0
+       iprior = 0
+       ifiles = 0
+       do i=1,4
+          if(file_priority(i).gt.0)nfile = nfile + 1
        end do
- 10    close(1)
+
+
+       do i=1,4       ! order to load file
+          do j=1,4    ! files in order
+             if(file_priority(j).eq.i)then
+                ifiles(i)=j
+             end if
+          end do
+       end do
+
+       allocate(nucleus_index(nspecies,nspecies))
+       nucleus_index = 0
+       
+       do i=1,4
+          if(ifiles(i).eq.0) cycle
+          filename=files_to_load(ifiles(i))
+          open(1,file=filename,status='old')
+          do
+             read(1,'(A)',end=10) line
+             read(line,*) lindex
+             if (lindex.eq.'p') then
+                continue_reading = .true.
+                read(line(index(line(1:),"Q=")+2:index(line(1:),"Q=")+9),*) nucQ
+                read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+4),*) nucA
+                read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nucZ
+                A = int(nucA)
+                Z = int(nucZ)
+                if(nucleus_index(A,Z).ne.0) then
+                   continue_reading = .false.
+                   cycle
+                end if
+                nuc = nuc + 1
+                nrho = 0 
+                nt9 = 0
+             end if
+             if (index('0123456789',lindex).ne.0.and.continue_reading) then
+                lrho_prior = lrho
+                read(line,*) t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu            
+                if (lrho.ne.lrho_prior) then
+                   nrho = nrho + 1
+                end if
+                nt9 = nt9 + 1
+             end if
+          end do
+
+10        close(1)
+
+       end do
        write(*,*) nuc,nrho,nt9/nrho
 
        ! allocate the array's based on dimension
@@ -71,50 +128,66 @@
        allocate(nuclear_species(nuc,3))
        allocate(t9dat(nt9/nrho))
        allocate(rhoYedat(nrho))
-       allocate(nucleus_index(nspecies,nspecies))
-
+       
        nuc = 0
        lrho = 0.0d0
        nrho = 0
        nt9 = 0
-       ! fill the arrays
-       open(1,file=filename,status='old')
-       do
-          read(1,'(A)',end=20) line
-          read(line,*) lindex
-          if (lindex.eq.'p') then
-             nuc = nuc + 1
-             read(line(index(line(1:),"Q=")+2:index(line(1:),"Q=")+9),*) nuclear_species(nuc,1)
-             read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+4),*) nuclear_species(nuc,2)
-             A = nuclear_species(nuc,2)
-             read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nuclear_species(nuc,3)
-             nuclear_species(nuc,3)=nuclear_species(nuc,3)+1 !Currently reading in z of daughter which is 1 less that of parent, hence the addition of one
-             Z = nuclear_species(nuc,3)
-             nucleus_index(A,Z) = nuc
-             nrho = 0 
-             nt9 = 0
-          end if
-          if (index('0123456789',lindex).ne.0) then
-             lrho_prior = lrho
-             read(line,*) t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu            
-             if (lrho.ne.lrho_prior) then
-                nrho = nrho + 1
+       nucleus_index = 0
+
+
+       do i=1,4
+          if(ifiles(i).eq.0) cycle
+          filename=files_to_load(ifiles(i))
+          ! fill the arrays
+          open(1,file=filename,status='old')
+          do
+             read(1,'(A)',end=20) line
+             read(line,*) lindex
+             if (lindex.eq.'p') then
+                continue_reading = .true.
+                read(line(index(line(1:),"Q=")+2:index(line(1:),"Q=")+9),*) nucQ
+                read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+4),*) nucA
+                read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nucZ
+                A = int(nucA)
+                Z = int(nucZ)
+                if(nucleus_index(A,Z).ne.0) then
+                   continue_reading = .false.
+                   cycle
+                end if
+                nuc = nuc + 1
+                nuclear_species(nuc,1) = nucQ
+                nuclear_species(nuc,2) = nucA
+                nuclear_species(nuc,3) = nucZ
+                nuclear_species(nuc,3)=nuclear_species(nuc,3)+1 !Currently reading in z of daughter which is 1 less that of parent, hence the addition of one
+                nucleus_index(A,Z) = nuc
+                nrho = 0 
                 nt9 = 0
              end if
-             nt9 = nt9 + 1
-             rates(nuc,nt9,nrho,1)=lbetap
-             rates(nuc,nt9,nrho,2)=leps
-             rates(nuc,nt9,nrho,3)=lnu
-             rates(nuc,nt9,nrho,4)=lbetam
-             rates(nuc,nt9,nrho,5)=lpos
-             rates(nuc,nt9,nrho,6)=lanu
-             rates(nuc,nt9,nrho,7)=uf
-             t9dat(nt9)=t9
-             rhoYedat(nrho)=lrho
-          end if
+             if (index('0123456789',lindex).ne.0.and.continue_reading) then
+                lrho_prior = lrho
+                read(line,*) t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu            
+                if (lrho.ne.lrho_prior) then
+                   nrho = nrho + 1
+                   nt9 = 0
+                end if
+                nt9 = nt9 + 1
+                rates(nuc,nt9,nrho,1)=lbetap
+                rates(nuc,nt9,nrho,2)=leps
+                rates(nuc,nt9,nrho,3)=lnu
+                rates(nuc,nt9,nrho,4)=lbetam
+                rates(nuc,nt9,nrho,5)=lpos
+                rates(nuc,nt9,nrho,6)=lanu
+                rates(nuc,nt9,nrho,7)=uf
+                t9dat(nt9)=t9
+                rhoYedat(nrho)=lrho
+             end if
+          end do
+
+20        close(1)
+
        end do
-                    
- 20    close(1)
+
        write(*,*) "Weak rate data loaded."
 
        ! build array of interpolating spline coefficients
