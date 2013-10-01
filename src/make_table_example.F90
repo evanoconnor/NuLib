@@ -25,10 +25,7 @@ program make_table_example
   !number of energy groups
   integer :: mytable_number_groups = 24
 
-  !EOS table
-  character*200 :: eos_filename = "/user/sullivan/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
-
-  !Weak rate data (currently LMP rates only)
+  !NuLib parameters file (weak rates and EOS)
   character*200 :: parameters_filename = "/projects/ceclub/gr1dnulib/GitHub/NuLib/parameters"
 
 
@@ -80,6 +77,7 @@ program make_table_example
   real*8 dxfac,mindx
   logical :: doing_inelastic
 
+  call input_parser(parameters_filename)
   !this sets up many cooefficients and creates the energy grid (one
   !zone + log spacing) see nulib.F90:initialize_nulib
   call initialize_nulib(mytable_neutrino_scheme,mytable_number_species,mytable_number_groups)
@@ -91,7 +89,7 @@ program make_table_example
   
   !read in weak rates table and build interpolant functions
   weakrates_density_extrapolation = .false.
-  call readrates(parameters_filename,table_bounds)
+  call readrates(table_bounds)
   
 
   adhoc_nux_factor = 0.0d0 !increase for adhoc nux heating (also set

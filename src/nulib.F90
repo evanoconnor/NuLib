@@ -24,7 +24,10 @@ module nulib
   real*8, allocatable,dimension(:) :: bin_widths ! MeV, energy width of bin
   real*8, allocatable,dimension(:) :: bin_bottom ! MeV, energy at bottom of bin
   real*8, allocatable,dimension(:) :: bin_top ! MeV, energy at top of bin
-  
+
+  !EOS table
+  character*200 :: eos_filename
+
   !EOS reference mass (Shen, m_amu, LS, m_n)
   real*8 :: m_ref !MeV
 

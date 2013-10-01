@@ -7,6 +7,7 @@ subroutine input_parser(fn)
   implicit none
   character*(*) fn
 
+  call get_string_parameter(fn,'eos_table_name',eos_filename)
   call get_string_parameter(fn,'lmp_rates',files_to_load(1))
   call get_string_parameter(fn,'lmsh_rates',files_to_load(2))
   call get_string_parameter(fn,'oda_rates',files_to_load(3))

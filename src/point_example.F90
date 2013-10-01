@@ -29,11 +29,8 @@ program point_example
   !number of energy groups
   integer :: mypoint_number_groups = 24
 
-  !EOS table
-  character*200 :: eos_filename = "/user/sullivan/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
-
-  !Weak rate data (currently LMP rates only)
-  character*200 :: weakrates_filename = "/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/rates-ext.out"
+  !NuLib parameters file (weak rates and EOS)
+  character*200 :: parameters_filename = "/projects/ceclub/gr1dnulib/GitHub/NuLib/parameters"
 
   !local variables
   real*8, allocatable,dimension(:,:) :: local_emissivity
@@ -55,6 +52,7 @@ program point_example
   allocate(local_scatopacity(mypoint_number_output_species,mypoint_number_groups))
   allocate(blackbody_spectra(mypoint_number_output_species,mypoint_number_groups))
 
+  call input_parser(parameters_filename)
   !this sets up many cooefficients and creates the energy grid (one
   !zone + log spacing) see nulib.F90:initialize_nulib
   call initialize_nulib(mypoint_neutrino_scheme,mypoint_number_species,mypoint_number_groups)
@@ -66,7 +64,7 @@ program point_example
 
   !read in weak rates table and build interpolant functions
   weakrates_density_extrapolation = .true.
-  call readrates(weakrates_filename,table_bounds)
+  call readrates(table_bounds)
 
   !example point
   xrho = 2.0d10 !g/cm^3

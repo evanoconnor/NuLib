@@ -39,9 +39,9 @@ program test
   t9array(24)=65.00
   t9array(25)=100.00
 
-
+  call input_parser(filename)
   call initialize_nulib(1,6,24)
-  call readrates(filename,table_bounds)
+  call readrates(table_bounds)
 
   open(11,file='lmp.dat')
 

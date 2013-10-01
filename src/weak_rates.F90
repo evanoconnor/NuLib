@@ -27,7 +27,7 @@
 
    contains
 
-     subroutine readrates(params,table_bounds)
+     subroutine readrates(table_bounds)
        
        use nulib, only : weakrates_density_extrapolation
        
@@ -43,11 +43,7 @@
        nrho = 0
        nt9 = 0
        dim = 1
-       
-       ! Read and set user designated initialization parameters
-       call input_parser(params)
-       filename = lmp_rates
-
+      
        ! Initialize Hempel EOS dependencies 
        call set_up_Hempel ! set's up EOS for nuclear abundances
        call get_Hempel_number_of_species(nspecies) ! returns the total number of nuclei

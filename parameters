@@ -7,61 +7,61 @@ ffn_rates		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/
 ## Priority ##
 ilmp			=	1	# 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, it will be ignored.
 ilmsh			=	0	# 0 indicates the table will not be used
-ioda			=	3
-iffn			=	2
+ioda			=	0
+iffn			=	0
 iapprox			=	0
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ####### EOS parameters #######
-# #eos_table_name 		= 	"/projects/ceclub/gr1dnulib/eos/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
-# #
+eos_table_name 		= 	"/projects/ceclub/gr1dnulib/eos/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ####### Output parameters #######
 # #outdir			=	"./tables/"		# output directory, must exist
 # #tablename		=	"mytestjob"
