@@ -1,5 +1,5 @@
 ####### Weak interaction parameters #######
-lmp_rates     		= 	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/lmp.dat"
+lmp_rates     		= 	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/rates-ext.out"
 lmsh_rates		= 	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/lmsh.dat"
 oda_rates		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/oda_hires.dat"
 ffn_rates		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/ffn_hires.dat"

@@ -95,7 +95,7 @@
                 read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+4),*) nucA
                 read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nucZ
                 A = int(nucA)
-                Z = int(nucZ)
+                Z = int(nucZ)+1
                 if(nucleus_index(A,Z).ne.0) then
                    continue_reading = .false.
                    cycle
@@ -146,7 +146,7 @@
                 read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+4),*) nucA
                 read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nucZ
                 A = int(nucA)
-                Z = int(nucZ)
+                Z = int(nucZ)+1
                 if(nucleus_index(A,Z).ne.0) then
                    continue_reading = .false.
                    cycle
