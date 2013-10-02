@@ -1,3 +1,6 @@
+# ####### EOS parameters #######
+eos_table_name 		= 	"/projects/ceclub/gr1dnulib/eos/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
+
 ####### Weak interaction parameters #######
 lmp_rates     		= 	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/rates-ext.out"
 lmsh_rates		= 	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/lmsh.dat"
@@ -11,8 +14,6 @@ ioda			=	0
 iffn			=	0
 iapprox			=	0
 
-# ####### EOS parameters #######
-eos_table_name 		= 	"/projects/ceclub/gr1dnulib/eos/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
 
 
 
