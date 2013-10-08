@@ -85,12 +85,18 @@ program make_table_example
   !read in EOS table & set reference mass
   call readtable(eos_filename)
   m_ref = m_amu !for SFHo_EOS (Hempel)
-  ! m_ref = m_n !for LS200
+  call set_up_Hempel ! set's up EOS for nuclear abundances
+
   
   !read in weak rates table and build interpolant functions
   weakrates_density_extrapolation = .false.
-  call readrates(table_bounds)
+  call readrates(table_bounds)  
   
+  ! !$OMP PARALLEL
+  ! write(*,*) t9dat(5),rhoYedat(5)
+  ! !$OMP END PARALLEL
+  ! stop
+
 
   adhoc_nux_factor = 0.0d0 !increase for adhoc nux heating (also set
                            !add_nux_absorption_on_n_and_p to true)
@@ -172,7 +178,8 @@ program make_table_example
 
   !$OMP PARALLEL DO PRIVATE(itemp,iye,local_emissivity,local_absopacity,local_scatopacity, &
   !$OMP ns,ng,eos_variables,keytemp,keyerr,matter_prs,matter_ent,matter_cs2,matter_dedt, &
-  !$OMP matter_dpderho,matter_dpdrhoe,rates,nuclear_species,nuclei_A,nuclei_Z,t9dat,rhoYedat,C,nucleus_index,nuc,nrho,nt9,nnuc,nrate,nspecies)
+  !$OMP matter_dpderho,matter_dpdrhoe) COPYIN(rates,nuclear_species,nuclei_A,nuclei_Z,t9dat,rhoYedat, &
+  !$OMP C,nucleus_index,nuc,nrho,nt9,nnuc,nrate,nspecies,ifiles,file_priority)
   !loop over rho,temp,ye of table, do each point
   do irho=1,final_table_size_rho
      !must do declarations here for openmp
