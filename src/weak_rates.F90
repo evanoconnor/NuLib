@@ -502,7 +502,6 @@
                 emissivity(ng) = (energies(ng)*mev_to_erg)*(1.0d39*number_density)*nu_spectrum_eval/(4.0d0*pi) !erg/cm^3/s/MeV/srad
              end do
           endif
-          if(Sum(emissivity).ne.Sum(emissivity)) write(*,*) "found one (inside)2"          
           return
 
         end function emissivity_from_weak_interaction_rates
@@ -772,7 +771,9 @@
           real*8, dimension(number_groups) :: emissivity_ni56
 
           !Hempel EOS and number of species are set up in readrates
+          !$OMP CRITICAL(HEMPEL)
           call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)
+          !$OMP END CRITICAL(HEMPEL)
           emissivity = 0.0d0
 
           do i=1,nspecies !nnuc for only looping over LMP rates
@@ -782,16 +783,13 @@
 
              if(i.eq.1)then !if LMP data is not provided for a given nucleus, we will use the rates for 56Ni
                 emissivity_ni56 = emissivity_from_weak_interaction_rates(56,28,1.0d0,eos_variables,neutrino_species) 
-                if(Sum(emissivity_ni56).ne.Sum(emissivity_ni56)) write(*,*) "found one (inside)"
              endif
 
              if(nucleus_index(nuclei_A(i),nuclei_Z(i)) == 0)then
                 emissivity(:) = emissivity(:) + emissivity_ni56(:)*number_densities(i)
-                if(Sum(emissivity).ne.Sum(emissivity))write(*,*) number_densities(i),i,eos_variables(1),eos_variables(2),eos_variables(mueindex)
              else
                 emissivity_temp = emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&
                      eos_variables,neutrino_species)
-                if(Sum(emissivity_temp).ne.Sum(emissivity_temp)) write(*,*) "found one (inside)"
                 emissivity = emissivity + emissivity_temp
              end if
 
