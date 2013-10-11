@@ -34,6 +34,7 @@
      subroutine readrates(table_bounds)
        
        use nulib, only : weakrates_density_extrapolation
+
        
        character lindex
        character*200 :: filename,line,params
@@ -771,9 +772,7 @@
           real*8, dimension(number_groups) :: emissivity_ni56
 
           !Hempel EOS and number of species are set up in readrates
-          !$OMP CRITICAL(HEMPEL)
-          call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)
-          !$OMP END CRITICAL(HEMPEL)
+          call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)          
           emissivity = 0.0d0
 
           do i=1,nspecies !nnuc for only looping over LMP rates

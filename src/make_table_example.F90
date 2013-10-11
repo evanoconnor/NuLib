@@ -92,12 +92,6 @@ program make_table_example
   weakrates_density_extrapolation = .false.
   call readrates(table_bounds)  
   
-  ! !$OMP PARALLEL
-  ! write(*,*) t9dat(5),rhoYedat(5)
-  ! !$OMP END PARALLEL
-  ! stop
-
-
   adhoc_nux_factor = 0.0d0 !increase for adhoc nux heating (also set
                            !add_nux_absorption_on_n_and_p to true)
 
@@ -200,6 +194,7 @@ program make_table_example
            !! EOS stuff
            keytemp = 1
            keyerr = 0
+
            call nuc_eos_full(eos_variables(rhoindex),eos_variables(tempindex), &
                 eos_variables(yeindex),eos_variables(energyindex),matter_prs, &
                 eos_variables(entropyindex),matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe, &

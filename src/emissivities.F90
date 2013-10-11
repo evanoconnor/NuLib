@@ -401,7 +401,7 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
         call total_emissivities(ns,energy_point,energy_bottom,energy_top,emissivity,eos_variables)
         emissivity_spectra(ns,ng) = emissivity !ergs/cm^3/s/MeV/srad
      enddo
- 
+
     !first conditions require rho,T,Ye grid point to be within phase space of the tabulated weak rates
      if (lrhoYe.ge.table_bounds(1).and.lrhoYe.le.table_bounds(3)&
           .and.t9.ge.table_bounds(2).and.t9.le.table_bounds(4)) then
