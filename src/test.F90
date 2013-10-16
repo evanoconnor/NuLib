@@ -43,7 +43,7 @@ program test
   call initialize_nulib(1,6,24)
   call readrates(table_bounds)
 
-  open(11,file='lmp.dat')
+  open(11,file='lmsh-extended.dat')
 
   do i=1,nnuc
      write(11,"(A14,A3,I2,A3,I2,A3,I2,A3,F8.4)")"pos. daughter","z=",int(nuclear_species(i,3))-1,"n=",int(nuclear_species(i,2))-(int(nuclear_species(i,3)-1)),"a=",int(nuclear_species(i,2)),"Q=",nuclear_species(i,1)
@@ -52,7 +52,7 @@ program test
            query_t9 = t9array(k)
            query_lrYe = dble(j)/2
            write(11,"(F7.2,F6.1,F8.3,F9.3,F9.3,F9.3,F9.3,F9.3,F9.3)") query_t9,query_lrYe,&
-                weakrates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),query_t9,query_lrYe,7),&
+                0.0000d0,&
                 weakrates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),query_t9,query_lrYe,1),&
                 weakrates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),query_t9,query_lrYe,2),&
                 weakrates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),query_t9,query_lrYe,3),&

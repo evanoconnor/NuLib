@@ -321,7 +321,7 @@
                         C(nuc,nrate,dim,spl,i-1,4)
                    exit
                 else
-                   result = 0.0d0
+                   result = -1.0d5
                    exit
                 end if
              end if
@@ -384,6 +384,18 @@
                             C(nucleus,nrate,dim,i,j-1,4)
                        exit
                     end if
+                 else if (query1.gt.t9dat(j).and.j.eq.nt9) then
+                    if(query1.le.100.0d0)then
+                       value = C(nucleus,nrate,dim,i,j-1,1)*(query1-t9dat(j-1))**3 +&
+                            C(nucleus,nrate,dim,i,j-1,2)*(query1-t9dat(j-1))**2 +&
+                            C(nucleus,nrate,dim,i,j-1,3)*(query1-t9dat(j-1)) +&
+                            C(nucleus,nrate,dim,i,j-1,4)
+                       exit
+                    else
+                       value = -1.0d5
+                       exit
+                    end if
+
                 end if
              end do
              Data2d(i,1) = rhoYedat(i)
