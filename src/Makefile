@@ -1,6 +1,7 @@
 include ../make.inc
 
 SOURCES=nulib.F90 \
+	weak_rates.F90 \
 	fermi.F90 \
 	helpers.F90 \
 	gauss_laguerre_helpers.F90 \
@@ -10,7 +11,6 @@ SOURCES=nulib.F90 \
 	emissivities.F90 \
 	scattering.F90 \
 	weak_magnetism_correction.F90 \
-	weak_rates.F90 \
 	inelastic_electron_scattering.F90 \
 	nuclei_distribution_helpers.F90 \
 	input_parser.F90

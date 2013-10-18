@@ -3,33 +3,38 @@
 
    implicit none
 
-   real*8, allocatable,dimension(:,:,:,:) :: rates  ! rates[nuc,T,rhoYe,rates+uf(indexed by nrate)]
-   real*8, allocatable,dimension(:,:,:,:,:,:) :: C ! Matrix of spline coefficients (see desc. below)
-   real*8, allocatable,dimension(:,:) :: nuclear_species ! nuclear_species[nucleus, (Q, A, Z)]
-   real*8, allocatable,dimension(:) :: t9dat
-   real*8, allocatable,dimension(:) :: rhoYedat
+   real*8, allocatable,dimension(:,:,:,:),save :: rates  ! rates[nuc,T,rhoYe,rates+uf(indexed by nrate)]
+   real*8, allocatable,dimension(:,:,:,:,:,:),save :: C ! Matrix of spline coefficients (see desc. below)
+   real*8, allocatable,dimension(:,:),save :: nuclear_species ! nuclear_species[nucleus, (Q, A, Z)]
+   real*8, allocatable,dimension(:),save :: t9dat
+   real*8, allocatable,dimension(:),save :: rhoYedat
 
-   integer, allocatable,dimension(:) :: nuclei_A ! Hempel EOS nuclei
-   integer, allocatable,dimension(:) :: nuclei_Z ! Hempel EOS nuclei
-   integer, allocatable,dimension(:,:) :: nucleus_index ! output array index for a given (A,Z)
+   integer, allocatable,dimension(:),save :: nuclei_A ! Hempel EOS nuclei
+   integer, allocatable,dimension(:),save :: nuclei_Z ! Hempel EOS nuclei
+   real*8, allocatable,dimension(:),save :: number_densities
+   real*8, allocatable,dimension(:),save :: mass_fractions
+
+   integer, allocatable,dimension(:,:),save :: nucleus_index ! output array index for a given (A,Z)
 
    ! various counters
    integer nuc,nrho,nt9,nnuc,nrate,nspecies
 
    ! weak interaction rate data table file names
-   character*200 :: ffn_rates,oda_rates,lmp_rates,lmsh_rates
    character*200, dimension(4) :: files_to_load
    integer, dimension(4) :: ifiles
-   integer iprior
    
    ! table priorities
-   integer, dimension(5) :: file_priority
+   integer, dimension(5),save :: file_priority
+
+   !$OMP THREADPRIVATE(rates,nuclear_species,nuclei_A,nuclei_Z,t9dat,rhoYedat, &
+   !$OMP C,nucleus_index,nuc,nrho,nt9,nnuc,nrate,nspecies,ifiles,file_priority,number_densities,mass_fractions)
 
    contains
 
      subroutine readrates(table_bounds)
        
        use nulib, only : weakrates_density_extrapolation
+
        
        character lindex
        character*200 :: filename,line,params
@@ -39,16 +44,19 @@
        real*8 :: t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu
        real*8 :: lrho_prior,nucA,nucZ,nucQ
        logical continue_reading
+
        nuc = 0
        nrho = 0
        nt9 = 0
        dim = 1
       
        ! Initialize Hempel EOS dependencies 
-       call set_up_Hempel ! set's up EOS for nuclear abundances
        call get_Hempel_number_of_species(nspecies) ! returns the total number of nuclei
+       !$OMP PARALLEL COPYIN(nspecies)
        allocate(nuclei_A(nspecies))
        allocate(nuclei_Z(nspecies))
+       !$OMP END PARALLEL
+
        call get_Hempel_As_and_Zs(nuclei_A,nuclei_Z)
        
        !Set rhoYe and T9 bounds for LMP rates
@@ -64,13 +72,10 @@
        ! if(ioda.gt.0) files_to_load(ioda)=oda_rates
 
        nfile = 0
-       iprior = 0
        ifiles = 0
        do i=1,4
           if(file_priority(i).gt.0)nfile = nfile + 1
        end do
-
-
        do i=1,4       ! order to load file
           do j=1,4    ! files in order
              if(file_priority(j).eq.i)then
@@ -78,10 +83,13 @@
              end if
           end do
        end do
-
+       !$OMP PARALLEL COPYIN(nspecies)
        allocate(nucleus_index(nspecies,nspecies))
+       allocate(number_densities(nspecies))
+       allocate(mass_fractions(nspecies))
+       !$OMP END PARALLEL
        nucleus_index = 0
-       
+
        do i=1,4
           if(ifiles(i).eq.0) cycle
           filename=files_to_load(ifiles(i))
@@ -117,13 +125,17 @@
 10        close(1)
 
        end do
+
        write(*,*) nuc,nrho,nt9/nrho
 
        ! allocate the array's based on dimension
+       !$OMP PARALLEL COPYIN(nuc,nt9,nrho)
        allocate(rates(nuc,nt9/nrho,nrho,7))
        allocate(nuclear_species(nuc,3))
        allocate(t9dat(nt9/nrho))
        allocate(rhoYedat(nrho))
+       !$OMP END PARALLEL
+
        
        nuc = 0
        lrho = 0.0d0
@@ -183,12 +195,19 @@
 20        close(1)
 
        end do
-
+       
+       !$OMP PARALLEL COPYIN(rates,t9dat,rhoYedat,nucleus_index)     
+       !$OMP END PARALLEL
+       
        write(*,*) "Weak rate data loaded."
 
        ! build array of interpolating spline coefficients
        nnuc = nuc
        call monotonic_interp_2d(dim)
+
+       !$OMP PARALLEL COPYIN(C)
+       !$OMP END PARALLEL     
+
        write(*,*) "Interpolant functions built. Read-in is complete."
      end subroutine readrates
 
@@ -340,7 +359,9 @@
           dim = 1
 
           allocate(Data(nt9,2))
+          !$OMP PARALLEL COPYIN(nuc,nt9,nrho)
           allocate(C(nuc,7,2,nrho,nt9,4))  ! 7 = 6 LMP weak rates + chemical potential
+          !$OMP END PARALLEL
 
           nuc = 1
           do nuc=1,nnuc
@@ -494,6 +515,7 @@
                 emissivity(ng) = (energies(ng)*mev_to_erg)*(1.0d39*number_density)*nu_spectrum_eval/(4.0d0*pi) !erg/cm^3/s/MeV/srad
              end do
           endif
+          return
 
         end function emissivity_from_weak_interaction_rates
 
@@ -750,47 +772,51 @@
           end if
         end function average_energy
         
+        
+        subroutine microphysical_electron_capture(neutrino_species,eos_variables,emissivity)
+          use nulib, only : total_eos_variables, number_groups, tempindex, hempel_lookup_table, mueindex
+
+          integer i
+          integer, intent(in) :: neutrino_species
+          real*8, intent(in) :: eos_variables(total_eos_variables)
+          real*8, dimension(number_groups) :: emissivity
+          real*8, dimension(number_groups) :: emissivity_temp
+          real*8, dimension(number_groups) :: emissivity_ni56
+
+          !Hempel EOS and number of species are set up in readrates
+          call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)          
+          emissivity = 0.0d0
+
+          do i=1,nspecies !nnuc for only looping over LMP rates
+             !     emissivity = emissivity + emissivity_from_weak_interaction_rates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),&
+             !          number_densities(hempel_lookup_table(int(nuclear_species(i,2)),int(nuclear_species(i,3)))),eos_variables,neutrino_species)       
+             !use this when i=1,nspecies
+
+             if(i.eq.1)then !if LMP data is not provided for a given nucleus, we will use the rates for 56Ni
+                emissivity_ni56 = emissivity_from_weak_interaction_rates(56,28,1.0d0,eos_variables,neutrino_species) 
+             endif
+
+             if(nucleus_index(nuclei_A(i),nuclei_Z(i)) == 0)then
+                emissivity(:) = emissivity(:) + emissivity_ni56(:)*number_densities(i)
+             else
+                emissivity_temp = emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&
+                     eos_variables,neutrino_species)
+                emissivity = emissivity + emissivity_temp
+             end if
+
+          end do
+          number_densities = 0.0d0
+          mass_fractions = 0.0d0
+          return
+
+        end subroutine microphysical_electron_capture
 
 
 end module weak_rates
 
 !#################################################################################################!
 
-subroutine microphysical_electron_capture(neutrino_species,eos_variables,emissivity)
-  use nulib, only : total_eos_variables, number_groups, tempindex, hempel_lookup_table
-  use weak_rates
-  
-  integer i
-  integer, intent(in) :: neutrino_species
-  real*8, intent(in) :: eos_variables(total_eos_variables)
-  real*8, dimension(number_groups) :: emissivity
-  real*8, dimension(number_groups) :: emissivity_temp
-  real*8, dimension(number_groups) :: emissivity_ni56
-  real*8, dimension(nspecies) :: number_densities
-  real*8, dimension(nspecies) :: mass_fractions
 
-  !Hempel EOS and number of species are set up in readrates
-  call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)
-  emissivity = 0.0d0
-  do i=1,nspecies !nnuc for only looping over LMP rates
-!     emissivity = emissivity + emissivity_from_weak_interaction_rates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),&
-!          number_densities(hempel_lookup_table(int(nuclear_species(i,2)),int(nuclear_species(i,3)))),eos_variables,neutrino_species)       
-      !use this when i=1,nspecies
-
-     if(i.eq.1)then !if LMP data is not provided for a given nucleus, we will use the rates for 56Ni
-         emissivity_ni56 = emissivity_from_weak_interaction_rates(56,28,1.0d0,eos_variables,neutrino_species) 
-      endif
-
-      if(nucleus_index(nuclei_A(i),nuclei_Z(i)) == 0)then
-         emissivity = emissivity(:) + emissivity_ni56(:)*number_densities(i)
-      else
-        emissivity_temp = emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&
-             eos_variables,neutrino_species)
-        emissivity = emissivity + emissivity_temp
-     end if
-
-  end do
-end subroutine microphysical_electron_capture
 
 
 
