@@ -833,10 +833,11 @@ function  return_emissivity_from_electron_capture_on_A(A,Z,number_density,eos_va
   emissivity = emissivity_from_weak_interaction_rates(A,Z,number_density,eos_variables,neutrino_species)
 end function return_emissivity_from_electron_capture_on_A
 
-function analytic_weakrates(temperature,q_gs,mue) result(rate)
+function analytic_weakrates(n,temperature,q_gs,mue) result(rate)
 
   use nulib
 
+  integer, intent(in) :: n ! 0 for electron capture rate, 1 for nuetrino energy loss rate
   real*8 :: rate
   real*8 :: temperature
   real*8 :: chi
@@ -848,8 +849,8 @@ function analytic_weakrates(temperature,q_gs,mue) result(rate)
   chi = (q_gs-2.5d0)/temperature
   eta = mue/temperature + chi
 
-  rate = log(2.0d0)*4.6d0/6146.0d0*(temperature/m_e)**5.0d0*(complete_fermi_integral(4,eta)-2.0d0*chi*complete_fermi_integral(3,eta)+&
-       chi**2.0d0*complete_fermi_integral(2,eta))
+  rate = log(2.0d0)*4.6d0/6146.0d0*(temperature**(5.0d0+n)/m_e**(5.0d0))*(complete_fermi_integral(4+n,eta)+2.0d0*abs(chi)*complete_fermi_integral(3+n,eta)+&
+       chi**2.0d0*complete_fermi_integral(2+n,eta))
 
 !  write(*,*) chi,eta,rate,complete_fermi_integral(4,eta),2.0d0*chi*complete_fermi_integral(3,eta),chi**2.0d0*complete_fermi_integral(2,eta)
 !  write(*,*) complete_fermi_integral(4,eta),complete_fermi_integral(3,eta),complete_fermi_integral(2,eta)
