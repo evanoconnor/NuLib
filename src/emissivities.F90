@@ -13,7 +13,7 @@ function single_neutrino_emissivity_from_epannhil_given_energyrange( &
   real*8, intent(in) :: range_top !MeV, upper energy of integral
   
   !output
-  real*8 :: emissivity !total emissivity in MeV/cm^3/s
+  real*8 :: emissivity !total emissivity
 
   !function declarations
   real*8 :: epannhil_dQdenu_BRT06
@@ -58,7 +58,7 @@ function single_neutrino_emissivity_from_epannhil_given_energypoint( &
   real*8, intent(in) :: nu_energy !MeV, energy of point
   
   !output
-  real*8 :: emissivity !total emissivity in MeV/cm^3/s
+  real*8 :: emissivity !total emissivity
 
   !function declarations
   real*8 :: epannhil_dQdenu_BRT06
@@ -96,7 +96,7 @@ function single_neutrino_emissivity_from_NNBrem_given_energyrange( &
   real*8, intent(in) :: range_top !MeV, upper energy of integral
   
   !output
-  real*8 :: emissivity !total emissivity in MeV/cm^3/s
+  real*8 :: emissivity !total emissivity
 
   !function declarations
   !real*8 :: NNBrem_dQdenu_BRT06 ! do not yet need this, but should improve emissivity, so will
@@ -142,7 +142,7 @@ function single_neutrino_emissivity_from_NNBrem_given_energypoint( &
   real*8, intent(in) :: nu_energy !MeV, energy of point
 
   !output
-  real*8 :: emissivity !total emissivity in MeV/cm^3/s
+  real*8 :: emissivity !total emissivity
 
   !function declarations
   !real*8 :: NNBrem_dQdenu_BRT06 ! do not yet need this, but should improve emissivity, so will

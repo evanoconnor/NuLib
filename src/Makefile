@@ -35,18 +35,18 @@ EXTRAINCS = $(HDF5INCS) -I./nuc_eos
 EXTRADEPS += nuc_eos/nuc_eos.a
 EXTRAOBJECTS = nuc_eos/nuc_eos.a $(HDF5LIBS)
 
-all: nulib.a nulibtable_driver point_example make_table_example
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
 
-nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) 
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINC) -o ../nulibtable_driver nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS)
+../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) 
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINC) -o $@ nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS)
 
-point_example:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) point_example.F90
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o ../point_example point_example.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
+../point_example:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) point_example.F90
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ point_example.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
 
-make_table_example:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) make_table_example.F90
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o ../make_table_example make_table_example.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
+../make_table_example:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) make_table_example.F90
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_example.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
 
-nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS)
+nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
 	ar -r nulib.a *.o
 
 $(OBJECTS): %.o: %.F90 $(EXTRADEPS)
