@@ -771,7 +771,71 @@
              avgenergy = (eos_variables(tempindex))*(energy_density_integral/number_density_integral)
           end if
         end function average_energy
-        
+
+        function GPQ_intervals(q,eos_variables) result (interval)
+          use nulib, only : total_eos_variables,tempindex,mueindex,m_e
+
+          real*8, dimension(2) :: interval
+          real*8, intent(in) :: eos_variables(total_eos_variables)
+          real*8, intent(in) :: q
+          real*8 :: spectra
+          real*8 :: energy
+          real*8 :: centroid
+          real*8 :: lower_bound,lower_bound_spectra
+          real*8 :: upper_bound,upper_bound_spectra
+          real*8 :: tolerance
+          integer :: N,nmax_bisections
+          
+      
+          N=0
+          nmax_bisections = 25
+          centroid = (q+eos_variables(mueindex)-m_e)/eos_variables(tempindex)
+          tolerance = 1.0d-4
+          lower_bound = 0.0d0
+          upper_bound = centroid             
+            
+          do while (N < nmax_bisections)
+             lower_bound_spectra = ec_neutrino_spectra(lower_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))-0.01d0
+             upper_bound_spectra = ec_neutrino_spectra(upper_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))-0.01d0
+             energy = (upper_bound+lower_bound)/2
+             spectra = ec_neutrino_spectra(energy,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))-0.01d0
+             if (abs(spectra).le.tolerance) then
+                N = nmax_bisections + 1 !to exit loop
+             end if
+             if (sign(1.0d0,(upper_bound_spectra)).eq.sign(1.0d0,(spectra))) then
+                upper_bound = energy
+             else
+                lower_bound = energy
+             end if
+             N = N + 1   
+          end do
+          interval(1) = energy
+
+          N=0
+          nmax_bisections = 25
+          tolerance = 1.0d-4
+          lower_bound = centroid
+          upper_bound = min(1000.0d0,centroid*2)
+          do while (N < nmax_bisections)
+             lower_bound_spectra = ec_neutrino_spectra(lower_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))-0.01d0
+             upper_bound_spectra = ec_neutrino_spectra(upper_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))-0.01d0
+             energy = (upper_bound+lower_bound)/2
+             spectra = ec_neutrino_spectra(energy,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))-0.01d0
+             if (abs(spectra).le.tolerance) then
+                N = nmax_bisections + 1 !to exit loop
+             end if
+             if (sign(1.0d0,(upper_bound_spectra)).eq.sign(1.0d0,(spectra))) then
+                upper_bound = energy
+             else
+                lower_bound = energy
+             end if
+             N = N + 1   
+          end do
+
+          interval(2) = energy
+          return
+                   
+        end function GPQ_intervals        
         
         subroutine microphysical_electron_capture(neutrino_species,eos_variables,emissivity)
           use nulib, only : total_eos_variables, number_groups, tempindex, hempel_lookup_table, mueindex
