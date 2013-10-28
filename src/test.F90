@@ -1,69 +1,126 @@
-!-*-f90-*- 
+!-*-F90-*- 
 program test
 
   use weak_rates
   use nulib
+
   implicit none
+  
+  real*8 :: t9
+  real*8 :: lrhoye
+  real*8 :: analytic_weakrates,rate
+  integer i,j,t,d
 
-  character*200 :: filename = "/projects/ceclub/gr1dnulib/GitHub/NuLib/parameters"
-  real*8 :: query_t9,query_lrYe,logECs,eos_variables(14)!,emissivity(number_groups)
-  real*8, allocatable, dimension(:) :: emissivity
+
+  integer :: mypoint_neutrino_scheme = 1
+
+  !number of species for nulib to calculate interactions for, must
+  !be six currently, average is done via above parameter
+  integer :: mypoint_number_species = 6
+
+  !number of species for nulib to output interactions for, must
+  !be commensurate with neutrino_scheme above
+  integer :: mypoint_number_output_species = 3
+
+  !number of energy groups
+  integer :: mypoint_number_groups = 24
+
+  character*200 :: parameters = "/projects/ceclub/gr1dnulib/GitHub/NuLib/parameters"
+
+  !local variables
+  real*8, allocatable,dimension(:,:) :: local_emissivity
+  real*8, allocatable,dimension(:,:) :: local_absopacity
+  real*8, allocatable,dimension(:,:) :: local_scatopacity
+  real*8, allocatable,dimension(:,:) :: local_Phi0, local_Phi1
+  real*8, allocatable,dimension(:,:) :: blackbody_spectra
+  real*8, allocatable,dimension(:) :: eos_variables
+  real*8 :: matter_prs,matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe
+  integer :: keytemp,keyerr
+  real*8 :: precision = 1.0d-10
+  real*8 :: xrho, xtemp, xye
   real*8 dxfac,mindx
-  integer reqnuc,rate,A,Z,i,ilrhoye,itemp,j,k
-  real*8, dimension(25) :: t9array
+  real*8, dimension(4) :: lrhoyearr,t9arr
+  real*8, dimension(4,4) :: muearr
+  real*8 :: interval(2)
+  real*8 :: q
+  !allocate the arrays for the point values
+  allocate(local_emissivity(mypoint_number_output_species,mypoint_number_groups))
+  allocate(local_absopacity(mypoint_number_output_species,mypoint_number_groups))
+  allocate(local_scatopacity(mypoint_number_output_species,mypoint_number_groups))
+  allocate(blackbody_spectra(mypoint_number_output_species,mypoint_number_groups))
+
+  call input_parser(parameters)
+  !this sets up many cooefficients and creates the energy grid (one
+  !zone + log spacing) see nulib.F90:initialize_nulib
+  call initialize_nulib(mypoint_neutrino_scheme,mypoint_number_species,mypoint_number_groups)
+
+  !read in EOS table & set reference mass
+  call readtable(eos_filename)
+  m_ref = m_amu !for SFHo_EOS (Hempel)
+  ! m_ref = m_n !for LS220
+
+  !set up energies bins
+  do_integrated_BB_and_emissivity = .false.
+  mindx = 1.0d0
+  bin_bottom(1) = 0.0d0 !MeV
+  bin_bottom(2) = 1.0d0 !MeV
+  bin_bottom(3) = bin_bottom(2)+mindx
+  bin_bottom(number_groups) = 250.0d0
+  
+  call nulib_series2(number_groups-1,bin_bottom(2),bin_bottom(number_groups),mindx,dxfac)
+  do i=4,number_groups
+     bin_bottom(i) = bin_bottom(i-1)+(bin_bottom(i-1)-bin_bottom(i-2))*dxfac
+  enddo
+  
+  !calculate bin widths & energies from the bottom of the bin & energy at top on bin
+  do i=1,number_groups-1
+     energies(i) = (bin_bottom(i)+bin_bottom(i+1))/2.0d0
+     bin_widths(i) = bin_bottom(i+1)-bin_bottom(i)
+     bin_top(i) = bin_bottom(i+1)
+  enddo
+  energies(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups-1)*dxfac/2.0d0
+  bin_widths(number_groups) = 2.0*(energies(number_groups)-bin_bottom(number_groups))
+  bin_top(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups)
+
+  allocate(eos_variables(total_eos_variables))
+
+  !! EOS stuff
+  keytemp = 1
+  keyerr = 0
 
 
-  t9array(1)=0.01
-  t9array(2)=0.06
-  t9array(3)=0.10
-  t9array(4)=0.15
-  t9array(5)=0.20
-  t9array(6)=0.30
-  t9array(7)=0.40
-  t9array(8)=0.55
-  t9array(9)=0.70
-  t9array(10)=0.85
-  t9array(11)=1.00
-  t9array(12)=1.25
-  t9array(13)=1.50
-  t9array(14)=1.75
-  t9array(15)=2.00
-  t9array(16)=2.50
-  t9array(17)=3.00
-  t9array(18)=4.00
-  t9array(19)=5.00
-  t9array(20)=7.50
-  t9array(21)=10.00
-  t9array(22)=20.00
-  t9array(23)=30.00
-  t9array(24)=65.00
-  t9array(25)=100.00
 
-  call input_parser(filename)
-  call initialize_nulib(1,6,24)
+
+!###########################
+!######END NULIB SETUP######
+!###########################
+  
+
   call readrates(table_bounds)
+  
 
-  open(11,file='lmsh-extended.dat')
+  xye = 0.5d0 !dimensionless
+  xrho = 1.0d12
+  xtemp = 1.0d0
+  eos_variables = 0.0d0
+  eos_variables(rhoindex) = xrho
+  eos_variables(tempindex) = xtemp
+  eos_variables(yeindex) = xye
+  call nuc_eos_full(eos_variables(rhoindex),eos_variables(tempindex), &
+       eos_variables(yeindex),eos_variables(energyindex),matter_prs, &
+       matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe, &
+       eos_variables(xaindex),eos_variables(xhindex),eos_variables(xnindex), &
+       eos_variables(xpindex),eos_variables(abarindex),eos_variables(zbarindex), &
+       eos_variables(mueindex),eos_variables(munindex),eos_variables(mupindex), &
+       eos_variables(muhatindex),keytemp,keyerr,precision)
 
-  do i=1,nnuc
-     write(11,"(A14,A3,I2,A3,I2,A3,I2,A3,F8.4)")"pos. daughter","z=",int(nuclear_species(i,3))-1,"n=",int(nuclear_species(i,2))-(int(nuclear_species(i,3)-1)),"a=",int(nuclear_species(i,2)),"Q=",nuclear_species(i,1)
-     do j=2,25
-        do k=1,25
-           query_t9 = t9array(k)
-           query_lrYe = dble(j)/2
-           write(11,"(F7.2,F6.1,F8.3,F9.3,F9.3,F9.3,F9.3,F9.3,F9.3)") query_t9,query_lrYe,&
-                0.0000d0,&
-                weakrates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),query_t9,query_lrYe,1),&
-                weakrates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),query_t9,query_lrYe,2),&
-                weakrates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),query_t9,query_lrYe,3),&
-                weakrates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),query_t9,query_lrYe,4),&
-                weakrates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),query_t9,query_lrYe,5),&
-                weakrates(int(nuclear_species(i,2)),int(nuclear_species(i,3)),query_t9,query_lrYe,6)
-        end do
-     end do
-     write(11,"(A9)") "end"
-  end do
 
-  close(11)
+  q = 10.0d0
+  interval(:) = 0.0d0
+  write(*,*) "Mue: ",eos_variables(mueindex),"q: ",q,"Temp: ",eos_variables(tempindex)
+  interval = GPQ_intervals(q,eos_variables)
+  write(*,*) "Lower bound: ",interval(1)       
+  write(*,*) "Upper bound: ",interval(2)       
+  
 
 end program test
