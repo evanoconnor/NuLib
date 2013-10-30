@@ -46,6 +46,7 @@ module nulib
   real*8 :: GPQ_n16_weights(16), GPQ_n16_roots(16) !weights and roots for n=16
   real*8 :: GPQ_n32_weights(32), GPQ_n32_roots(32) !weights and roots for n=32
   real*8 :: GPQ_n64_weights(64), GPQ_n64_roots(64) !weights and roots for n=64
+  real*8 :: GPQ_n128_weights(128), GPQ_n128_roots(128) !weights and roots for n=64
 
   !EOS variables index holders, we carry this around with us to
   !instead of globally setting it for easy parallization
@@ -284,6 +285,7 @@ module nulib
       call GaussLegendreQuadrature_weights_and_roots(16,GPQ_n16_roots,GPQ_n16_weights)
       call GaussLegendreQuadrature_weights_and_roots(32,GPQ_n32_roots,GPQ_n32_weights)
       call GaussLegendreQuadrature_weights_and_roots(64,GPQ_n64_roots,GPQ_n64_weights)
+      call GaussLegendreQuadrature_weights_and_roots(128,GPQ_n128_roots,GPQ_n128_weights)
 
     end subroutine initialize_nulib
 

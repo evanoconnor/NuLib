@@ -1,4 +1,4 @@
-!-*-F90-*- 
+!-*-f90-*- 
 program test
 
   use weak_rates
@@ -8,7 +8,7 @@ program test
   
   real*8 :: t9
   real*8 :: lrhoye
-  real*8 :: analytic_weakrates,rate
+  real*8 :: analytic_weakrates,rate,avge(2)
   integer i,j,t,d
 
 
@@ -41,8 +41,8 @@ program test
   real*8 dxfac,mindx
   real*8, dimension(4) :: lrhoyearr,t9arr
   real*8, dimension(4,4) :: muearr
-  real*8 :: interval(2)
-  real*8 :: q
+  real*8 :: qec_eff
+
   !allocate the arrays for the point values
   allocate(local_emissivity(mypoint_number_output_species,mypoint_number_groups))
   allocate(local_absopacity(mypoint_number_output_species,mypoint_number_groups))
@@ -94,33 +94,53 @@ program test
 !###########################
 !######END NULIB SETUP######
 !###########################
-  
+
+  open(33,file="analysis/qec_solver_gpq_test.dat")
 
   call readrates(table_bounds)
   
+  lrhoyearr(1)=10.0d0
+  lrhoyearr(2)=10.5d0
+  lrhoyearr(3)=11.5d0
+  lrhoyearr(4)=12.4d0
 
-  xye = 0.5d0 !dimensionless
-  xrho = 1.0d12
-  xtemp = 1.0d0
-  eos_variables = 0.0d0
-  eos_variables(rhoindex) = xrho
-  eos_variables(tempindex) = xtemp
-  eos_variables(yeindex) = xye
-  call nuc_eos_full(eos_variables(rhoindex),eos_variables(tempindex), &
-       eos_variables(yeindex),eos_variables(energyindex),matter_prs, &
-       matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe, &
-       eos_variables(xaindex),eos_variables(xhindex),eos_variables(xnindex), &
-       eos_variables(xpindex),eos_variables(abarindex),eos_variables(zbarindex), &
-       eos_variables(mueindex),eos_variables(munindex),eos_variables(mupindex), &
-       eos_variables(muhatindex),keytemp,keyerr,precision)
+  t9arr(1)=8.20d0
+  t9arr(2)=20.0d0
+  t9arr(3)=30.0d0
+  t9arr(4)=39.0d0
+
+  rate=0.0d0
+
+  do i=1,78
+     write(33,"(F10.6,A)",advance='no') nuclear_species(i,1)-2.50d0, " "
+     do t=1,4    
+        do d=1,4
+           xye = 0.5d0 !dimensionless
+           xrho = (10**(lrhoyearr(d)))/xye !g/cm^3
+           xtemp = t9arr(t)*1.0d9*kelvin_to_mev !MeV
+           eos_variables = 0.0d0
+           eos_variables(rhoindex) = xrho
+           eos_variables(tempindex) = xtemp
+           eos_variables(yeindex) = xye
+           call nuc_eos_full(eos_variables(rhoindex),eos_variables(tempindex), &
+                eos_variables(yeindex),eos_variables(energyindex),matter_prs, &
+                matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe, &
+                eos_variables(xaindex),eos_variables(xhindex),eos_variables(xnindex), &
+                eos_variables(xpindex),eos_variables(abarindex),eos_variables(zbarindex), &
+                eos_variables(mueindex),eos_variables(munindex),eos_variables(mupindex), &
+                eos_variables(muhatindex),keytemp,keyerr,precision)
+
+           muearr(t,d)=eos_variables(mueindex)
+           avge(2)=nuclear_species(i,1) 
+           avge(1)=analytic_weakrates(1,(t9arr(t)*10**9)*kelvin_to_mev,avge(2),muearr(t,d))/analytic_weakrates(0,(t9arr(t)*10**9)*kelvin_to_mev,avge(2),muearr(t,d))
+           qec_eff = qec_solver(avge,avge(2),eos_variables)
+           write(33,"(F15.6,A)",advance='no') qec_eff, " "
+        end do
+     end do
+     write(33,*) " "
+  end do
 
 
-  q = 10.0d0
-  interval(:) = 0.0d0
-  write(*,*) "Mue: ",eos_variables(mueindex),"q: ",q,"Temp: ",eos_variables(tempindex)
-  interval = GPQ_intervals(q,eos_variables)
-  write(*,*) "Lower bound: ",interval(1)       
-  write(*,*) "Upper bound: ",interval(2)       
+  close(33)
   
-
 end program test
