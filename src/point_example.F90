@@ -67,17 +67,9 @@ program point_example
   call readrates(table_bounds)
 
   !example point
-  xrho = 2.0d10 !g/cm^3
-  xtemp = 0.86d0 !MeV
-  xye = 0.5d0 !dimensionless
-
-!  xrho = 49131273878.3 !g/cm^3
-!  xtemp = 0.1059 !MeV
-!  xye = 0.035d0 !dimensionless
-
-!  xrho = 958255854960.26392
-!  xtemp = 0.10591320785487254
-!  xye = 0.035
+  xrho = 16681005372.0d0 !g/cm^3
+  xtemp = 0.1360223147d0 !MeV
+  xye = 0.0865d0 !dimensionless
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
@@ -135,10 +127,10 @@ program point_example
   !values based on the mypoint_neutrino_scheme this assumes detailed
   !balance and uses the opacities to fullying calculate the
   !emissivities and vice versa, see single_point_return_all.
-  ! call single_point_return_all(eos_variables, &
-!        local_emissivity,local_absopacity,local_scatopacity, &
-!        mypoint_neutrino_scheme)
-
+   call single_point_return_all(eos_variables, &
+        local_emissivity,local_absopacity,local_scatopacity, &
+        mypoint_neutrino_scheme)
+   write(*,*) "done"
 !   write(*,*) "Example of a single point call with returning all emissivity, absorptive opacity, and scattering opacity"
 !   write(*,*) 
 !   do i=1,mypoint_number_output_species
@@ -168,7 +160,11 @@ program point_example
   write(*,*) "Mu_e: ",eos_variables(mueindex)
   write(*,*) "Example of single point but only emissivity"
   write(*,*) 
-  call return_emissivity_spectra_given_neutrino_scheme(local_emissivity,eos_variables)
+
+
+
+
+!  call return_emissivity_spectra_given_neutrino_scheme(local_emissivity,eos_variables)
 
   !write(*,*) "Example of single point but only absorptive opacity"
   !write(*,*) 

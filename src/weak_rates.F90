@@ -434,26 +434,23 @@
         function emissivity_from_weak_interaction_rates(A,Z,number_density,eos_variables,neutrino_species,parameterized_rate) result(emissivity)
 
           use nulib, only : total_eos_variables,energies,number_groups,do_integrated_BB_and_emissivity&
-               ,mueindex,rhoindex,tempindex,yeindex,GLQ_n128_roots,GLQ_n128_weights,GPQ_n128_roots,GPQ_n128_weights
+               ,mueindex,rhoindex,tempindex,yeindex,GPQ_n128_roots,GPQ_n128_weights
           include 'constants.inc'
 
           integer A,Z
 
-          real*8 :: eos_variables(total_eos_variables)
+          real*8, intent(in) :: eos_variables(total_eos_variables)
           real*8, intent(in) :: number_density
           integer, intent(in) :: neutrino_species
-          logical, intent (in) :: parameterized_rate
           real*8 :: emissivity(number_groups) !final answer in erg/cm^/s/srad/MeV
           real*8 :: avgenergy(2)
+          real*8 :: GPQ_interval(2)
+          real*8 :: GPQ_coef(2)
           real*8 :: qec_eff                   !effective Qec for the approximate neutrino spectra
 
           !spectrum integration
           real*8 :: normalization_constant    !nu spectra normalization, units of 1/MeV^5/s
-          real*8 :: analytic_weakrates
           real*8 :: spectra
-          real*8 :: spectra2
-          real*8 :: spectra_eval
-          real*8 :: interval_shift
           real*8 :: t9
           real*8 :: lrhoYe
           real*8 :: nu_spectrum_eval
@@ -464,6 +461,9 @@
           real*8 :: lcap       !capture rate (electron or positron for nue or anue)
           real*8 :: lnu        !nue or anue energy loss rate
 
+
+          GPQ_interval = 0.0d0
+          GPQ_coef(:) = 0.0d0
           !set local eos_variables for rate interpolation
           lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
           t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  ! Conversion from MeV to GK
@@ -498,75 +498,14 @@
 
           !calculate normalization constant using effective neutrino spectra
           spectra = 0.0d0
-          spectra2 = 0.0d0
-          interval_shift = (((5.0d0/4.0d0)*(qec_eff+eos_variables(mueindex)-m_e)/eos_variables(tempindex))/2)
-
-          if(interval_shift.ge.GLQ_n128_roots(128)) then
-             open(111,file='laguerre')
-             open(112,file='legendre')
-             write(*,*) interval_shift,GLQ_n128_roots(128)
-             write(111,*)"ListPlot[{"
-             write(112,*)"ListPlot[{"
-             do i=1,250
-
-                spectra = 0.0d0
-                spectra2 = 0.0d0
-                eos_variables(mueindex) = 250.0
-                do j=1,128
-                   spectra = spectra + GLQ_n128_weights(j)*ec_neutrino_spectra(GLQ_n128_roots(j),dble(i),eos_variables(mueindex),1.0d0)
-                end do
-
-!                 interval_shift = (5.0d0/4.0d0)*(dble(i)/2)
-                 interval_shift = (15.0d0/4.0d0*(eos_variables(mueindex)/dble(i))+5.0d0/4.0d0)*(dble(i)/2)
-                 do j=1,128
-                    spectra2 = spectra2 + GPQ_n128_weights(j)*interval_shift*ec_neutrino_spectra(interval_shift*(GPQ_n128_roots(j)+1.0d0),dble(i),eos_variables(mueindex),1.0d0)      
-                 end do                 
-                 
-                ! do j=1,128                   
-                !    write(*,*) "{",GLQ_n128_roots(j),",",ec_neutrino_spectra(GLQ_n128_roots(j),dble(i),0.0d0,1.0d0),"}," 
-                ! end do
-
-                ! interval_shift = (5.0d0/4.0d0)*(dble(i)/2)
-                ! do j=1,128
-                !        write(*,*) "{",interval_shift*(GPQ_n128_roots(j)+1.0d0),",",ec_neutrino_spectra(interval_shift*(GPQ_n128_roots(j)+1.0d0),dble(i),0.0d0,1.0d0),"},"
-                ! end do
-
-                write(111,*) "{",dble(i),",",spectra,"},"
-                write(112,*) "{",dble(i),",",spectra2,"},"
-             end do
-             write(111,*)"}]"
-             write(112,*)"}]"
-             
-             close(111)
-             close(112)
-          
-
-
-
-
-
-
-
-
-
-          stop
-
-             write(*,*) interval_shift,GLQ_n128_roots(128)
-             spectra = 0.0d0
-             do i=1,128
-                spectra_eval = ec_neutrino_spectra(interval_shift*(GPQ_n128_roots(i)+1.0d0),qec_eff,eos_variables(mueindex)-m_e,&
-                     eos_variables(tempindex))
-                spectra = spectra + GPQ_n128_weights(i)*spectra_eval                     
-             end do
-             spectra = interval_shift*spectra             
-          else
-             do i=1,128
-                spectra = spectra + GLQ_n128_weights(i)*ec_neutrino_spectra(GLQ_n128_roots(i),qec_eff,eos_variables(mueindex)-m_e,&
-                     eos_variables(tempindex))
-             end do
-          endif
-
-          spectra = (eos_variables(tempindex)**5.0d0)*spectra !5th power of T because n(E)dE
+          GPQ_interval = GPQ_intervals(qec_eff,eos_variables)
+          GPQ_coef(1) = (GPQ_interval(2)-GPQ_interval(1))/2.0d0
+          GPQ_coef(2) = (GPQ_interval(1)+GPQ_interval(2))/2.0d0
+          do i=1,128
+             spectra = spectra + GLQ_n128_weights(i)*ec_neutrino_spectra(GLQ_n128_roots(i),qec_eff,eos_variables(mueindex)-m_e,&
+                  eos_variables(tempindex))
+          end do
+          spectra = (eos_variables(tempindex)**5)*spectra          
           if (neutrino_species.eq.1) then
              if (parameterized_rate) then
                 normalization_constant = (analytic_weakrates(0,eos_variables(tempindex),nuclear_species(nucleus_index(A,Z),1),eos_variables(mueindex)-m_e))/spectra
@@ -592,7 +531,6 @@
                      ec_neutrino_spectra(energies(ng)/eos_variables(tempindex),qec_eff,eos_variables(mueindex)-m_e,&
                      eos_variables(tempindex))
                 emissivity(ng) = (energies(ng)*mev_to_erg)*(1.0d39*number_density)*nu_spectrum_eval/(4.0d0*pi) !erg/cm^3/s/MeV/srad
-                if(nu_spectrum_eval.ne.nu_spectrum_eval) write(*,*)A,Z,nu_spectrum_eval,spectra,10.0d0**weakrates(A,Z,t9,lrhoYe,3)/10.0d0**weakrates(A,Z,t9,lrhoYe,2),eos_variables(tempindex),qec_eff,eos_variables(mueindex),eos_variables(rhoindex),log10(eos_variables(rhoindex)*eos_variables(yeindex))
              end do
           endif
           return
@@ -661,7 +599,10 @@
         end function ec_neutrino_spectra_q_derivative
 
         function qec_solver(avgenergy,qin,eos_variables) result(qec_eff)
-          use nulib, only : GLQ_n128_roots, GLQ_n128_weights, total_eos_variables, mueindex, tempindex
+
+          use nulib, only : GLQ_n128_roots, GLQ_n128_weights, total_eos_variables, mueindex, tempindex, rhoindex, yeindex
+          implicit none
+
           include 'constants.inc'
 
           !starting point energies using a seed q = Qgs
@@ -690,7 +631,14 @@
           real*8 :: upper_bound
           real*8 :: avge_spectra_boundary
           real*8 :: tolerance
+          real*8 :: GPQ_interval(2)
+          real*8 :: GPQ_interval_deriv(2)
+          real*8 :: GPQ_coef(2)
+          real*8 :: GPQ_coef_deriv(2)
+          real*8 :: energy
+
           integer limiter,nmax_bisections,extrapolation
+
           
           character(60) :: qec_solver_log_file,rho_string,t_string,ye_string,mue_string !for logging errors
 
@@ -701,88 +649,128 @@
           nmax_bisections = 15
           limiter = 0
           q = qin
+          qec_eff = q
+          GPQ_interval = 0.0d0
+          GPQ_interval_deriv = 0.0d0
+          GPQ_coef = 0.0d0
+          GPQ_coef_deriv = 0.0d0
 
           !Newton-Raphson technique to find zero (in q) of f(q) = <E>_rates - <E(q)>_spectra
+          
           do while (abs((avge_rates - avge_spectra)/avge_rates) > 1.0d-8) 
-             energy_density_integral=0.0d0 
-             number_density_integral=0.0d0
-             dq_energy_density_integral=0.0d0
-             dq_number_density_integral=0.0d0
-             nu_spectra=0.0d0
-
+             ! energy_density_integral=0.0d0 
+             ! number_density_integral=0.0d0
+             ! dq_energy_density_integral=0.0d0
+             ! dq_number_density_integral=0.0d0
+             ! nu_spectra=0.0d0
+             ! goto 1
              !Quadrature integration of n(E), n'(E), E*n(E), E*n'(E) such that E = kT*xi (xi is dimensionless)
              !q_n+1 = q_n - (<E>_rates - <E(q)>_spectra)/(-d/dq <E(q)>_spectra) 
-             do i=1,128
-                nu_spectra = ec_neutrino_spectra(GLQ_n128_roots(i),q,eos_variables(mueindex)-m_e,&
-                     eos_variables(tempindex))
-                nu_spectra_deriv_coef = ec_neutrino_spectra_q_derivative(GLQ_n128_roots(i),q,&
-                     eos_variables(mueindex)-m_e,eos_variables(tempindex))
-                energy_density_integral=energy_density_integral+GLQ_n128_weights(i)*GLQ_n128_roots(i)*&
-                     nu_spectra
-                number_density_integral=number_density_integral+GLQ_n128_weights(i)*nu_spectra
-                dq_energy_density_integral=dq_energy_density_integral+GLQ_n128_weights(i)*GLQ_n128_roots(i)*&
-                     nu_spectra*nu_spectra_deriv_coef
-                dq_number_density_integral=dq_number_density_integral+GLQ_n128_weights(i)*nu_spectra*&
-                     nu_spectra_deriv_coef                
-             end do
-             q_newton_raphson = (avge_rates - avge_spectra)/&
-                     ((dq_energy_density_integral*number_density_integral-energy_density_integral*&
-                     dq_number_density_integral)/(number_density_integral*number_density_integral))
+             ! GPQ_interval = GPQ_intervals(q,eos_variables)
+             ! GPQ_coef(1) = (GPQ_interval(2)-GPQ_interval(1))/2.0d0
+             ! GPQ_coef(2) = (GPQ_interval(1)+GPQ_interval(2))/2.0d0
+             ! GPQ_interval_deriv = GPQ_intervals_deriv(q,eos_variables)
+             ! GPQ_coef_deriv(1) = (GPQ_interval_deriv(2)-GPQ_interval_deriv(1))/2.0d0
+             ! GPQ_coef_deriv(2) = (GPQ_interval_deriv(1)+GPQ_interval_deriv(2))/2.0d0
+             ! do i=1,128
+                ! nu_spectra = ec_neutrino_spectra(GPQ_coef(1)*GPQ_n128_roots(i)+GPQ_coef(2),q,eos_variables(mueindex)-m_e,&
+                !      eos_variables(tempindex))
+                ! energy_density_integral = energy_density_integral + GPQ_coef(1)*GPQ_n128_weights(i)*(GPQ_coef(1)*GPQ_n128_roots(i)+GPQ_coef(2))*&
+                !      nu_spectra
+                ! number_density_integral = number_density_integral + GPQ_coef(1)*GPQ_n128_weights(i)*nu_spectra
+                ! nu_spectra_deriv_coef = ec_neutrino_spectra_q_derivative(GPQ_coef_deriv(1)*GPQ_n128_roots(i)+GPQ_coef_deriv(2),q,&
+                !      eos_variables(mueindex)-m_e,eos_variables(tempindex))
+                ! dq_energy_density_integral = dq_energy_density_integral + GPQ_coef_deriv(1)*GPQ_n128_weights(i)*(GPQ_coef_deriv(1)*GPQ_n128_roots(i)+GPQ_coef_deriv(2))*&
+                !      nu_spectra*nu_spectra_deriv_coef
+                ! dq_number_density_integral = dq_number_density_integral + GPQ_coef_deriv(1)*GPQ_n128_weights(i)*nu_spectra*&
+                !      nu_spectra_deriv_coef
+                ! nu_spectra = ec_neutrino_spectra(GLQ_n128_roots(i),q,eos_variables(mueindex)-m_e,&
+                !     eos_variables(tempindex))
+                ! nu_spectra_deriv_coef = ec_neutrino_spectra_q_derivative(GLQ_n128_roots(i),q,&
+                !     eos_variables(mueindex)-m_e,eos_variables(tempindex))
+               !  energy_density_integral=energy_density_integral+GLQ_n128_weights(i)*GLQ_n128_roots(i)*&
+             !         nu_spectra
+             !    number_density_integral=number_density_integral+GLQ_n128_weights(i)*nu_spectra
+             !    dq_energy_density_integral=dq_energy_density_integral+GLQ_n128_weights(i)*GLQ_n128_roots(i)*&
+             !         nu_spectra*nu_spectra_deriv_coef
+             !    dq_number_density_integral=dq_number_density_integral+GLQ_n128_weights(i)*nu_spectra*&
+             !         nu_spectra_deriv_coef                
+             ! end do
+             ! q_newton_raphson = (avge_rates - avge_spectra)/&
+             !         ((dq_energy_density_integral*number_density_integral-energy_density_integral*&
+             !         dq_number_density_integral)/(number_density_integral*number_density_integral))
              
-             if (number_density_integral.lt.1.0d-100.and.energy_density_integral.lt.1.0d-100) then
-                if(q_newton_raphson.ne.q_newton_raphson) then !Checking for NaNs
-                   avge_spectra = eos_variables(tempindex)*1.0d0
-                   q = q + (avge_rates - avge_spectra)/1.0d0
-                end if
-             else           
-                avge_spectra = eos_variables(tempindex)*(energy_density_integral/number_density_integral)
-                q = q + q_newton_raphson
-             end if
+             ! if (number_density_integral.lt.1.0d-100.and.energy_density_integral.lt.1.0d-100) then
+             !    if(q_newton_raphson.ne.q_newton_raphson) then !Checking for NaNs
+             !       avge_spectra = eos_variables(tempindex)*1.0d0
+             !       q = q + (avge_rates - avge_spectra)/1.0d0
+             !    end if
+             ! else           
+             !    avge_spectra = eos_variables(tempindex)*(energy_density_integral/number_density_integral)
+             !    q = q + q_newton_raphson
+             ! end if
 
-             !for low T, extrapolate the average energy curve linearly
-             if(eos_variables(tempindex).le.0.5d0.and.avge_rates.ge.40.0d0) then 
-                !this extrapolation needs to be redone. 35 should be scaled in some way by mue..
-2               q = avge_rates*35/average_energy(-eos_variables(mueindex)+35,eos_variables)-(eos_variables(mueindex)-m_e)
-                !avge_spectra = avge_rates
-!                write(*,*) "Extrapolating, q = ", q,avge_rates,eos_variables(3)
-                qec_eff = q
-                return
-             end if
+!              !for low T, extrapolate the average energy curve linearly
+!              if(eos_variables(tempindex).le.0.5d0.and.avge_rates.ge.40.0d0) then 
+!                 !this extrapolation needs to be redone. 35 should be scaled in some way by mue..
+! 2               q = avge_rates*35/average_energy(-eos_variables(mueindex)+35,eos_variables)-(eos_variables(mueindex)-m_e)
+!                 !avge_spectra = avge_rates
+! !                write(*,*) "Extrapolating, q = ", q,avge_rates,eos_variables(3)
+!                 qec_eff = q
+!                 return
+!              end if
 
              !Bisection fail safe if newton-raphson diverges
-             if (q.gt.30.0d0.or.q.lt.-30.0d0) then          
+!             if (q.gt.100.0d0.or.q.lt.-100.0d0) then          
+            
+
+
 1               lower_bound = -100.0d0
                 upper_bound = 100.0d0
                 avge_spectra_boundary = average_energy(lower_bound,eos_variables)
                 N=0
+                nmax_bisections = 1000
+                tolerance = 1.0d-8
                 !low resolution in the LMP rates can cause the interpolation to produce an
                 !average nu energy below the asymptotic limit of <E>_spectra, below is a patch.
-                if(avge_spectra_boundary.gt.avge_rates) then
-                   q = lower_bound
-                   avge_spectra = avge_rates
-                   N = nmax_bisections + 1
-                   ! open(1,file=qec_solver_log_file,status='old',POSITION='APPEND')
-                   !   write(rho_string,'(f20.5)') eos_variables(1)
-                   !   write(t_string,'(f10.5)') eos_variables(2)
-                   !   write(ye_string,'(f10.5)') eos_variables(3)
-                   !   write(mue_string,'(f10.5)') eos_variables(11)
-                   !   write(1,'(A5,A20,A7,A20,A4,A20,A6,A20)') "rho: ",rho_string,"    T: ",t_string,"Ye: ",ye_string,"Mu_e: ",mue_string
-                   ! close(1)                   
+                if(avge_spectra_boundary.gt.avge_rates) then                   
+                   qec_eff = lower_bound
+                   open(1,file=qec_solver_log_file,status='old',POSITION='APPEND')
+                     write(rho_string,'(f10.5)') eos_variables(1)
+                     write(t_string,'(f10.5)') eos_variables(2)
+                     write(ye_string,'(f10.5)') eos_variables(3)
+                     write(mue_string,'(f10.5)') eos_variables(11)
+                     write(1,'(A20)') "rho: ",rho_string,"T: ",t_string,"Ye: ",ye_string,"Mu_e: ",mue_string, " ", avge_rates
+                     write(1,'(a)') " "
+                   close(1)                   
+                   return
                 end if
-                do while (N < nmax_bisections)
-                   q = (lower_bound + upper_bound)/2
+                do 
+                   if(N.ge.500) write(*,*)avge_rates,q,average_energy(q,eos_variables),eos_variables(tempindex),eos_variables(rhoindex),eos_variables(yeindex),N
+                   if(N.ge.900)then
+                      Write(*,*) "ListPlot[{"
+                      do i=-1000,1000
+                         energy=average_energy(dble(i)/1.0d1,eos_variables)
+                         write(*,*) "{",dble(i)/1.0d1,",",energy,"},"
+                      end do
+                      write(*,*)"},PlotRange->All]"
+                      write(*,*) avge_rates,qin,eos_variables(mueindex),eos_variables(tempindex)
+                      stop 
+                   endif
+
+                   !if the bisection parameter q exceeds double precision
+                   if(q.eq.(lower_bound + upper_bound)/2.0d0)then
+                      if(abs(avge_rates - avge_spectra)/avge_rates.le.1.0d0)then
+                         qec_eff = q
+                         return
+                      end if
+                   end if
+                   q = (lower_bound + upper_bound)/2.0d0
                    avge_spectra = average_energy(q,eos_variables)                   
                    if (abs(avge_rates - avge_spectra)/avge_rates.le.tolerance) then
-                      N = nmax_bisections + 1 !to exit loop
-                      if (tolerance.eq.1.0d-8) then
-                         qec_eff = q
-                         return !this will only be reached if the newton-raphson failed 25 times and
-                         !the bisection method was used to attain a precision of 1.0d-8 in <E>
-                      else
-                         tolerance = tolerance / 10 !increase the precision for the next time the
-                         !bisection method is performed
-                         cycle
-                      end if
+                      qec_eff = q
+                      return !this will only be reached if the newton-raphson failed 25 times and
+                      !the bisection method was used to attain a precision of 1.0d-8 in <E>
                    end if
                    if (sign(1.0d0,(avge_rates-avge_spectra)).eq.sign(1.0d0,(avge_rates-avge_spectra_boundary))) then
                       lower_bound = q
@@ -790,21 +778,15 @@
                       upper_bound = q
                    end if
                    N = N + 1   
-                   if(N.ge.500)then
-                      goto 2
-                   endif
+
                 end do
-             endif
-             limiter = limiter + 1
-             
+                
+
+!             endif
+!             limiter = limiter + 1
+
              !if the newton-raphson fails to converge after 25 iterations, fall back to bisection method
-             if (limiter > 25) then
-!                write(*,*) "Limited ", avge_rates,q
-                nmax_bisections = 1000
-                tolerance = 1.0d-8
-                limiter = 0
-                goto 1
-             endif
+
 
           end do
 !          write(*,*)q,average_energy(q,eos_variables),avge_rates,"normal return"
@@ -813,46 +795,51 @@
         
         function average_energy(qec_eff,eos_variables) result(avgenergy)
           
-          use nulib
+          use nulib, only :GPQ_n128_roots,GPQ_n128_weights,total_eos_variables,m_e,mueindex,tempindex
+          implicit none
 
           real*8, intent(in) :: eos_variables(total_eos_variables)
-
-          !local rate variables
-          real*8 :: lrhoYe
-          real*8 :: t9
 
           !local integration variables
           integer :: i
           real*8 :: avgenergy
-          real*8 :: qec_eff
+          real*8, intent(in) :: qec_eff
           real*8 :: spectra
           real*8 :: number_density_integral
           real*8 :: energy_density_integral
+          real*8 :: GPQ_interval(2)
+          real*8 :: GPQ_coef(2)
 
-          !setting local variables from eos_variables
-          lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
-          t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  ! Conversion from MeV to GK
+          GPQ_interval = 0.0d0
+          GPQ_coef = 0.0d0
 
           !set weights and roots for quadrature integration, then calculate <E>
           avgenergy=0.0d0
           energy_density_integral=0.0d0
           number_density_integral=0.0d0
           spectra = 0.0d0
-          do i=1,128
-             spectra = ec_neutrino_spectra(GLQ_n128_roots(i),qec_eff,eos_variables(mueindex)-m_e,eos_variables(tempindex))
-             energy_density_integral=energy_density_integral+GLQ_n128_weights(i)*GLQ_n128_roots(i)*spectra
-             number_density_integral=number_density_integral+GLQ_n128_weights(i)*spectra
-          end do
 
+          GPQ_interval = GPQ_intervals(qec_eff,eos_variables)
+          GPQ_coef(1) = (GPQ_interval(2)-GPQ_interval(1))/2.0d0
+          GPQ_coef(2) = (GPQ_interval(1)+GPQ_interval(2))/2.0d0
+          do i=1,128
+             spectra = GPQ_coef(1)*ec_neutrino_spectra(GPQ_coef(1)*GPQ_n128_roots(i)+GPQ_coef(2),qec_eff,eos_variables(mueindex)-m_e,eos_variables(tempindex))
+             energy_density_integral=energy_density_integral+GPQ_n128_weights(i)*(GPQ_coef(1)*GPQ_n128_roots(i)+GPQ_coef(2))*spectra
+             number_density_integral=number_density_integral+GPQ_n128_weights(i)*spectra
+!             write(*,*) spectra,GPQ_interval(1),GPQ_interval(2),GPQ_coef(1),GPQ_coef(2)
+          end do
+          
           if (number_density_integral.eq.0.0d0.and.energy_density_integral.eq.0.0d0) then             
              avgenergy = (eos_variables(tempindex))*1.0d0
           else
              avgenergy = (eos_variables(tempindex))*(energy_density_integral/number_density_integral)
           end if
+
         end function average_energy
 
         function GPQ_intervals(q,eos_variables) result (interval)
           use nulib, only : total_eos_variables,tempindex,mueindex,m_e
+          implicit none
 
           real*8, dimension(2) :: interval
           real*8, intent(in) :: eos_variables(total_eos_variables)
@@ -860,64 +847,121 @@
           real*8 :: spectra
           real*8 :: energy
           real*8 :: centroid
+          real*8 :: spectra_centroid
           real*8 :: lower_bound,lower_bound_spectra
           real*8 :: upper_bound,upper_bound_spectra
           real*8 :: tolerance
-          integer :: N,nmax_bisections
+          integer :: N,nmax_bisections,i
           
-      
-          N=0
-          nmax_bisections = 25
-          centroid = (q+eos_variables(mueindex)-m_e)/eos_variables(tempindex)
-          tolerance = 1.0d-4
-          lower_bound = 0.0d0
-          upper_bound = centroid             
-            
-          do while (N < nmax_bisections)
-             lower_bound_spectra = ec_neutrino_spectra(lower_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))-0.01d0
-             upper_bound_spectra = ec_neutrino_spectra(upper_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))-0.01d0
-             energy = (upper_bound+lower_bound)/2
-             spectra = ec_neutrino_spectra(energy,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))-0.01d0
-             if (abs(spectra).le.tolerance) then
-                N = nmax_bisections + 1 !to exit loop
-             end if
-             if (sign(1.0d0,(upper_bound_spectra)).eq.sign(1.0d0,(spectra))) then
-                upper_bound = energy
+          interval = 0.0d0
+          spectra = 0.0d0
+          do i=0,int((q+eos_variables(mueindex)-m_e)/eos_variables(tempindex))
+             spectra = ec_neutrino_spectra(dble(i),q,eos_variables(mueindex)-m_e,eos_variables(tempindex)) - 0.01d0
+             if(sign(1.0d0,spectra).gt.0.0d0) then                
+                if(i.eq.1) then
+                   interval(1) = 0.0d0
+                else
+                   interval(1) = dble(i-1)                   
+                end if
+                exit
              else
-                lower_bound = energy
+                interval(1) = 0.0d0   
              end if
-             N = N + 1   
-          end do
-          interval(1) = energy
-
-          N=0
-          nmax_bisections = 25
-          tolerance = 1.0d-4
-          lower_bound = centroid
-          upper_bound = min(1000.0d0,centroid*2)
-          do while (N < nmax_bisections)
-             lower_bound_spectra = ec_neutrino_spectra(lower_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))-0.01d0
-             upper_bound_spectra = ec_neutrino_spectra(upper_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))-0.01d0
-             energy = (upper_bound+lower_bound)/2
-             spectra = ec_neutrino_spectra(energy,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))-0.01d0
-             if (abs(spectra).le.tolerance) then
-                N = nmax_bisections + 1 !to exit loop
-             end if
-             if (sign(1.0d0,(upper_bound_spectra)).eq.sign(1.0d0,(spectra))) then
-                upper_bound = energy
-             else
-                lower_bound = energy
-             end if
-             N = N + 1   
           end do
 
-          interval(2) = energy
+          centroid = abs(q+eos_variables(mueindex)-m_e)/eos_variables(tempindex)
+          upper_bound = max(centroid*5.0d0,20.0d0)
+          upper_bound_spectra = ec_neutrino_spectra(upper_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex)) - 0.01d0
+          spectra_centroid = ec_neutrino_spectra(centroid,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))
+          if (spectra_centroid.le.0.01d0) then
+             interval(2) = upper_bound
+             return
+          end if
+          if (upper_bound_spectra.gt.0.0d0) then
+             upper_bound = 1.0d3
+          end if
+          do i=1,int(upper_bound)
+             spectra = ec_neutrino_spectra(upper_bound-dble(i),q,eos_variables(mueindex)-m_e,eos_variables(tempindex)) - 0.01d0
+             if(sign(1.0d0,spectra).gt.0.0d0) then
+                if(i.eq.1) then
+                   interval(2) = upper_bound
+                else
+                   interval(2) = upper_bound - dble(i-1) 
+                end if
+                exit
+             else
+                interval(2) = upper_bound
+             end if
+          end do
+
+!          write(*,*) centroid, "centroid", interval(1),interval(2)
+
           return
                    
         end function GPQ_intervals        
         
+        function GPQ_intervals_deriv(q,eos_variables) result (interval)
+          use nulib, only : total_eos_variables,tempindex,mueindex,m_e
+          implicit none
+
+          real*8, dimension(2) :: interval
+          real*8, intent(in) :: eos_variables(total_eos_variables)
+          real*8, intent(in) :: q
+          real*8 :: spectra
+          real*8 :: spectra_centroid
+          real*8 :: energy
+          real*8 :: centroid
+          real*8 :: lower_bound,lower_bound_spectra
+          real*8 :: upper_bound,upper_bound_spectra
+          real*8 :: tolerance
+          integer :: N,nmax_bisections,i
+          
+          spectra = 0.0d0
+          interval = 0.0d0
+          do i=1,int((q+eos_variables(mueindex)-m_e)/eos_variables(tempindex))
+             spectra = ec_neutrino_spectra_q_derivative(dble(i),q,eos_variables(mueindex)-m_e,eos_variables(tempindex))*ec_neutrino_spectra(dble(i),q,eos_variables(mueindex)-m_e,eos_variables(tempindex))
+             if(sign(1.0d0,spectra).lt.0.0d0) then
+                if(i.eq.1) then                  
+                   interval(1) = 0.0d0
+                else
+                   interval(1) = dble(i-1)
+                end if
+                exit
+             end if
+          end do
+
+          centroid = abs(q+eos_variables(mueindex)-m_e)/eos_variables(tempindex)
+          upper_bound = max(centroid*5.0d0,20.0d0)
+          upper_bound_spectra = ec_neutrino_spectra_q_derivative(upper_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))*ec_neutrino_spectra(upper_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex)) - 0.01d0
+          spectra_centroid = ec_neutrino_spectra(centroid,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))
+          if (spectra_centroid.le.0.01d0) then
+             interval(2) = upper_bound
+             return
+          end if
+          if (upper_bound_spectra.gt.0.0d0) then
+             upper_bound = 1.0d3
+          end if
+          do i=1,int(upper_bound)
+             spectra = ec_neutrino_spectra_q_derivative(upper_bound-dble(i),q,eos_variables(mueindex)-m_e,eos_variables(tempindex))*ec_neutrino_spectra(upper_bound-dble(i),q,eos_variables(mueindex)-m_e,eos_variables(tempindex)) - 0.01d0
+             if(sign(1.0d0,spectra).gt.0.0d0) then
+                if(i.eq.1) then
+                   interval(2) = upper_bound
+                else
+                   interval(2) = upper_bound - dble(i-1) 
+                end if
+                exit
+             else
+                interval(2) = upper_bound
+             end if
+          end do
+
+          return
+
+                   
+        end function GPQ_intervals_deriv
+
         subroutine microphysical_electron_capture(neutrino_species,eos_variables,emissivity)
-          use nulib, only : total_eos_variables, number_groups, tempindex, hempel_lookup_table, mueindex, rhoindex, yeindex
+          use nulib, only : total_eos_variables, number_groups, tempindex, hempel_lookup_table, mueindex
 
           integer i
           integer, intent(in) :: neutrino_species
@@ -925,7 +969,6 @@
           real*8, dimension(number_groups) :: emissivity
           real*8, dimension(number_groups) :: emissivity_temp
           real*8, dimension(number_groups) :: emissivity_ni56
-          logical :: parameterized_rate
 
           !Hempel EOS and number of species are set up in readrates
           call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)          
