@@ -67,5 +67,5 @@
   logical :: add_nutau_emission_NNBrems = .true.
   logical :: add_anutau_emission_NNBrems = .true.	
 
-  logical :: add_nue_emission_weakinteraction_ecap = .true.
+  logical :: add_nue_emission_weakinteraction_ecap = .false.
   logical :: add_anue_emission_weakinteraction_poscap = .false.

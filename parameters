@@ -6,13 +6,14 @@ lmp_rates     		= 	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_t
 lmsh_rates		= 	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/lmsh-extended.dat"
 oda_rates		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/oda_hires.dat"
 ffn_rates		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/ffn_hires.dat"
+nuclear_masses		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/mass.mas12"
 
 ## Priority ##
-ilmp			=	0	# 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, it will be ignored.
-ilmsh			=	0	# 0 indicates the table will not be used
-ioda			=	1
+ilmp			=	1	# 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, it will be ignored.
+ilmsh			=	2	# 0 indicates the table will not be used
+ioda			=	3
 iffn			=	0
-iapprox			=	0
+iapprox			=	1
 
 
 
