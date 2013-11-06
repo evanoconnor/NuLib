@@ -3,6 +3,7 @@ program point_example
 
   use nulib
   use weak_rates
+  use sfho_frdm_composition_module, only : sfho_mass
   implicit none
 
   !many people use different number of species, this is to denote how they are devided up.
@@ -125,12 +126,12 @@ program point_example
 
 
   open(11,file="src/extra_code_and_tables/rho_temp_ye_c.dat",status='old')
-  open(22,file="src/extra_code_and_tables/dye.dat")
+  open(22,file="src/extra_code_and_tables/dye2.dat")
   open(33,file="src/extra_code_and_tables/M1_nue_enspectra_cenprime.xg",status='old')
-  open(44,file="src/extra_code_and_tables/dyesum.dat")
+  open(44,file="src/extra_code_and_tables/dyesum2.dat")
   open(55,file="src/extra_code_and_tables/dyedt_hydro_c_t.dat",status='old')
-  open(66,file="src/extra_code_and_tables/nue_enspectra.dat")
-  open(77,file="src/extra_code_and_tables/xp_c_t.dat")
+  open(66,file="src/extra_code_and_tables/nue_enspectra2.dat")
+  open(77,file="src/extra_code_and_tables/xp_c_t2.dat")
 
 
   cont = .true.
@@ -204,7 +205,7 @@ program point_example
 
         !if rate data from a table is not present and 65<A<120 and iapprox is on, use the parameterized rate function, else skip this nucleus
         if(nucleus_index(nuclei_A(i),nuclei_Z(i)).eq.0) then
-           if (nuclei_A(i).gt.65) then
+           if (nuclei_A(i).gt.4) then
               if(file_priority(5).gt.0) then
                  parameterized_rate = .true.
               else
@@ -228,10 +229,16 @@ program point_example
         end if
 
         if(parameterized_rate)then
-           if(nndc_mass_table(nuclei_A(i),nuclei_Z(i)).eq.0.0d0.or.nndc_mass_table(nuclei_A(i),nuclei_Z(i)-1).eq.0.0d0) then
+           if(sfho_mass(hempel_lookup_table(nuclei_A(i),nuclei_Z(i))).eq.0.0d0.or.sfho_mass(hempel_lookup_table(nuclei_A(i),nuclei_Z(i)-1)).eq.0.0d0) then
               cycle
            end if
         end if
+
+        ! if(parameterized_rate)then
+        !    if(nndc_mass_table(nuclei_A(i),nuclei_Z(i)).eq.0.0d0.or.nndc_mass_table(nuclei_A(i),nuclei_Z(i)-1).eq.0.0d0) then
+        !       cycle
+        !    end if
+        ! end if
 
         !emissivity calculation
         emissivity(i,:) = emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&

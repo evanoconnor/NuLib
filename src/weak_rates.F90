@@ -228,6 +228,7 @@
        end do
 30     close(8)
      end subroutine load_nuclear_masses
+
      function return_qec(A,Z_p,Z_d) result(q)
        use nulib, only : m_e
 
@@ -244,6 +245,20 @@
        q = (nndc_mass_table(A,Z_p) - nndc_mass_table(A,Z_d) - m_e/1.0d3)*1.0d3
        return
      end function return_qec
+     
+     function return_hempel_qec(A,Z_p,Z_d) result(q)
+       use sfho_frdm_composition_module, only : sfho_mass
+       use nulib, only : hempel_lookup_table
+
+       implicit none
+       real*8 :: q
+       integer, intent(in) :: A
+       integer, intent(in) :: Z_p
+       integer, intent(in) :: Z_d
+
+       q = sfho_mass(hempel_lookup_table(A,Z_p)) - sfho_mass(hempel_lookup_table(A,Z_d))
+              
+     end function return_hempel_qec
 
 
   ! #########################################################################
@@ -517,7 +532,7 @@
           t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  ! Conversion from MeV to GK
 
           if(parameterized_rate) then
-             qec_eff = return_qec(A,Z,Z-1) - 2.50d0
+             qec_eff = return_hempel_qec(A,Z,Z-1) - 2.50d0
           else
              !interpolating rates for given eos_variables and calculating average neutrino energy from rates
              !for nue, emissivities are from the betaplus direction; for anue, emissivities in the betaminus direction
@@ -556,7 +571,7 @@
           spectra = (eos_variables(tempindex)**5)*spectra          
           if (neutrino_species.eq.1) then
              if (parameterized_rate) then
-                normalization_constant = (analytic_weakrates(0,eos_variables(tempindex),return_qec(A,Z,Z-1),eos_variables(mueindex)-m_e))/spectra
+                normalization_constant = (analytic_weakrates(0,eos_variables(tempindex),return_hempel_qec(A,Z,Z-1),eos_variables(mueindex)-m_e))/spectra
              else
                 normalization_constant = (10.0d0**weakrates(A,Z,t9,lrhoYe,1)+10.0d0**weakrates(A,Z,t9,lrhoYe,2))/spectra
              end if
@@ -930,6 +945,7 @@
 
         subroutine microphysical_electron_capture(neutrino_species,eos_variables,emissivity)
           use nulib, only : total_eos_variables, number_groups, tempindex, hempel_lookup_table, mueindex, rhoindex, yeindex
+          use sfho_frdm_composition_module, only : sfho_mass
 
           integer i
           integer, intent(in) :: neutrino_species
@@ -949,7 +965,7 @@
 
              !if rate data from a table is not present and 65<A<120 and iapprox is on, use the parameterized rate function, else skip this nucleus
              if(nucleus_index(nuclei_A(i),nuclei_Z(i)).eq.0) then
-                if (nuclei_A(i).gt.65) then
+                if (nuclei_A(i).gt.4) then
                    if(file_priority(5).gt.0) then
                       parameterized_rate = .true.
                    else
@@ -973,7 +989,7 @@
              end if
 
              if(parameterized_rate)then
-                if(nndc_mass_table(nuclei_A(i),nuclei_Z(i)).eq.0.0d0.or.nndc_mass_table(nuclei_A(i),nuclei_Z(i)-1).eq.0.0d0) then
+                if(sfho_mass(hempel_lookup_table(nuclei_A(i),nuclei_Z(i))).eq.0.0d0.or.sfho_mass(hempel_lookup_table(nuclei_A(i),nuclei_Z(i)-1)).eq.0.0d0) then
                    cycle
                 end if
              end if
@@ -1029,7 +1045,7 @@ function analytic_weakrates(n,temperature,q_gs,mue) result(rate)
   chi = (q_gs-2.5d0)/temperature
   eta = mue/temperature + chi
 
-  rate = log(2.0d0)*4.6d0/6146.0d0*(temperature**(5.0d0+n)/m_e**(5.0d0))*(complete_fermi_integral(4+n,eta)+2.0d0*abs(chi)*complete_fermi_integral(3+n,eta)+&
+  rate = log(2.0d0)*4.6d0/6146.0d0*(temperature**(5.0d0+n)/m_e**(5.0d0))*(complete_fermi_integral(4+n,eta)-2.0d0*chi*complete_fermi_integral(3+n,eta)+&
        chi**2.0d0*complete_fermi_integral(2+n,eta))
 
 end function analytic_weakrates

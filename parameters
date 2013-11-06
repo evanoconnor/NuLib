@@ -13,7 +13,7 @@ ilmp			=	1	# 1 indicates highest priority, if other tables have rates for a nucl
 ilmsh			=	2	# 0 indicates the table will not be used
 ioda			=	3
 iffn			=	0
-iapprox			=	1
+iapprox			=	4
 
 
 
