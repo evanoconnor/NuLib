@@ -1,3 +1,4 @@
+!-*-f90-*-
  module eosmodule
 
    implicit none
@@ -10,6 +11,8 @@
    
    real*8 :: precision = 1.0d-9
 
+   character*256 eos_filename_stored
+
 ! min-max values:
    real*8 :: eos_rhomin,eos_rhomax
    real*8 :: eos_yemin,eos_yemax
@@ -18,7 +21,7 @@
    real*8 :: t_max_hack = 240.0d0
 
 ! basics
-   integer, parameter :: nvars = 19
+   integer :: nvars = 19
    real*8,allocatable :: alltables(:,:,:,:)
   ! index variable mapping:
   !  1 -> logpress
@@ -58,3 +61,4 @@
 
 
  end module eosmodule
+
