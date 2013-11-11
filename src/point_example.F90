@@ -125,13 +125,12 @@ program point_example
   allocate(eos_variables(total_eos_variables))
 
 
-  open(11,file="src/extra_code_and_tables/rho_temp_ye_c.dat",status='old')
-  open(22,file="src/extra_code_and_tables/dye2.dat")
-  open(33,file="src/extra_code_and_tables/M1_nue_enspectra_cenprime.xg",status='old')
-  open(44,file="src/extra_code_and_tables/dyesum2.dat")
-  open(55,file="src/extra_code_and_tables/dyedt_hydro_c_t.dat",status='old')
-  open(66,file="src/extra_code_and_tables/nue_enspectra2.dat")
-  open(77,file="src/extra_code_and_tables/xp_c_t2.dat")
+  open(11,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/velocity/rho_temp_ye_c.dat",status='old')
+  open(22,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/velocity/dye_vel2.dat")
+  open(33,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/velocity/M1_nue_enspectra_cenprime.xg",status='old')
+  open(44,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/velocity/dyesum_vel2.dat")
+  open(55,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/velocity/dyedt_hydro_c_t.dat",status='old')
+  open(77,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/velocity/xp_c_t_vel2.dat")
 
 
   cont = .true.
@@ -194,13 +193,11 @@ program point_example
 
      !begin emissivity calculation for each nucleus
      !Hempel EOS and number of species are set up in readrates
-
-     !Hempel EOS and number of species are set up in readrates
      call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)          
 
      emissivity = 0.0d0
 
-     do i=1,nspecies 
+     do i=1,10
         parameterized_rate = .false.
 
         !if rate data from a table is not present and 65<A<120 and iapprox is on, use the parameterized rate function, else skip this nucleus
@@ -243,12 +240,12 @@ program point_example
         !emissivity calculation
         emissivity(i,:) = emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&
              eos_variables,1,parameterized_rate)
+     end do     
 
-        !add the calculation to the total persistent emissivity array for this eos_variables
-        emissivity = emissivity + emissivity_temp
-
+     do i=1,10
+        write(*,*) Sum(emissivity(i,:))
      end do
-
+     stop
 
 
      !calculate emissivity for electron capture on free protons
@@ -351,21 +348,13 @@ program point_example
      !write to sum file
      write(77,*) xtime,eos_variables(xpindex)
      
-     if(xtime.ge.8.5d-2.and.spectralogical) then
-        write(66,*) xtime
-        do i=1,number_groups
-           write(66,*) energies(i) , probability_dist(i), blackbody_spectrum(i), (1-probability_dist(i)/blackbody_spectrum(i))
-        end do
-        spectralogical = .false.
-        close(66)
-     endif
-
      !read next time and stop if at EOF
      nindex = nindex + 1
      write(*,*) nindex
      read(33,"(A)",IOSTAT=IO) time_string
      if(Sum(mass_fractions(:)).le.0.1d0) cont = .false.
      if (IO.lt.0) cont = .false.     
+     
   end do
 
   close(11)

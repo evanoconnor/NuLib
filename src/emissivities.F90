@@ -403,8 +403,7 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
      enddo
 
     !first conditions require rho,T,Ye grid point to be within phase space of the tabulated weak rates
-     if (lrhoYe.ge.table_bounds(1).and.lrhoYe.le.table_bounds(3)&
-          .and.t9.ge.table_bounds(2).and.t9.le.table_bounds(4)) then
+     if (eos_variables(tempindex).gt.1.0d-1) then
 
         !calculate neutrino emissivity from electron and positron capture on nuclei
         if (add_nue_emission_weakinteraction_ecap.and.ns.eq.1) then

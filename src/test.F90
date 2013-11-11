@@ -101,8 +101,8 @@ program test
   
   lrhoyearr(1)=8.5d0
   lrhoyearr(2)=10.5d0
-  lrhoyearr(3)=11.5d0
-  lrhoyearr(4)=12.4d0
+  lrhoyearr(3)=13.5d0
+  lrhoyearr(4)=15.0d0
 
   t9arr(1)=8.2d0
   t9arr(2)=30.0d0

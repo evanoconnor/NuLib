@@ -944,7 +944,7 @@
         end function GPQ_intervals_deriv
 
         subroutine microphysical_electron_capture(neutrino_species,eos_variables,emissivity)
-          use nulib, only : total_eos_variables, number_groups, tempindex, hempel_lookup_table, mueindex, rhoindex, yeindex
+          use nulib, only : total_eos_variables, number_groups, tempindex, hempel_lookup_table, mueindex, rhoindex, yeindex, kelvin_to_mev
           use sfho_frdm_composition_module, only : sfho_mass
 
           integer i
@@ -954,16 +954,19 @@
           real*8, dimension(number_groups) :: emissivity_temp
           real*8, dimension(number_groups) :: emissivity_ni56
           real*8 :: q
+          real*8 :: logrhoYe,t9
           logical :: parameterized_rate          
 
           !Hempel EOS and number of species are set up in readrates
           call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)          
           emissivity = 0.0d0
+          logrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
+          t9 = (eos_variables(tempindex)/kelvin_to_mev)*1.0d-9
 
           do i=1,nspecies 
              parameterized_rate = .false.
 
-             !if rate data from a table is not present and 65<A<120 and iapprox is on, use the parameterized rate function, else skip this nucleus
+             !if rate data from a table is not present and A>4 and iapprox is on, use the parameterized rate function, else skip this nucleus
              if(nucleus_index(nuclei_A(i),nuclei_Z(i)).eq.0) then
                 if (nuclei_A(i).gt.4) then
                    if(file_priority(5).gt.0) then
@@ -976,10 +979,29 @@
                 end if
              end if
 
-             !if nucleus is an lmsh nucleus, use the parameterized function up to the lmsh table bound in density, and then use the rates from the table
-             if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.nuclei_A(i).gt.65) then !should work for lmp + lmsh, will need to check for other table combinations
+
+             !oda table bounds
+             if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.nuclei_A(i).lt.40) then !should work for lmp + lmsh, will need to check for other table combinations
+                !test to see if outside oda table bounds
+                if(logrhoYe.lt.1.0d0.or.logrhoYe.gt.11.0d0.or.t9.lt.1.0d-2.or.t9.gt.30.0d0) then
+                   if(file_priority(5).gt.0) then
+                      parameterized_rate = .true.
+                   else
+                      cycle
+                   end if
+                end if
+             else if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.(nuclei_A(i).gt.40.and.nuclei_A(i).le.65)) then !should work for lmp + lmsh, will need to check for other table combinations
+                !test to see if outside lmp table bounds
+                if(logrhoYe.lt.1.0d0.or.logrhoYe.gt.12.5d0.or.t9.lt.1.0d-2.or.t9.gt.100.0d0) then
+                   if(file_priority(5).gt.0) then
+                      parameterized_rate = .true.
+                   else
+                      cycle
+                   end if
+                end if
+             else if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.nuclei_A(i).gt.65) then !should work for lmp + lmsh
                 !test to see if outside lmsh table bounds
-                if(log10(eos_variables(rhoindex)*eos_variables(yeindex)).lt.9.28493d0) then
+                if(logrhoYe.lt.9.28493d0.or.logrhoYe.gt.12.42218d0.or.t9.lt.8.12315d0.or.t9.gt.39.04914d0) then
                    if(file_priority(5).gt.0) then
                       parameterized_rate = .true.
                    else
