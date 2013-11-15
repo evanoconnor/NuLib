@@ -108,11 +108,13 @@ function anue_absorption_on_p(neutrino_energy,eos_variables) result(crosssection
   !blocking is done outside of this subroutine (bottom of
   !absorption_crosssections.F90)
   final_positron_energy = neutrino_energy - delta_np
+  final_positron_energy = max(1.0d0,final_positron_energy)
   if (final_positron_energy.lt.m_e+1.0d-10) then
      !only happens if neutrino energy < ~1.8 MeV
      crosssection = 0.0d0
      return
   endif
+
 
   mu_nu_eq = -(eos_variables(mueindex)-eos_variables(muhatindex))
   feplus_exp_log10ed = fermidirac_exptermonly_log10ed(final_positron_energy,-eos_variables(mueindex),eos_variables(tempindex))

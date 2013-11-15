@@ -456,22 +456,7 @@
                     end if
                  else if (query1.gt.t9dat(j).and.j.eq.nt9) then
                     if(query1.le.100.0d0)then
-                       ! value = C(nucleus,nrate,dim,i,j-1,1)*(query1-t9dat(j-1))**3 +&
-                       !      C(nucleus,nrate,dim,i,j-1,2)*(query1-t9dat(j-1))**2 +&
-                       !      C(nucleus,nrate,dim,i,j-1,3)*(query1-t9dat(j-1)) +&
-                       !      C(nucleus,nrate,dim,i,j-1,4)
-
-                       !linear extrapolation
-                       ! value = C(nucleus,nrate,dim,i,j-1,1)*(t9dat(j)-t9dat(j-1))**3 +&
-                       !      C(nucleus,nrate,dim,i,j-1,2)*(t9dat(j)-t9dat(j-1))**2 +&
-                       !      C(nucleus,nrate,dim,i,j-1,3)*(t9dat(j)-t9dat(j-1)) +&
-                       !      C(nucleus,nrate,dim,i,j-1,4)
-                       ! value = value + (3.0d0*C(nucleus,nrate,dim,i,j-1,1)*(t9dat(j)-t9dat(j-1))**2.0d0 +&
-                       ! 2.0d0*C(nucleus,nrate,dim,i,j-1,2)*(t9dat(j)-t9dat(j-1))**1.0d0 +&
-                       ! 1.0d0*C(nucleus,nrate,dim,i,j-1,3))*(query1-t9dat(j))
-                       ! exit
-                       stop
-
+                       stop "Extrapolation is not allowed"
                        exit
                     else
                        value = -1.0d2
@@ -488,6 +473,10 @@
           nuc = nucleus
           call monotonic_interpolator(2,1,nrho,Data2d)
           call interpolant(2,1,interp_val)
+
+          !for rate variations
+          interp_val = interp_val - 1.0d0  !Equivalent to multiplying rate by 10 b/c  interp_val = log10(rate)
+          return
 
         end function weakrates
 
@@ -729,22 +718,13 @@
              !average nu energy below the asymptotic limit of <E>_spectra, below is a patch.
              if(avge_spectra_boundary.gt.avge_rates) then          
                 qec_eff = lower_bound
-                ! if(avge_rates.ge.10.0d0.and.eos_variables(mueindex).ge.60.0d0)then
-                !    write(*,*) "ListPlot[{"
-                !    do i=-150,150
-                !       write(*,*) "{",dble(i),",",average_energy(dble(i),eos_variables),"},"
-                !    end do
-                !    write(*,*) "}]"
-                !    write(*,*)qin,eos_variables(mueindex)-m_e,eos_variables(tempindex),avge_rates
-                !    stop
-                ! end if
-                open(1,file="qec_solver_log_file2",position="APPEND")
-                write(rho_string,'(f20.5)') eos_variables(1)
-                write(t_string,'(f10.5)') eos_variables(2)
-                write(ye_string,'(f10.5)') eos_variables(3)
-                write(mue_string,'(f10.5)') eos_variables(11)
-                write(1,'(A6,f10.5A6,A20,A4,A20,A5,A20,A5,A20,A10,f10.5,A10,f10.5,A4,f10.5)')"Qgs: ",qin, "rho: ",rho_string,"T: ",t_string,"Ye: ",ye_string,"Mu_e: ",mue_string, "ave_rates ", avge_rates,"avge_chosen",avge_spectra_boundary," ",lower_bound
-                close(1)                   
+                ! open(1,file="qec_solver_log_file2",position="APPEND")
+                ! write(rho_string,'(f20.5)') eos_variables(1)
+                ! write(t_string,'(f10.5)') eos_variables(2)
+                ! write(ye_string,'(f10.5)') eos_variables(3)
+                ! write(mue_string,'(f10.5)') eos_variables(11)
+                ! write(1,'(A6,f10.5A6,A20,A4,A20,A5,A20,A5,A20,A10,f10.5,A10,f10.5,A4,f10.5)')"Qgs: ",qin, "rho: ",rho_string,"T: ",t_string,"Ye: ",ye_string,"Mu_e: ",mue_string, "ave_rates ", avge_rates,"avge_chosen",avge_spectra_boundary," ",lower_bound
+                ! close(1)                   
                 return
              end if
              do 
@@ -1069,5 +1049,9 @@ function analytic_weakrates(n,temperature,q_gs,mue) result(rate)
 
   rate = log(2.0d0)*4.6d0/6146.0d0*(temperature**(5.0d0+n)/m_e**(5.0d0))*(complete_fermi_integral(4+n,eta)-2.0d0*chi*complete_fermi_integral(3+n,eta)+&
        chi**2.0d0*complete_fermi_integral(2+n,eta))
+
+  !for rate variations
+  rate = rate*1.0d-1
+  return
 
 end function analytic_weakrates
