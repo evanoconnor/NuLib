@@ -6,7 +6,6 @@
    real*8, allocatable,dimension(:,:,:,:),save :: rates  ! rates[nuc,T,rhoYe,rates+uf(indexed by nrate)]
    real*8, allocatable,dimension(:,:,:,:,:,:),save :: C ! Matrix of spline coefficients (see desc. below)
    real*8, allocatable,dimension(:,:),save :: nuclear_species ! nuclear_species[nucleus, (Q, A, Z)]
-   real*8, dimension(300,200),save :: nndc_mass_table ! nncd_mass_table(A,Z) = Q_g.s.
    real*8, allocatable,dimension(:),save :: t9dat
    real*8, allocatable,dimension(:),save :: rhoYedat
 
@@ -28,7 +27,7 @@
    integer, dimension(5),save :: file_priority
 
    !$OMP THREADPRIVATE(rates,nuclear_species,nuclei_A,nuclei_Z,t9dat,rhoYedat, &
-   !$OMP C,nucleus_index,nuc,nrho,nt9,nnuc,nrate,nspecies,ifiles,file_priority,number_densities,mass_fractions,nndc_mass_table)
+   !$OMP C,nucleus_index,nuc,nrho,nt9,nnuc,nrate,nspecies,ifiles,file_priority,number_densities,mass_fractions)
 
    contains
 
@@ -51,8 +50,6 @@
        nt9 = 0
        dim = 1
  
-       call load_nuclear_masses
-     
        ! Initialize Hempel EOS dependencies 
        call get_Hempel_number_of_species(nspecies) ! returns the total number of nuclei
        !$OMP PARALLEL COPYIN(nspecies)
@@ -194,7 +191,7 @@
 
        end do
        
-       !$OMP PARALLEL COPYIN(rates,t9dat,rhoYedat,nucleus_index,nndc_mass_table)  
+       !$OMP PARALLEL COPYIN(rates,t9dat,rhoYedat,nucleus_index)  
        !$OMP END PARALLEL
        
        write(*,*) "Weak rate data loaded."
@@ -208,43 +205,6 @@
 
        write(*,*) "Interpolant functions built. Read-in is complete."
      end subroutine readrates
-
-     subroutine load_nuclear_masses
-       implicit none       
-       integer nline,A,Z,N,A_prev,Z_prev
-       real*8 :: nuclear_mass
-       
-       nline=1
-       nndc_mass_table = 0.0d0
-       nuclear_mass = 0.0d0
-       A_prev = 0
-       Z_prev = 0
-       open(8,file=files_to_load(5))
-       do
-          if(nline.eq.1) read(8,*) 
-          read(8,'(I5,I5,I5,F16.7)',end=30)N,Z,A,nuclear_mass
-          nndc_mass_table(A,Z) = (dble(A)*0.9314949028d0+nuclear_mass/1.0d6)          
-          nline = nline + 1
-       end do
-30     close(8)
-     end subroutine load_nuclear_masses
-
-     function return_qec(A,Z_p,Z_d) result(q)
-       use nulib, only : m_e
-
-       implicit none
-       real*8 :: q
-       integer, intent(in) :: A
-       integer, intent(in) :: Z_p
-       integer, intent(in) :: Z_d
-       
-       if(nndc_mass_table(A,Z_p).eq.0.0d0.or.nndc_mass_table(A,Z_d).eq.0.0d0) then
-          write(*,*)A,Z_p,Z_d
-          stop "no nucleus found"
-       end if
-       q = (nndc_mass_table(A,Z_p) - nndc_mass_table(A,Z_d) - m_e/1.0d3)*1.0d3
-       return
-     end function return_qec
      
      function return_hempel_qec(A,Z_p,Z_d) result(q)
        use sfho_frdm_composition_module, only : sfho_mass
@@ -475,7 +435,8 @@
           call interpolant(2,1,interp_val)
 
           !for rate variations
-          interp_val = interp_val - 1.0d0  !Equivalent to multiplying rate by 10 b/c  interp_val = log10(rate)
+!          interp_val = log10(((10.0d0**interp_val)/5.0d0))  !Equivalent to multiplying rate by 10 b/c  interp_val = log10(rate)
+          interp_val = interp_val !+ 1.0d0
           return
 
         end function weakrates
@@ -560,7 +521,7 @@
           spectra = (eos_variables(tempindex)**5)*spectra          
           if (neutrino_species.eq.1) then
              if (parameterized_rate) then
-                normalization_constant = (analytic_weakrates(0,eos_variables(tempindex),return_hempel_qec(A,Z,Z-1),eos_variables(mueindex)-m_e))/spectra
+                normalization_constant = (analytic_weakrates(0,eos_variables(tempindex),qec_eff,eos_variables(mueindex)-m_e))/spectra !replaced return_hempel_qec(A,Z,Z-1) with qec_eff
              else
                 normalization_constant = (10.0d0**weakrates(A,Z,t9,lrhoYe,1)+10.0d0**weakrates(A,Z,t9,lrhoYe,2))/spectra
              end if
@@ -1051,7 +1012,7 @@ function analytic_weakrates(n,temperature,q_gs,mue) result(rate)
        chi**2.0d0*complete_fermi_integral(2+n,eta))
 
   !for rate variations
-  rate = rate*1.0d-1
+  !rate = rate*10.0d0
   return
 
 end function analytic_weakrates

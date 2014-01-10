@@ -49,7 +49,7 @@ program point_example
   real*8, allocatable,dimension(:) :: probability_dist
   real*8, allocatable,dimension(:) :: emissivity_ni56
   real*8, allocatable,dimension(:) :: blackbody_spectrum
-  real*8, allocatable,dimension(:,:) :: emissivity,emissivity_temp
+  real*8, allocatable,dimension(:,:) :: emissivity,emissivity_temp,nuclei_weakrates
   real*8, allocatable,dimension(:) :: dye
   real*8, allocatable,dimension(:) :: normalized_dye
 
@@ -65,6 +65,10 @@ program point_example
   real*8 :: dye_bin_sum
   real*8 :: dyedt_hydro
   real*8 :: dyedt_ecfreep
+  real*8 :: qec_eff
+  real*8 :: t9
+  real*8 :: lrhoye
+  real*8 :: analytic_weakrates
   logical :: spectralogical
   logical :: parameterized_rate          
 
@@ -91,6 +95,7 @@ program point_example
 
   allocate(probability_dist(number_groups))
   allocate(emissivity(nspecies,number_groups))
+  allocate(nuclei_weakrates(2,nspecies))
   allocate(emissivity_temp(nspecies,number_groups))
   allocate(blackbody_spectrum(number_groups))
   allocate(emissivity_ni56(number_groups))
@@ -125,39 +130,25 @@ program point_example
   allocate(eos_variables(total_eos_variables))
 
 
-  open(11,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/velocity/rho_temp_ye_c.dat",status='old')
-  open(22,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/velocity/dye_vel2.dat")
-  open(33,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/velocity/M1_nue_enspectra_cenprime.xg",status='old')
-  open(44,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/velocity/dyesum_vel2.dat")
-  open(55,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/velocity/dyedt_hydro_c_t.dat",status='old')
-  open(77,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/velocity/xp_c_t_vel2.dat")
-
+  open(11,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/Data_all_vel_inel_12_tvd/rho_temp_ye_c.dat",status='old')
+  open(88,file="/mnt/simulations/ceclub/sullivan/gr1d/dyedtruns/Data_all_vel_inel_12_tvd/ecrates_rho_c_temp.dat")
 
   cont = .true.
-  read(33,"(A)") time_string
   nindex = 1
   spectralogical = .true.
   
   do while(cont)
      !read profile vars from gr1d evolution
-     read(55,*) xtime,dyedt_hydro
-     read(11,*) xtime,xrho,xtemp,xye
-
-     !match with line from nue_enspectra_cen file
-     read(time_string(index(time_string(1:),"= ")+5:index(time_string(1:),"= ")+28),*) current_time
-     if(current_time.gt.1.0d0) stop
-
-     do i=1,number_groups
-        read(33,*) current_energy,probability_dist(i)
-     end do
-     read(33,*)
-     read(33,*)
+     read(11,*,end=101) xtime,xrho,xtemp,xye
 
      !setup eos_variables
      eos_variables = 0.0d0
      eos_variables(rhoindex) = xrho
      eos_variables(tempindex) = xtemp
      eos_variables(yeindex) = xye
+     lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
+     t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  
+
 
      !! EOS stuff
      keytemp = 1
@@ -181,23 +172,13 @@ program point_example
         eos_variables(xhindex) = 0.0d0
      endif
 
-     !calculate the blackbody function (dimensionless fermi function in this 
-     !case because other terms cancel in the division of E/B (f_avg / f_neq)     
-     do i=1,number_groups 
-        blackbody_spectrum(i) = fermidirac_dimensionless(energies(i)/eos_variables(tempindex),&
-             (eos_variables(mueindex)+eos_variables(mupindex)-eos_variables(munindex))/eos_variables(tempindex))
-     end do
-
-
-
-
      !begin emissivity calculation for each nucleus
      !Hempel EOS and number of species are set up in readrates
      call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)          
 
      emissivity = 0.0d0
 
-     do i=1,10
+     do i=1,nspecies
         parameterized_rate = .false.
 
         !if rate data from a table is not present and 65<A<120 and iapprox is on, use the parameterized rate function, else skip this nucleus
@@ -212,11 +193,29 @@ program point_example
               cycle
            end if
         end if
-
-        !if nucleus is an lmsh nucleus, use the parameterized function up to the lmsh table bound in density, and then use the rates from the table
-        if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.nuclei_A(i).gt.65) then !should work for lmp + lmsh, will need to check for other table combinations
+        
+        !oda table bounds
+        if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.nuclei_A(i).lt.40) then !should work for lmp + lmsh, will need to check for other table combinations
+           !test to see if outside oda table bounds
+           if(lrhoYe.lt.1.0d0.or.lrhoYe.gt.11.0d0.or.t9.lt.1.0d-2.or.t9.gt.30.0d0) then
+              if(file_priority(5).gt.0) then
+                 parameterized_rate = .true.
+              else
+                 cycle
+              end if
+           end if
+        else if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.(nuclei_A(i).gt.40.and.nuclei_A(i).le.65)) then !should work for lmp + lmsh, will need to check for other table combinations
+           !test to see if outside lmp table bounds
+           if(lrhoYe.lt.1.0d0.or.lrhoYe.gt.12.5d0.or.t9.lt.1.0d-2.or.t9.gt.100.0d0) then
+              if(file_priority(5).gt.0) then
+                 parameterized_rate = .true.
+              else
+                 cycle
+              end if
+           end if
+        else if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.nuclei_A(i).gt.65) then !should work for lmp + lmsh
            !test to see if outside lmsh table bounds
-           if(log10(eos_variables(rhoindex)*eos_variables(yeindex)).lt.9.28493d0) then
+           if(lrhoYe.lt.9.28493d0.or.lrhoYe.gt.12.42218d0.or.t9.lt.8.12315d0.or.t9.gt.39.04914d0) then
               if(file_priority(5).gt.0) then
                  parameterized_rate = .true.
               else
@@ -231,138 +230,32 @@ program point_example
            end if
         end if
 
-        ! if(parameterized_rate)then
-        !    if(nndc_mass_table(nuclei_A(i),nuclei_Z(i)).eq.0.0d0.or.nndc_mass_table(nuclei_A(i),nuclei_Z(i)-1).eq.0.0d0) then
-        !       cycle
-        !    end if
-        ! end if
 
-        !emissivity calculation
-        emissivity(i,:) = emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&
-             eos_variables,1,parameterized_rate)
-     end do     
+        if(parameterized_rate)then
+           qec_eff = return_hempel_qec(nuclei_A(i),nuclei_Z(i),nuclei_Z(i)-1)
+           nuclei_weakrates(1,i) = analytic_weakrates(0,eos_variables(tempindex),qec_eff,eos_variables(mueindex))
+           nuclei_weakrates(2,i) = analytic_weakrates(1,eos_variables(tempindex),qec_eff,eos_variables(mueindex))
+        else
+           nuclei_weakrates(1,i) = 10.0d0**weakrates(nuclei_A(i),nuclei_Z(i),t9,lrhoYe,2)
+           nuclei_weakrates(2,i) = 10.0d0**weakrates(nuclei_A(i),nuclei_Z(i),t9,lrhoYe,3)
+        end if
 
-     do i=1,10
-        write(*,*) Sum(emissivity(i,:))
      end do
-     stop
 
+     write(*,*)eos_variables(rhoindex),Sum(nuclei_weakrates(1,:))
 
-     !calculate emissivity for electron capture on free protons
-     call single_point_return_all(eos_variables, &
-          local_emissivity,local_absopacity,local_scatopacity, &
-          mypoint_neutrino_scheme)
-     
-
-     !calculate dyedt for each nucleus
-     dye = 0.0d0
-     do i=1,nspecies
-!        dye(i)=-Sum((4.0d0*pi/6.02214129d23)*bin_widths(:)*(emissivity(i,:)/mev_to_erg)*(1-probability_dist(:)/blackbody_spectrum(:))/energies(:))
-        dye(i)=-Sum((4.0d0*pi/6.02214129d23)*bin_widths(:)*(emissivity(i,:)/mev_to_erg)*probability_dist(:)/energies(:))
-!        if (nindex.ge.1605) write(*,*) Sum(emissivity(i,:)), mass_fractions(i)
-     end do     
-     normalized_dye(:)=dye(:)/eos_variables(rhoindex)
-    
-     !calculate dyedt for free protons
-     dyedt_ecfreep = -Sum((4.0d0*pi/6.02214129d23)*bin_widths(:)*(local_emissivity(1,:)/mev_to_erg)*probability_dist(:)/energies(:))/eos_variables(rhoindex)
-     
-
-     !write to file
-     dye_bin = 0.0d0
-     dye_bin_sum = 0.0d0
-     do i=1,nspecies
-        ! if(nuclei_A(i).le.5) then
-        !    dye_bin(1) = dye_bin(1) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.5.and.nuclei_A(i).lt.25) then
-        !    dye_bin(2) = dye_bin(2) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.25.and.nuclei_A(i).lt.45) then 
-        !    dye_bin(3) = dye_bin(3) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.45.and.nuclei_A(i).le.65) then
-        !    dye_bin(4) = dye_bin(4) + normalized_dye(i)
-        ! else if(nuclei_A(i).gt.65.and.nuclei_A(i).lt.85) then
-        !    dye_bin(5) = dye_bin(5) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.85.and.nuclei_A(i).lt.105) then
-        !    dye_bin(6) = dye_bin(6) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.105.and.nuclei_A(i).lt.125) then
-        !    dye_bin(7) = dye_bin(7) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.125.and.nuclei_A(i).lt.145) then
-        !    dye_bin(8) = dye_bin(8) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.145.and.nuclei_A(i).lt.165) then
-        !    dye_bin(9) = dye_bin(9) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.165.and.nuclei_A(i).lt.185) then
-        !    dye_bin(10) = dye_bin(10) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.185.and.nuclei_A(i).lt.205) then
-        !    dye_bin(11) = dye_bin(11) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.205.and.nuclei_A(i).lt.225) then
-        !    dye_bin(12) = dye_bin(12) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.225.and.nuclei_A(i).lt.245) then
-        !    dye_bin(13) = dye_bin(13) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.245.and.nuclei_A(i).lt.265) then
-        !    dye_bin(14) = dye_bin(14) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.265.and.nuclei_A(i).lt.285) then
-        !    dye_bin(15) = dye_bin(15) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.285.and.nuclei_A(i).lt.305) then
-        !    dye_bin(16) = dye_bin(16) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.305.and.nuclei_A(i).lt.325) then
-        !    dye_bin(17) = dye_bin(17) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.325.and.nuclei_A(i).lt.345) then
-        !    dye_bin(18) = dye_bin(18) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.345.and.nuclei_A(i).lt.365) then
-        !    dye_bin(19) = dye_bin(19) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.365.and.nuclei_A(i).lt.385) then
-        !    dye_bin(20) = dye_bin(20) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.385.and.nuclei_A(i).lt.405) then
-        !    dye_bin(21) = dye_bin(21) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.425.and.nuclei_A(i).lt.445) then
-        !    dye_bin(22) = dye_bin(22) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.445.and.nuclei_A(i).lt.465) then
-        !    dye_bin(23) = dye_bin(23) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.465.and.nuclei_A(i).lt.485) then
-        !    dye_bin(24) = dye_bin(24) + normalized_dye(i)
-        ! else if(nuclei_A(i).ge.485.and.nuclei_A(i).lt.505) then
-        !    dye_bin(25) = dye_bin(25) + normalized_dye(i)
-        ! end if 
-     end do
-     dye_bin_sum = Sum(dye_bin(:)) + dyedt_ecfreep
-
-     !write to binned file
-     if(nindex.eq.1)then
-        write(22,'(A24,A1)',advance='no') " "," "
-        do i=1,nspecies
-           write(22,'(I3,A1,I3,A17)',advance='no') nuclei_A(i)," ",nuclei_Z(i)," "
-        end do
-        write(22,*)
-     end if
-
-
-     write(22,'(ES23.14e3,A1)',advance='no') xtime," "
-     do i=1,nspecies
-        write(22,'(E23.14e3,A1)',advance='no') normalized_dye(i)," "
-     end do
-     write(22,*)
-!     write(22,*) xtime,dye_bin(1),dye_bin(2),dye_bin(3),dye_bin(4),dye_bin(5),dye_bin(6),dye_bin(7),dye_bin(8),dye_bin(9),dye_bin(10),dye_bin(11),dye_bin(12),dye_bin(13),dye_bin(14),dye_bin(15),dye_bin(16),dye_bin(17),dye_bin(18),dye_bin(19),dye_bin(20),dye_bin(21),dye_bin(22),dye_bin(23),dye_bin(24),dye_bin(25),dyedt_ecfreep
-
-     !write to sum file
-     write(44,*) xtime,dye_bin_sum
-
-     !write to sum file
-     write(77,*) xtime,eos_variables(xpindex)
      
      !read next time and stop if at EOF
      nindex = nindex + 1
      write(*,*) nindex
-     read(33,"(A)",IOSTAT=IO) time_string
      if(Sum(mass_fractions(:)).le.0.1d0) cont = .false.
      if (IO.lt.0) cont = .false.     
      
   end do
 
-  close(11)
-  close(22)
-  close(33)
-  close(44)
-  close(55)
-  close(77)
+101  close(11)
+  close(88)
+  
     
 end program point_example
   
