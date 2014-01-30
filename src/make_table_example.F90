@@ -249,7 +249,7 @@ program make_table_example
      allocate(eos_variables(total_eos_variables))
      write(*,*) "Rho:", 100.0*dble(displs(rank)+irho-1)/dble(final_table_size_rho),"%"
      do itemp=1,final_table_size_temp
-!        write(*,*) "Temp:", 100.0*dble(itemp-1)/dble(final_table_size_temp),"%"
+        write(*,*) "Temp:", 100.0*dble(itemp-1)/dble(final_table_size_temp),"%"
         do iye=1,final_table_size_ye
 
            eos_variables = 0.0d0

@@ -952,7 +952,7 @@
              end if
 
              if(parameterized_rate)then
-                if(sfho_mass(hempel_lookup_table(nuclei_A(i),nuclei_Z(i))).eq.0.0d0.or.sfho_mass(hempel_lookup_table(nuclei_A(i),nuclei_Z(i)-1)).eq.0.0d0) then
+                if(hempel_lookup_table(nuclei_A(i),nuclei_Z(i)).eq.0.or.hempel_lookup_table(nuclei_A(i),nuclei_Z(i)-1).eq.0) then
                    cycle
                 end if
              end if
