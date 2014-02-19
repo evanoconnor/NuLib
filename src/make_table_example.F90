@@ -23,7 +23,7 @@ program make_table_example
   integer :: mytable_number_species = 6
 
   !number of energy groups
-  integer :: mytable_number_groups = 12
+  integer :: mytable_number_groups = 18
 
   !NuLib parameters file (weak rates and EOS)
   character*200 :: parameters_filename = "/projects/ceclub/gr1dnulib/GitHub/NuLib/parameters"
