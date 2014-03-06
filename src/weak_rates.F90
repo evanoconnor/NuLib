@@ -85,125 +85,143 @@
        !$OMP END PARALLEL
        nucleus_index = 0
 
-       do i=1,4
-          if(ifiles(i).eq.0) cycle
-          filename=files_to_load(ifiles(i))
-          open(1,file=filename,status='old')
-          do
-             read(1,'(A)',end=10) line
-             read(line,*) lindex
-             if (lindex.eq.'p') then
-                continue_reading = .true.
-                read(line(index(line(1:),"Q=")+2:index(line(1:),"Q=")+9),*) nucQ
-                read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+5),*) nucA
-                read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nucZ
-                A = int(nucA)
-                Z = int(nucZ)+1
-                if(nucleus_index(A,Z).ne.0) then
-                   continue_reading = .false.
-                   cycle
-                end if
-                nuc = nuc + 1
-                nrho = 0 
-                nt9 = 0
-             end if
-             if (index('0123456789',lindex).ne.0.and.continue_reading) then
-                lrho_prior = lrho
-                read(line,*) t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu            
-                if (lrho.ne.lrho_prior) then
-                   nrho = nrho + 1
-                end if
-                nt9 = nt9 + 1
-             end if
-          end do
-
-10        close(1)
-
-       end do
-
-       write(*,*) nuc,nrho,nt9/nrho
-
-       ! allocate the array's based on dimension
-       !$OMP PARALLEL COPYIN(nuc,nt9,nrho)
-       allocate(rates(nuc,nt9/nrho,nrho,7))
-       allocate(nuclear_species(nuc,3))
-       allocate(t9dat(nt9/nrho))
-       allocate(rhoYedat(nrho))
-       !$OMP END PARALLEL
-
-       
-       nuc = 0
-       lrho = 0.0d0
-       nrho = 0
-       nt9 = 0
-       nucleus_index = 0
-
-
-       do i=1,4
-          if(ifiles(i).eq.0) cycle
-          filename=files_to_load(ifiles(i))
-          ! fill the arrays
-          open(1,file=filename,status='old')
-          do
-             read(1,'(A)',end=20) line
-             read(line,*) lindex
-             if (lindex.eq.'p') then
-                continue_reading = .true.
-                read(line(index(line(1:),"Q=")+2:index(line(1:),"Q=")+9),*) nucQ
-                read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+5),*) nucA
-                read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nucZ
-                A = int(nucA)
-                Z = int(nucZ)+1
-                if(nucleus_index(A,Z).ne.0) then
-                   continue_reading = .false.
-                   cycle
-                end if
-                nuc = nuc + 1
-                nuclear_species(nuc,1) = nucQ
-                nuclear_species(nuc,2) = nucA
-                nuclear_species(nuc,3) = nucZ
-                nuclear_species(nuc,3)=nuclear_species(nuc,3)+1 !Currently reading in z of daughter which is 1 less that of parent, hence the addition of one
-                nucleus_index(A,Z) = nuc
-                nrho = 0 
-                nt9 = 0
-             end if
-             if (index('0123456789',lindex).ne.0.and.continue_reading) then
-                lrho_prior = lrho
-                read(line,*) t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu            
-                if (lrho.ne.lrho_prior) then
-                   nrho = nrho + 1
+       if(Sum(ifiles).ne.0)then
+          do i=1,4
+             if(ifiles(i).eq.0) cycle
+             filename=files_to_load(ifiles(i))
+             open(1,file=filename,status='old')
+             do
+                read(1,'(A)',end=10) line
+                read(line,*) lindex
+                if (lindex.eq.'p') then
+                   continue_reading = .true.
+                   read(line(index(line(1:),"Q=")+2:index(line(1:),"Q=")+9),*) nucQ
+                   read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+5),*) nucA
+                   read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nucZ
+                   A = int(nucA)
+                   Z = int(nucZ)+1
+                   if(nucleus_index(A,Z).ne.0) then
+                      continue_reading = .false.
+                      cycle
+                   end if
+                   nuc = nuc + 1
+                   nrho = 0 
                    nt9 = 0
                 end if
-                nt9 = nt9 + 1
-                rates(nuc,nt9,nrho,1)=lbetap
-                rates(nuc,nt9,nrho,2)=leps
-                rates(nuc,nt9,nrho,3)=lnu
-                rates(nuc,nt9,nrho,4)=lbetam
-                rates(nuc,nt9,nrho,5)=lpos
-                rates(nuc,nt9,nrho,6)=lanu
-                rates(nuc,nt9,nrho,7)=uf
-                t9dat(nt9)=t9
-                rhoYedat(nrho)=lrho
-             end if
+                if (index('0123456789',lindex).ne.0.and.continue_reading) then
+                   lrho_prior = lrho
+                   read(line,*) t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu            
+                   if (lrho.ne.lrho_prior) then
+                      nrho = nrho + 1
+                   end if
+                   nt9 = nt9 + 1
+                end if
+             end do
+
+10           close(1)
+
           end do
 
-20        close(1)
+          write(*,*) nuc,nrho,nt9/nrho
 
-       end do
-       
-       !$OMP PARALLEL COPYIN(rates,t9dat,rhoYedat,nucleus_index)  
-       !$OMP END PARALLEL
-       
-       write(*,*) "Weak rate data loaded."
+          ! allocate the array's based on dimension
+          !$OMP PARALLEL COPYIN(nuc,nt9,nrho)
+          allocate(rates(nuc,nt9/nrho,nrho,7))
+          allocate(nuclear_species(nuc,3))
+          allocate(t9dat(nt9/nrho))
+          allocate(rhoYedat(nrho))
+          !$OMP END PARALLEL
 
-       ! build array of interpolating spline coefficients
-       nnuc = nuc
-       call monotonic_interp_2d(dim)
+          nuc = 0
+          lrho = 0.0d0
+          nrho = 0
+          nt9 = 0
+          nucleus_index = 0
 
-       !$OMP PARALLEL COPYIN(C)
-       !$OMP END PARALLEL     
 
-       write(*,*) "Interpolant functions built. Read-in is complete."
+          do i=1,4
+             if(ifiles(i).eq.0) cycle
+             filename=files_to_load(ifiles(i))
+             ! fill the arrays
+             open(1,file=filename,status='old')
+             do
+                read(1,'(A)',end=20) line
+                read(line,*) lindex
+                if (lindex.eq.'p') then
+                   continue_reading = .true.
+                   read(line(index(line(1:),"Q=")+2:index(line(1:),"Q=")+9),*) nucQ
+                   read(line(index(line(1:),"a=")+2:index(line(1:),"a=")+5),*) nucA
+                   read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nucZ
+                   A = int(nucA)
+                   Z = int(nucZ)+1
+                   if(nucleus_index(A,Z).ne.0) then
+                      continue_reading = .false.
+                      cycle
+                   end if
+                   nuc = nuc + 1
+                   nuclear_species(nuc,1) = nucQ
+                   nuclear_species(nuc,2) = nucA
+                   nuclear_species(nuc,3) = nucZ
+                   nuclear_species(nuc,3)=nuclear_species(nuc,3)+1 !Currently reading in z of daughter which is 1 less that of parent, hence the addition of one
+                   nucleus_index(A,Z) = nuc
+                   nrho = 0 
+                   nt9 = 0
+                end if
+                if (index('0123456789',lindex).ne.0.and.continue_reading) then
+                   lrho_prior = lrho
+                   read(line,*) t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu            
+                   if (lrho.ne.lrho_prior) then
+                      nrho = nrho + 1
+                      nt9 = 0
+                   end if
+                   nt9 = nt9 + 1
+                   rates(nuc,nt9,nrho,1)=lbetap
+                   rates(nuc,nt9,nrho,2)=leps
+                   rates(nuc,nt9,nrho,3)=lnu
+                   rates(nuc,nt9,nrho,4)=lbetam
+                   rates(nuc,nt9,nrho,5)=lpos
+                   rates(nuc,nt9,nrho,6)=lanu
+                   rates(nuc,nt9,nrho,7)=uf
+                   t9dat(nt9)=t9
+                   rhoYedat(nrho)=lrho
+                end if
+             end do
+
+20           close(1)
+
+          end do
+
+          !$OMP PARALLEL COPYIN(rates,t9dat,rhoYedat,nucleus_index)  
+          !$OMP END PARALLEL
+
+          write(*,*) "Weak rate data loaded."
+
+          ! build array of interpolating spline coefficients
+          nnuc = nuc
+          call monotonic_interp_2d(dim)
+
+          !$OMP PARALLEL COPYIN(C)
+          !$OMP END PARALLEL     
+
+          write(*,*) "Interpolant functions built. Read-in is complete."
+       else
+          write(*,*) "No weak rate data to load, using analytic approximation everywhere."
+          nuc=0
+          nnuc=nuc
+          nrho=0
+          nt9=0
+          !$OMP PARALLEL COPYIN(nuc,nt9,nrho)
+          allocate(rates(0,0,0,0))
+          allocate(nuclear_species(0,0))
+          allocate(t9dat(0))
+          allocate(rhoYedat(0))
+          !$OMP END PARALLEL          
+          !$OMP PARALLEL COPYIN(rates,t9dat,rhoYedat,nucleus_index)  
+          !$OMP END PARALLEL
+          !$OMP PARALLEL COPYIN(C)
+          !$OMP END PARALLEL     
+       end if
+
      end subroutine readrates
      
      function return_hempel_qec(A,Z_p,Z_d) result(q)
@@ -445,7 +463,7 @@
         function emissivity_from_weak_interaction_rates(A,Z,number_density,eos_variables,neutrino_species,parameterized_rate) result(emissivity)
 
           use nulib, only : total_eos_variables,energies,number_groups,do_integrated_BB_and_emissivity&
-               ,mueindex,rhoindex,tempindex,yeindex,GPQ_n128_roots,GPQ_n128_weights
+               ,mueindex,rhoindex,tempindex,yeindex,GPQ_n32_roots,GPQ_n32_weights
           include 'constants.inc'
 
           integer A,Z
@@ -514,8 +532,8 @@
           GPQ_interval = GPQ_intervals(qec_eff,eos_variables)
           GPQ_coef(1) = (GPQ_interval(2)-GPQ_interval(1))/2.0d0
           GPQ_coef(2) = (GPQ_interval(1)+GPQ_interval(2))/2.0d0
-          do i=1,128
-             spectra = spectra + GPQ_coef(1)*GPQ_n128_weights(i)*ec_neutrino_spectra(GPQ_coef(1)*GPQ_n128_roots(i)+GPQ_coef(2),qec_eff,eos_variables(mueindex)-m_e,&
+          do i=1,32
+             spectra = spectra + GPQ_coef(1)*GPQ_n32_weights(i)*ec_neutrino_spectra(GPQ_coef(1)*GPQ_n32_roots(i)+GPQ_coef(2),qec_eff,eos_variables(mueindex)-m_e,&
                   eos_variables(tempindex))
           end do
           spectra = (eos_variables(tempindex)**5)*spectra          
@@ -613,7 +631,7 @@
 
         function qec_solver(avgenergy,qin,eos_variables) result(qec_eff)
 
-          use nulib, only : GLQ_n128_roots, GLQ_n128_weights, total_eos_variables, mueindex, tempindex, rhoindex, yeindex
+          use nulib, only : GLQ_n32_roots, GLQ_n32_weights, total_eos_variables, mueindex, tempindex, rhoindex, yeindex
           implicit none
 
           include 'constants.inc'
@@ -722,7 +740,7 @@
         
         function average_energy(qec_eff,eos_variables) result(avgenergy)
           
-          use nulib, only :GPQ_n128_roots,GPQ_n128_weights,total_eos_variables,m_e,mueindex,tempindex
+          use nulib, only :GPQ_n32_roots,GPQ_n32_weights,total_eos_variables,m_e,mueindex,tempindex
           implicit none
 
           real*8, intent(in) :: eos_variables(total_eos_variables)
@@ -749,10 +767,10 @@
           GPQ_interval = GPQ_intervals(qec_eff,eos_variables)
           GPQ_coef(1) = (GPQ_interval(2)-GPQ_interval(1))/2.0d0
           GPQ_coef(2) = (GPQ_interval(1)+GPQ_interval(2))/2.0d0
-          do i=1,128
-             spectra = GPQ_coef(1)*ec_neutrino_spectra(GPQ_coef(1)*GPQ_n128_roots(i)+GPQ_coef(2),qec_eff,eos_variables(mueindex)-m_e,eos_variables(tempindex))
-             energy_density_integral=energy_density_integral+GPQ_n128_weights(i)*(GPQ_coef(1)*GPQ_n128_roots(i)+GPQ_coef(2))*spectra
-             number_density_integral=number_density_integral+GPQ_n128_weights(i)*spectra
+          do i=1,32
+             spectra = GPQ_coef(1)*ec_neutrino_spectra(GPQ_coef(1)*GPQ_n32_roots(i)+GPQ_coef(2),qec_eff,eos_variables(mueindex)-m_e,eos_variables(tempindex))
+             energy_density_integral=energy_density_integral+GPQ_n32_weights(i)*(GPQ_coef(1)*GPQ_n32_roots(i)+GPQ_coef(2))*spectra
+             number_density_integral=number_density_integral+GPQ_n32_weights(i)*spectra
           end do
           
           if (number_density_integral.eq.0.0d0.and.energy_density_integral.eq.0.0d0) then             
@@ -774,6 +792,7 @@
           real*8 :: energy
           real*8 :: centroid
           real*8 :: spectra_centroid
+          real*8 :: spectra_shift
           real*8 :: lower_bound,lower_bound_spectra
           real*8 :: upper_bound,upper_bound_spectra
           real*8 :: tolerance
@@ -781,44 +800,30 @@
           
           interval = 0.0d0
           spectra = 0.0d0
-          do i=0,int((q+eos_variables(mueindex)-m_e)/eos_variables(tempindex))
-             spectra = ec_neutrino_spectra(dble(i),q,eos_variables(mueindex)-m_e,eos_variables(tempindex)) - 0.01d0
-             if(sign(1.0d0,spectra).gt.0.0d0) then                
-                if(i.eq.1) then
-                   interval(1) = 0.0d0
-                else
-                   interval(1) = dble(i-1)                   
-                end if
-                exit
-             else
-                interval(1) = 0.0d0   
-             end if
-          end do
-
-          centroid = abs(q+eos_variables(mueindex)-m_e)/eos_variables(tempindex)
-          upper_bound = max(centroid*5.0d0,20.0d0)
-          upper_bound_spectra = ec_neutrino_spectra(upper_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex)) - 0.01d0
+          !lowerbound
+          centroid = (q+eos_variables(mueindex)-m_e)/eos_variables(tempindex)
           spectra_centroid = ec_neutrino_spectra(centroid,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))
-          if (spectra_centroid.le.0.01d0) then
-             interval(2) = upper_bound
-             return
+          spectra_shift = spectra_centroid/1.0d2          
+          spectra_shift = sqrt(spectra_shift)
+          ! If (q+mu)/T is less than 3MeV, the spectra will be hugging the origin so a interval from 0 to 25 should be sufficient.
+          ! For greater values of (g+mu)/T the interval should be determined with the quartic part of the spectra for the lower end
+          ! and an auxillary gaussian that is used to track the high energy end. The below represents this method.
+          if(centroid.gt.3.0d0)then
+             interval(1) = (q/eos_variables(tempindex)+sqrt((q/eos_variables(tempindex))**2.0d0+4.0d0*spectra_shift))/2.0d0         
+             interval(2) = (q+eos_variables(mueindex)-m_e)/eos_variables(tempindex) + 27.314d0
+          else
+             interval(1) = 0.0d0
+             interval(2) = 25.0d0
           end if
-          if (upper_bound_spectra.gt.0.0d0) then
-             upper_bound = 1.0d3
+          ! fail safe in case the above doesn't work
+          if(interval(1).lt.1.0d-5.and.interval(2).lt.0.0d0)then
+             interval(2) = max(interval(2),50.0d0)
           end if
-          do i=1,int(upper_bound)
-             spectra = ec_neutrino_spectra(upper_bound-dble(i),q,eos_variables(mueindex)-m_e,eos_variables(tempindex)) - 0.01d0
-             if(sign(1.0d0,spectra).gt.0.0d0) then
-                if(i.eq.1) then
-                   interval(2) = upper_bound
-                else
-                   interval(2) = upper_bound - dble(i-1) 
-                end if
-                exit
-             else
-                interval(2) = upper_bound
-             end if
-          end do
+          if(interval(2).lt.0.0d0)then
+             write(*,*)  "lower bound = ",interval(1), "upper bound = ", interval(2)
+             write(*,*) 
+             stop
+          end if
 
           return
                    
@@ -896,7 +901,7 @@
           real*8, dimension(number_groups) :: emissivity_ni56
           real*8 :: q
           real*8 :: logrhoYe,t9
-          logical :: parameterized_rate          
+          logical :: parameterized_rate  
 
           !Hempel EOS and number of species are set up in readrates
           call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)          
@@ -906,6 +911,8 @@
 
           do i=1,nspecies 
              parameterized_rate = .false.
+
+             if(number_densities(i).eq.0.0d0)cycle
 
              !if rate data from a table is not present and A>4 and iapprox is on, use the parameterized rate function, else skip this nucleus
              if(nucleus_index(nuclei_A(i),nuclei_Z(i)).eq.0) then
@@ -963,7 +970,6 @@
              
              !add the calculation to the total persistent emissivity array for this eos_variables
              emissivity = emissivity + emissivity_temp
-
 
           end do
           number_densities = 0.0d0
