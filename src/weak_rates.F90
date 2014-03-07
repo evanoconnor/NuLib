@@ -1,4 +1,4 @@
- !-*-f90-*- 
+ !-*-f90-*- z
  module weak_rates
 
    implicit none
@@ -27,7 +27,8 @@
    integer, dimension(5),save :: file_priority
 
    !$OMP THREADPRIVATE(rates,nuclear_species,nuclei_A,nuclei_Z,t9dat,rhoYedat, &
-   !$OMP C,nucleus_index,nuc,nrho,nt9,nnuc,nrate,nspecies,ifiles,file_priority,number_densities,mass_fractions)
+   !$OMP C,nucleus_index,nuc,nrho,nt9,nnuc,nrate,nspecies,ifiles,file_priority, &
+   !$OMP number_densities,mass_fractions)
 
    contains
 
@@ -162,7 +163,9 @@
                    nuclear_species(nuc,1) = nucQ
                    nuclear_species(nuc,2) = nucA
                    nuclear_species(nuc,3) = nucZ
-                   nuclear_species(nuc,3)=nuclear_species(nuc,3)+1 !Currently reading in z of daughter which is 1 less that of parent, hence the addition of one
+                   nuclear_species(nuc,3)=nuclear_species(nuc,3)+1 
+                   !^ currently reading in z of daughter which is 
+                   !1 less that of parent, hence the addition of one
                    nucleus_index(A,Z) = nuc
                    nrho = 0 
                    nt9 = 0
@@ -453,21 +456,28 @@
           call interpolant(2,1,interp_val)
 
           !for rate variations
-!          interp_val = log10(((10.0d0**interp_val)/5.0d0))  !Equivalent to multiplying rate by 10 b/c  interp_val = log10(rate)
           interp_val = interp_val !+ 1.0d0
           return
 
         end function weakrates
 
 
-        function emissivity_from_weak_interaction_rates(A,Z,number_density,eos_variables,neutrino_species,parameterized_rate) result(emissivity)
+        function emissivity_from_weak_interaction_rates(&
+             A,&
+             Z,&
+             number_density,&
+             eos_variables,&
+             neutrino_species,&
+             parameterized_rate)&
+             result(emissivity)
 
-          use nulib, only : total_eos_variables,energies,number_groups,do_integrated_BB_and_emissivity&
-               ,mueindex,rhoindex,tempindex,yeindex,GPQ_n32_roots,GPQ_n32_weights
+          use nulib, only : total_eos_variables,energies,number_groups,&
+               do_integrated_BB_and_emissivity,mueindex,rhoindex,tempindex,&
+               yeindex,GPQ_n32_roots,GPQ_n32_weights
+
           include 'constants.inc'
 
           integer A,Z
-
           real*8, intent(in) :: eos_variables(total_eos_variables)
           real*8, intent(in) :: number_density
           integer, intent(in) :: neutrino_species
@@ -502,17 +512,19 @@
           if(parameterized_rate) then
              qec_eff = return_hempel_qec(A,Z,Z-1) - 2.50d0
           else
-             !interpolating rates for given eos_variables and calculating average neutrino energy from rates
-             !for nue, emissivities are from the betaplus direction; for anue, emissivities in the betaminus direction
+             !interpolating rates for given eos_variables and calculating 
+             !average neutrino energy from rates for nue, emissivities are
+             !from the betaplus direction; for anue, emissivities in the betaminus direction
              if (neutrino_species.eq.1) then
                 lbeta = weakrates(A,Z,t9,lrhoYe,1)
                 lcap = weakrates(A,Z,t9,lrhoYe,2)
                 lnu = weakrates(A,Z,t9,lrhoYe,3)         
                 qec_eff = nuclear_species(nucleus_index(A,Z),1) !using Qgs from LMP table as seed
                 avgenergy(1) = 10.0d0**lnu/(10.0d0**lcap + 10.0d0**lbeta) 
-                avgenergy(2) = qec_eff !only necessary so as to fulfill the first comparison in qec_solver
+                avgenergy(2) = qec_eff !necessary to fulfill the first comparison in qec_solver
              else if (neutrino_species.eq.2) then
-                stop "Positron capture effective q is bugged and not currently working, please turn it off in requested_interactions.inc."
+                stop "Positron capture effective q is bugged and not currently working,&
+                     please turn it off in requested_interactions.inc."
                 lbeta = weakrates(A,Z,t9,lrhoYe,4)
                 lcap = weakrates(A,Z,t9,lrhoYe,5)
                 lnu = weakrates(A,Z,t9,lrhoYe,6)         
@@ -520,10 +532,12 @@
                 avgenergy(1) = 10.0d0**lnu/(10.0d0**lcap + 10.0d0**lbeta)   
                 avgenergy(2) = qec_eff
              else
-                stop "Weak interactions are only nontrivial for electron neutrinos and antineutrinos. Exiting."
+                stop "Weak interactions are only nontrivial for electron neutrinos &
+                     and antineutrinos. Exiting."
              endif
 
-             !solve for the eff Qec that constrains the effective neutrino spectra to produce the correct avg. energy
+             !solve for the eff Qec that constrains the effective 
+             !neutrino spectra to produce the correct avg. energy
              qec_eff = qec_solver(avgenergy,qec_eff,eos_variables)
           end if
 
@@ -533,25 +547,33 @@
           GPQ_coef(1) = (GPQ_interval(2)-GPQ_interval(1))/2.0d0
           GPQ_coef(2) = (GPQ_interval(1)+GPQ_interval(2))/2.0d0
           do i=1,32
-             spectra = spectra + GPQ_coef(1)*GPQ_n32_weights(i)*ec_neutrino_spectra(GPQ_coef(1)*GPQ_n32_roots(i)+GPQ_coef(2),qec_eff,eos_variables(mueindex)-m_e,&
-                  eos_variables(tempindex))
+             spectra = spectra + &
+                  GPQ_coef(1)*GPQ_n32_weights(i)*&
+                  ec_neutrino_spectra(&
+                  GPQ_coef(1)*GPQ_n32_roots(i)+GPQ_coef(2),&
+                  qec_eff,eos_variables(mueindex)-m_e,eos_variables(tempindex))
           end do
           spectra = (eos_variables(tempindex)**5)*spectra          
           if (neutrino_species.eq.1) then
              if (parameterized_rate) then
-                normalization_constant = (analytic_weakrates(0,eos_variables(tempindex),qec_eff,eos_variables(mueindex)-m_e))/spectra !replaced return_hempel_qec(A,Z,Z-1) with qec_eff
+                normalization_constant = (analytic_weakrates(&
+                     0,eos_variables(tempindex),qec_eff,&
+                     eos_variables(mueindex)-m_e))/spectra 
+                     !replaced return_hempel_qec(A,Z,Z-1) with qec_eff
              else
-                normalization_constant = (10.0d0**weakrates(A,Z,t9,lrhoYe,1)+10.0d0**weakrates(A,Z,t9,lrhoYe,2))/spectra
+                normalization_constant = &
+                     (10.0d0**weakrates(A,Z,t9,lrhoYe,1)+10.0d0**weakrates(A,Z,t9,lrhoYe,2))/spectra
              end if
           else if (neutrino_species.eq.2) then
              if (parameterized_rate) then
                 stop "There is currently no parameterization applicable for positron capture"
              else
-                normalization_constant = (10.0d0**weakrates(A,Z,t9,lrhoYe,4)+10.0d0**weakrates(A,Z,t9,lrhoYe,5))/spectra
+                normalization_constant = &
+                     (10.0d0**weakrates(A,Z,t9,lrhoYe,4)+10.0d0**weakrates(A,Z,t9,lrhoYe,5))/spectra
              end if
           end if
           
-          !Either integrate over energy bin or take central value of bin and multiply by the bin width
+          !integrate over energy bin or take central value of bin and multiply by the bin width
           if (do_integrated_BB_and_emissivity) then
              !To be added
              stop "Integration is not yet supported for ec neutrino emissivities"
@@ -559,9 +581,10 @@
              do ng=1,number_groups
                 nu_spectrum_eval =&
                      (eos_variables(tempindex)**4.0d0)*normalization_constant*&
-                     ec_neutrino_spectra(energies(ng)/eos_variables(tempindex),qec_eff,eos_variables(mueindex)-m_e,&
-                     eos_variables(tempindex))
-                emissivity(ng) = (energies(ng)*mev_to_erg)*(1.0d39*number_density)*nu_spectrum_eval/(4.0d0*pi) !erg/cm^3/s/MeV/srad
+                     ec_neutrino_spectra(energies(ng)/eos_variables(tempindex),&
+                     qec_eff,eos_variables(mueindex)-m_e,eos_variables(tempindex))
+                emissivity(ng) = &  !erg/cm^3/s/MeV/srad
+                     (energies(ng)*mev_to_erg)*(1.0d39*number_density)*nu_spectrum_eval/(4.0d0*pi) 
              end do
           endif
           return
@@ -599,8 +622,10 @@
         end function ec_neutrino_spectra
 
 
-        function ec_neutrino_spectra_q_derivative(nu_energy_per_T,q,uf,T) result(nu_spectra_derivative)
-          !definition: d/dq n(E) = (ec_neutrino_spectra_q_derivative/T) * n(E)
+        function ec_neutrino_spectra_q_derivative(&
+             nu_energy_per_T,q,uf,T) &
+             result(nu_spectra_derivative)
+             !definition: d/dq n(E) = (ec_neutrino_spectra_q_derivative/T) * n(E)
 
           include 'constants.inc'
 
@@ -621,8 +646,10 @@
              !prevent neutrino from having less energy than the Qec value for Qec > 0
              nu_spectra_derivative = 0.0d0
           else
-             !ec neutrino spectra derivative with respect to q (q=qec_eff) divided by the neutrino spectra
-             nu_spectra_derivative = (1.0d0-1.0d0/(1.0d0+exp(nu_energy_per_T-q_T-uf_T))-2.0d0/(nu_energy_per_T-q_T))
+             !ec neutrino spectra derivative with respect to q (q=qec_eff) divided 
+             !by the neutrino spectra
+             nu_spectra_derivative = &
+                  (1.0d0-1.0d0/(1.0d0+exp(nu_energy_per_T-q_T-uf_T))-2.0d0/(nu_energy_per_T-q_T))
              !note a factor of /T was removed to make the spectrum dimensionless, the returned result
              !should therefore be divided by T in MeV         
           end if
@@ -631,9 +658,10 @@
 
         function qec_solver(avgenergy,qin,eos_variables) result(qec_eff)
 
-          use nulib, only : GLQ_n32_roots, GLQ_n32_weights, total_eos_variables, mueindex, tempindex, rhoindex, yeindex
+          use nulib, only : GLQ_n32_roots, GLQ_n32_weights, &
+               total_eos_variables, mueindex, tempindex, rhoindex, yeindex
+        
           implicit none
-
           include 'constants.inc'
 
           !starting point energies using a seed q = Qgs
@@ -670,10 +698,6 @@
 
           integer limiter,nmax_bisections,extrapolation
 
-          
-          character(60) :: qec_solver_log_file,rho_string,t_string,ye_string,mue_string !for logging errors
-
-          qec_solver_log_file="qec_solver_log_file"
           avge_rates = avgenergy(1)
           avge_spectra = avgenergy(2)
           tolerance = 0.1d0
@@ -693,17 +717,11 @@
              N=0
              nmax_bisections = 1000
              tolerance = 1.0d-8
-             !low resolution in the LMP rates can cause the interpolation to produce an
-             !average nu energy below the asymptotic limit of <E>_spectra, below is a patch.
+             !low resolution in the shell-model rates can cause the interpolation to produce an
+             !average nu energy below the asymptotic limit of <E>_spectra. In this case, the
+             !effective q is set to the lower bound -100MeV
              if(avge_spectra_boundary.gt.avge_rates) then          
                 qec_eff = lower_bound
-                ! open(1,file="qec_solver_log_file2",position="APPEND")
-                ! write(rho_string,'(f20.5)') eos_variables(1)
-                ! write(t_string,'(f10.5)') eos_variables(2)
-                ! write(ye_string,'(f10.5)') eos_variables(3)
-                ! write(mue_string,'(f10.5)') eos_variables(11)
-                ! write(1,'(A6,f10.5A6,A20,A4,A20,A5,A20,A5,A20,A10,f10.5,A10,f10.5,A4,f10.5)')"Qgs: ",qin, "rho: ",rho_string,"T: ",t_string,"Ye: ",ye_string,"Mu_e: ",mue_string, "ave_rates ", avge_rates,"avge_chosen",avge_spectra_boundary," ",lower_bound
-                ! close(1)                   
                 return
              end if
              do 
@@ -713,8 +731,10 @@
 
                 !if the bisection parameter q exceeds double precision
                 if(q.eq.(lower_bound + upper_bound)/2.0d0)then
-                   if(abs(avge_rates - avge_spectra)/avge_rates.lt.1.0d0)then !consider changing to avoid (10000-0)/10000 
+                   !consider checking the effectiveness of this logic statement
+                   if(abs(avge_rates - avge_spectra)/avge_rates.lt.1.0d0)then  
                       qec_eff = q
+                      !write(*,*) avge_rates, avge_spectra,(avge_rates - avge_spectra)/avge_rates
                       return
                    end if
                 end if
@@ -722,10 +742,10 @@
                 avge_spectra = average_energy(q,eos_variables)                   
                 if (abs(avge_rates - avge_spectra)/avge_rates.le.tolerance) then
                    qec_eff = q
-                   return !this will only be reached if the newton-raphson failed 25 times and
-                   !the bisection method was used to attain a precision of 1.0d-8 in <E>
+                   return 
                 end if
-                if (sign(1.0d0,(avge_rates-avge_spectra)).eq.sign(1.0d0,(avge_rates-avge_spectra_boundary))) then
+                if (sign(1.0d0,(avge_rates-avge_spectra)).eq.&
+                     sign(1.0d0,(avge_rates-avge_spectra_boundary))) then
                    lower_bound = q
                 else
                    upper_bound = q
@@ -740,15 +760,17 @@
         
         function average_energy(qec_eff,eos_variables) result(avgenergy)
           
-          use nulib, only :GPQ_n32_roots,GPQ_n32_weights,total_eos_variables,m_e,mueindex,tempindex
+          use nulib, only : GPQ_n32_roots,GPQ_n32_weights,&
+               total_eos_variables,m_e,mueindex,tempindex
+          
           implicit none
 
           real*8, intent(in) :: eos_variables(total_eos_variables)
+          real*8, intent(in) :: qec_eff
 
           !local integration variables
           integer :: i
           real*8 :: avgenergy
-          real*8, intent(in) :: qec_eff
           real*8 :: spectra
           real*8 :: number_density_integral
           real*8 :: energy_density_integral
@@ -768,15 +790,19 @@
           GPQ_coef(1) = (GPQ_interval(2)-GPQ_interval(1))/2.0d0
           GPQ_coef(2) = (GPQ_interval(1)+GPQ_interval(2))/2.0d0
           do i=1,32
-             spectra = GPQ_coef(1)*ec_neutrino_spectra(GPQ_coef(1)*GPQ_n32_roots(i)+GPQ_coef(2),qec_eff,eos_variables(mueindex)-m_e,eos_variables(tempindex))
-             energy_density_integral=energy_density_integral+GPQ_n32_weights(i)*(GPQ_coef(1)*GPQ_n32_roots(i)+GPQ_coef(2))*spectra
-             number_density_integral=number_density_integral+GPQ_n32_weights(i)*spectra
+             spectra = GPQ_coef(1)*ec_neutrino_spectra(&
+                  GPQ_coef(1)*GPQ_n32_roots(i)+GPQ_coef(2),&
+                  qec_eff,eos_variables(mueindex)-m_e,eos_variables(tempindex))
+             energy_density_integral = energy_density_integral + &
+                  GPQ_n32_weights(i)*(GPQ_coef(1)*GPQ_n32_roots(i)+GPQ_coef(2))*spectra
+             number_density_integral = number_density_integral + GPQ_n32_weights(i)*spectra
           end do
           
           if (number_density_integral.eq.0.0d0.and.energy_density_integral.eq.0.0d0) then             
              avgenergy = (eos_variables(tempindex))*1.0d0
           else
-             avgenergy = (eos_variables(tempindex))*(energy_density_integral/number_density_integral)
+             avgenergy = (eos_variables(tempindex))*&
+                  (energy_density_integral/number_density_integral)
           end if
 
         end function average_energy
@@ -802,14 +828,18 @@
           spectra = 0.0d0
           !lowerbound
           centroid = (q+eos_variables(mueindex)-m_e)/eos_variables(tempindex)
-          spectra_centroid = ec_neutrino_spectra(centroid,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))
+          spectra_centroid = &
+               ec_neutrino_spectra(centroid,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))
           spectra_shift = spectra_centroid/1.0d2          
           spectra_shift = sqrt(spectra_shift)
-          ! If (q+mu)/T is less than 3MeV, the spectra will be hugging the origin so a interval from 0 to 25 should be sufficient.
-          ! For greater values of (g+mu)/T the interval should be determined with the quartic part of the spectra for the lower end
-          ! and an auxillary gaussian that is used to track the high energy end. The below represents this method.
+          !If (q+mu)/T is less than 3MeV, the spectra will be hugging the origin,
+          !so an interval from 0 to 25 should be sufficient. For greater values
+          !of (q+mu)/T the interval should be determined with the quartic part 
+          !of the spectra for the lower bound and an auxillary gaussian that is 
+          !used to track the high energy bound. The below represents this method.
           if(centroid.gt.3.0d0)then
-             interval(1) = (q/eos_variables(tempindex)+sqrt((q/eos_variables(tempindex))**2.0d0+4.0d0*spectra_shift))/2.0d0         
+             interval(1) = (q/eos_variables(tempindex)+sqrt((q/eos_variables(tempindex))**2.0d0 + &
+                  4.0d0*spectra_shift))/2.0d0         
              interval(2) = (q+eos_variables(mueindex)-m_e)/eos_variables(tempindex) + 27.314d0
           else
              interval(1) = 0.0d0
@@ -829,68 +859,12 @@
                    
         end function GPQ_intervals        
         
-        function GPQ_intervals_deriv(q,eos_variables) result (interval)
-          use nulib, only : total_eos_variables,tempindex,mueindex,m_e
-          implicit none
-
-          real*8, dimension(2) :: interval
-          real*8, intent(in) :: eos_variables(total_eos_variables)
-          real*8, intent(in) :: q
-          real*8 :: spectra
-          real*8 :: spectra_centroid
-          real*8 :: energy
-          real*8 :: centroid
-          real*8 :: lower_bound,lower_bound_spectra
-          real*8 :: upper_bound,upper_bound_spectra
-          real*8 :: tolerance
-          integer :: N,nmax_bisections,i
-          
-          spectra = 0.0d0
-          interval = 0.0d0
-          do i=1,int((q+eos_variables(mueindex)-m_e)/eos_variables(tempindex))
-             spectra = ec_neutrino_spectra_q_derivative(dble(i),q,eos_variables(mueindex)-m_e,eos_variables(tempindex))*ec_neutrino_spectra(dble(i),q,eos_variables(mueindex)-m_e,eos_variables(tempindex))
-             if(sign(1.0d0,spectra).lt.0.0d0) then
-                if(i.eq.1) then                  
-                   interval(1) = 0.0d0
-                else
-                   interval(1) = dble(i-1)
-                end if
-                exit
-             end if
-          end do
-
-          centroid = abs(q+eos_variables(mueindex)-m_e)/eos_variables(tempindex)
-          upper_bound = max(centroid*5.0d0,20.0d0)
-          upper_bound_spectra = ec_neutrino_spectra_q_derivative(upper_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))*ec_neutrino_spectra(upper_bound,q,eos_variables(mueindex)-m_e,eos_variables(tempindex)) - 0.01d0
-          spectra_centroid = ec_neutrino_spectra(centroid,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))
-          if (spectra_centroid.le.0.01d0) then
-             interval(2) = upper_bound
-             return
-          end if
-          if (upper_bound_spectra.gt.0.0d0) then
-             upper_bound = 1.0d3
-          end if
-          do i=1,int(upper_bound)
-             spectra = ec_neutrino_spectra_q_derivative(upper_bound-dble(i),q,eos_variables(mueindex)-m_e,eos_variables(tempindex))*ec_neutrino_spectra(upper_bound-dble(i),q,eos_variables(mueindex)-m_e,eos_variables(tempindex)) - 0.01d0
-             if(sign(1.0d0,spectra).gt.0.0d0) then
-                if(i.eq.1) then
-                   interval(2) = upper_bound
-                else
-                   interval(2) = upper_bound - dble(i-1) 
-                end if
-                exit
-             else
-                interval(2) = upper_bound
-             end if
-          end do
-
-          return
-
-                   
-        end function GPQ_intervals_deriv
-
-        subroutine microphysical_electron_capture(neutrino_species,eos_variables,emissivity)
-          use nulib, only : total_eos_variables, number_groups, tempindex, hempel_lookup_table, mueindex, rhoindex, yeindex, kelvin_to_mev
+        subroutine microphysical_electron_capture(&
+             neutrino_species,&
+             eos_variables,&
+             emissivity)
+          use nulib, only : total_eos_variables, number_groups, &
+               tempindex, hempel_lookup_table, mueindex, rhoindex, yeindex, kelvin_to_mev
           use sfho_frdm_composition_module, only : sfho_mass
 
           integer i
@@ -904,7 +878,8 @@
           logical :: parameterized_rate  
 
           !Hempel EOS and number of species are set up in readrates
-          call nuclei_distribution_Hempel(nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)          
+          call nuclei_distribution_Hempel(&
+               nspecies,nuclei_A,nuclei_Z,mass_fractions,number_densities,eos_variables)          
           emissivity = 0.0d0
           logrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
           t9 = (eos_variables(tempindex)/kelvin_to_mev)*1.0d-9
@@ -914,7 +889,8 @@
 
              if(number_densities(i).eq.0.0d0)cycle
 
-             !if rate data from a table is not present and A>4 and iapprox is on, use the parameterized rate function, else skip this nucleus
+             !if rate data from a table is not present and A>4 with iapprox nonzero,
+             !use the parameterized rate function, else skip this nucleus
              if(nucleus_index(nuclei_A(i),nuclei_Z(i)).eq.0) then
                 if (nuclei_A(i).gt.4) then
                    if(file_priority(5).gt.0) then
@@ -929,7 +905,7 @@
 
 
              !oda table bounds
-             if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.nuclei_A(i).lt.40) then !should work for lmp + lmsh, will need to check for other table combinations
+             if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.nuclei_A(i).lt.40) then 
                 !test to see if outside oda table bounds
                 if(logrhoYe.lt.1.0d0.or.logrhoYe.gt.11.0d0.or.t9.lt.1.0d-2.or.t9.gt.30.0d0) then
                    if(file_priority(5).gt.0) then
@@ -938,7 +914,8 @@
                       cycle
                    end if
                 end if
-             else if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.(nuclei_A(i).gt.40.and.nuclei_A(i).le.65)) then !should work for lmp + lmsh, will need to check for other table combinations
+             else if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.&
+                  (nuclei_A(i).gt.40.and.nuclei_A(i).le.65)) then
                 !test to see if outside lmp table bounds
                 if(logrhoYe.lt.1.0d0.or.logrhoYe.gt.12.5d0.or.t9.lt.1.0d-2.or.t9.gt.100.0d0) then
                    if(file_priority(5).gt.0) then
@@ -947,9 +924,13 @@
                       cycle
                    end if
                 end if
-             else if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.nuclei_A(i).gt.65) then !should work for lmp + lmsh
+             else if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.&
+                  nuclei_A(i).gt.65) then !should work for lmp + lmsh
                 !test to see if outside lmsh table bounds
-                if(logrhoYe.lt.9.28493d0.or.logrhoYe.gt.12.42218d0.or.t9.lt.8.12315d0.or.t9.gt.39.04914d0) then
+                if(logrhoYe.lt.9.28493d0.or.&
+                     logrhoYe.gt.12.42218d0.or.&
+                     t9.lt.8.12315d0.or.&
+                     t9.gt.39.04914d0) then
                    if(file_priority(5).gt.0) then
                       parameterized_rate = .true.
                    else
@@ -959,13 +940,15 @@
              end if
 
              if(parameterized_rate)then
-                if(hempel_lookup_table(nuclei_A(i),nuclei_Z(i)).eq.0.or.hempel_lookup_table(nuclei_A(i),nuclei_Z(i)-1).eq.0) then
+                if(hempel_lookup_table(nuclei_A(i),nuclei_Z(i)).eq.0.or.&
+                     hempel_lookup_table(nuclei_A(i),nuclei_Z(i)-1).eq.0) then
                    cycle
                 end if
              end if
 
              !emissivity calculation
-             emissivity_temp = emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i),&
+             emissivity_temp = &
+                  emissivity_from_weak_interaction_rates(nuclei_A(i),nuclei_Z(i),number_densities(i), &
                   eos_variables,neutrino_species,parameterized_rate)
              
              !add the calculation to the total persistent emissivity array for this eos_variables
@@ -983,9 +966,16 @@ end module weak_rates
 
 !#################################################################################################!
 
-
 !use this function to calculate the emissivity for a particular nucleus in your own test programs
-function  return_emissivity_from_electron_capture_on_A(A,Z,number_density,eos_variables,neutrino_species,parameterized_rate) result(emissivity)
+function  return_emissivity_from_electron_capture_on_A(&
+     A,&
+     Z,&
+     number_density,&
+     eos_variables,&
+     neutrino_species,&
+     parameterized_rate)&
+     result(emissivity)
+
   use weak_rates
   use nulib, only : number_groups, total_eos_variables
 
@@ -995,7 +985,8 @@ function  return_emissivity_from_electron_capture_on_A(A,Z,number_density,eos_va
   real*8 :: emissivity(number_groups) !final answer in erg/cm^/s/srad/MeV
   logical, intent(in) :: parameterized_rate
 
-  emissivity = emissivity_from_weak_interaction_rates(A,Z,number_density,eos_variables,neutrino_species,parameterized_rate)
+  emissivity = emissivity_from_weak_interaction_rates(&
+       A,Z,number_density,eos_variables,neutrino_species,parameterized_rate)
 end function return_emissivity_from_electron_capture_on_A
 
 function analytic_weakrates(n,temperature,q_gs,mue) result(rate)
@@ -1014,11 +1005,12 @@ function analytic_weakrates(n,temperature,q_gs,mue) result(rate)
   chi = (q_gs-2.5d0)/temperature
   eta = mue/temperature + chi
 
-  rate = log(2.0d0)*4.6d0/6146.0d0*(temperature**(5.0d0+n)/m_e**(5.0d0))*(complete_fermi_integral(4+n,eta)-2.0d0*chi*complete_fermi_integral(3+n,eta)+&
+  rate = log(2.0d0)*4.6d0/6146.0d0*(temperature**(5.0d0+n)/m_e**(5.0d0))*&
+       (complete_fermi_integral(4+n,eta) - &
+       2.0d0*chi*complete_fermi_integral(3+n,eta) + &
        chi**2.0d0*complete_fermi_integral(2+n,eta))
 
-  !for rate variations
-  !rate = rate*10.0d0
+  !rate = rate*10.0d0   !for rate variations
   return
 
 end function analytic_weakrates
