@@ -67,3 +67,10 @@
   logical :: add_nutau_emission_NNBrems = .true.
   logical :: add_anutau_emission_NNBrems = .true.
 
+  !kernels for full calculation of thermal processes
+  logical :: add_nue_kernel_epannihil = .false.
+  logical :: add_anue_kernel_epannihil = .false.
+  logical :: add_numu_kernel_epannihil = .false.
+  logical :: add_anumu_kernel_epannihil = .false.
+  logical :: add_nutau_kernel_epannihil = .false.
+  logical :: add_anutau_kernel_epannihil = .false.

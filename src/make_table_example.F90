@@ -51,6 +51,8 @@ program make_table_example
   real*8, allocatable,dimension(:) :: Itable_inE
   real*8, allocatable,dimension(:,:,:,:,:) :: Itable_Phi0
   real*8, allocatable,dimension(:,:,:,:,:) :: Itable_Phi1   
+  real*8, allocatable,dimension(:,:,:,:,:,:) :: Itable_Phi0_epannihil !for ep-annihilation kernels, need both production and destruction kernels
+  real*8, allocatable,dimension(:,:,:,:,:,:) :: Itable_Phi1_epannihil !for ep-annihilation kernels, need both production and destruction kernels
 
 
   !versioning
@@ -67,13 +69,15 @@ program make_table_example
   real*8, allocatable,dimension(:,:) :: local_scatopacity
   real*8, allocatable,dimension(:,:) :: local_Phi0
   real*8, allocatable,dimension(:,:) :: local_Phi1
+  real*8, allocatable,dimension(:,:,:) :: local_Phi0_epannihil 
+  real*8, allocatable,dimension(:,:,:) :: local_Phi1_epannihil 
   real*8, allocatable,dimension(:) :: eos_variables
   real*8 :: matter_prs,matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe
   integer :: keytemp,keyerr
   real*8 :: precision = 1.0d-10
   integer :: i
   real*8 dxfac,mindx
-  logical :: doing_inelastic
+  logical :: doing_inelastic, doing_epannihil
 
   !this sets up many cooefficients and creates the energy grid (one
   !zone + log spacing) see nulib.F90:initialize_nulib
@@ -275,6 +279,16 @@ program make_table_example
        add_nutau_Iscattering_electrons.or.add_anutau_Iscattering_electrons) then
 
      doing_inelastic = .true.
+  endif
+
+  if (add_nue_kernel_epannihil.or.add_anue_kernel_epannihil.or. &
+       add_numu_kernel_epannihil.or.add_anumu_kernel_epannihil.or. &
+       add_nutau_kernel_epannihil.or.add_anutau_kernel_epannihil) then
+
+     doing_epannihil = .true.
+  endif
+
+  if (doing_inelastic.or.doing_epannihil) then
 
      write(*,*) "Making Inelastic Table Opacity Table" 
 
@@ -291,6 +305,10 @@ program make_table_example
           final_Itable_size_inE,number_output_species,mytable_number_groups))
      allocate(Itable_Phi1(final_Itable_size_temp,final_Itable_size_eta, &
           final_Itable_size_inE,number_output_species,mytable_number_groups))
+     allocate(Itable_Phi0_epannihil(final_Itable_size_temp,final_Itable_size_eta, &
+          final_Itable_size_inE,number_output_species,mytable_number_groups,2))
+     allocate(Itable_Phi1_epannihil(final_Itable_size_temp,final_Itable_size_eta, &
+          final_Itable_size_inE,number_output_species,mytable_number_groups,2))
 
      do itemp=1,final_Itable_size_temp
         Itable_temp(itemp) = &
@@ -307,6 +325,8 @@ program make_table_example
         !must do declarations here for openmp
         allocate(local_Phi0(number_output_species,mytable_number_groups))
         allocate(local_Phi1(number_output_species,mytable_number_groups))
+        allocate(local_Phi0_epannihil(number_output_species,mytable_number_groups,2))
+        allocate(local_Phi1_epannihil(number_output_species,mytable_number_groups,2))
 
         write(*,*) "Temp:", 100.0*dble(itemp-1)/dble(final_Itable_size_temp),"%"
         
@@ -372,11 +392,76 @@ program make_table_example
                 enddo !do ns=1,number_output_species
               enddo !do ng=1,mytable_number_groups
            
+              call single_epannihil_kernel_point_return_all(iinE,Itable_eta(ieta), &
+                   Itable_temp(itemp),local_Phi0_epannihil,local_Phi1_epannihil,mytable_neutrino_scheme)               
+
+              !calculate and check that the number is not NaN or Inf
+              !(.gt.1.0d300)
+              do ns=1,number_output_species
+                 do ng=1,mytable_number_groups
+
+                    if (local_Phi0_epannihil(ns,ng,1).ne.local_Phi0_epannihil(ns,ng,1)) then
+                       write(*,"(a,1P2E18.9,i6,i6,i6)") "We have a NaN in Phi0_epannihil production", &
+                            Itable_temp(itemp),Itable_eta(ieta),iinE,ns,ng
+                       stop
+                    endif
+                    if (local_Phi0_epannihil(ns,ng,2).ne.local_Phi0_epannihil(ns,ng,2)) then
+                       write(*,"(a,1P2E18.9,i6,i6,i6)") "We have a NaN in Phi0_epannihil annihilation", &
+                            Itable_temp(itemp),Itable_eta(ieta),iinE,ns,ng
+                       stop
+                    endif
+                    if (local_Phi1_epannihil(ns,ng,1).ne.local_Phi1_epannihil(ns,ng,1)) then
+                       write(*,"(a,1P2E18.9,i6,i6,i6)") "We have a NaN in Phi1_epannihil production", &
+                            Itable_temp(itemp),Itable_eta(ieta),iinE,ns,ng
+                       stop
+                    endif
+                    if (local_Phi1_epannihil(ns,ng,2).ne.local_Phi1_epannihil(ns,ng,2)) then
+                       write(*,"(a,1P2E18.9,i6,i6,i6)") "We have a NaN in Phi1_epannihil annihilation", &
+                            Itable_temp(itemp),Itable_eta(ieta),iinE,ns,ng
+                       stop
+                    endif
+                    
+                    if (log10(local_Phi0_epannihil(ns,ng,1)).ge.300.0d0) then
+                       write(*,"(a,1P3E18.9,i6,i6,i6)") "We have a Inf in Phi0_epannihil production", &
+                            local_Phi0_epannihil(ns,ng,1),Itable_temp(itemp),Itable_eta(ieta),iinE,ns,ng
+                       stop
+                    endif
+                    if (log10(local_Phi0_epannihil(ns,ng,2)).ge.300.0d0) then
+                       write(*,"(a,1P3E18.9,i6,i6,i6)") "We have a Inf in Phi0_epannihil annihilation", &
+                            local_Phi0_epannihil(ns,ng,2),Itable_temp(itemp),Itable_eta(ieta),iinE,ns,ng
+                       stop
+                    endif
+                    if (log10(local_Phi1_epannihil(ns,ng,1)).ge.300.0d0) then
+                       write(*,"(a,1P3E18.9,i6,i6,i6)") "We have a Inf in Phi1_epannihil production", &
+                            local_Phi1_epannihil(ns,ng,1),Itable_temp(itemp),Itable_eta(ieta),iinE,ns,ng
+                       stop
+                    endif
+                    if (log10(local_Phi1_epannihil(ns,ng,2)).ge.300.0d0) then
+                       write(*,"(a,1P3E18.9,i6,i6,i6)") "We have a Inf in Phi1_epannihil annihilation", &
+                            local_Phi1_epannihil(ns,ng,2),Itable_temp(itemp),Itable_eta(ieta),iinE,ns,ng
+                       stop
+                    endif
+
+                 enddo !do ng=1,mytable_number_groups
+              enddo !do ns=1,number_output_species
+
+              !set global table
+              do ns=1,number_output_species
+                 do ng=1,mytable_number_groups
+                    Itable_Phi0_epannihil(itemp,ieta,iinE,ns,ng,1) = local_Phi0_epannihil(ns,ng,1) !cm^3/s
+                    Itable_Phi0_epannihil(itemp,ieta,iinE,ns,ng,2) = local_Phi0_epannihil(ns,ng,2) !cm^3/s
+                    Itable_Phi1_epannihil(itemp,ieta,iinE,ns,ng,1) = local_Phi1_epannihil(ns,ng,1) !cm^3/s
+                    Itable_Phi1_epannihil(itemp,ieta,iinE,ns,ng,2) = local_Phi1_epannihil(ns,ng,2) !cm^3/s
+                enddo !do ns=1,number_output_species
+              enddo !do ng=1,mytable_number_groups              
+
            enddo!do iinE=1,final_Itable_size_inE
         enddo!do ieta=1,final_Itable_size_eta
 
         deallocate(local_Phi0)
         deallocate(local_Phi1)
+        deallocate(local_Phi0_epannihil)
+        deallocate(local_Phi1_epannihil)
      enddo!do itemp=1,final_Itable_size_temp
      !$OMP END PARALLEL DO! end do
 
@@ -399,7 +484,7 @@ program make_table_example
   base="NuLib_LS220"
   vnum="1.0"
 
-  if (doing_inelastic) then
+  if (doing_inelastic.or.doing_epannihil) then
      finaltable_filename = trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
           "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &
           "_ng"//trim(adjustl(sng))//"_ns"//trim(adjustl(sns))// &
@@ -427,7 +512,7 @@ contains
     !H5 stuff
     integer :: error,rank,cerror
     integer(HID_T) :: file_id,dset_id,dspace_id
-    integer(HSIZE_T) :: dims1(1), dims2(2), dims3(3), dims4(4), dims5(5)!, etc....
+    integer(HSIZE_T) :: dims1(1), dims2(2), dims3(3), dims4(4), dims5(5), dims6(6)!, etc....
     
     real*8 :: timestamp
     character(8) :: date
@@ -598,7 +683,7 @@ contains
     call h5sclose_f(dspace_id, error)  
     cerror = cerror + error   
 
-    if (doing_inelastic) then
+    if (doing_inelastic.or.doing_epannihil) then
 
        rank = 1
        dims1(1) = 1
@@ -640,6 +725,10 @@ contains
        call h5sclose_f(dspace_id, error)  
        cerror = cerror + error   
        
+    endif
+
+    if(doing_inelastic) then
+
        rank = 5
        dims5(1) = final_Itable_size_temp
        dims5(2) = final_Itable_size_eta
@@ -659,6 +748,32 @@ contains
        call h5dcreate_f(file_id, "inelastic_phi1", H5T_NATIVE_DOUBLE, &
             dspace_id, dset_id, error)
        call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,Itable_Phi1, dims5, error)
+       call h5dclose_f(dset_id, error)
+       call h5sclose_f(dspace_id, error)  
+       cerror = cerror + error
+    endif
+
+    if (doing_epannihil) then
+       rank = 6
+       dims6(1) = final_Itable_size_temp
+       dims6(2) = final_Itable_size_eta
+       dims6(3) = final_Itable_size_inE
+       dims6(4) = number_output_species  
+       dims6(5) = number_groups
+       dims6(6) = 2
+       
+       call h5screate_simple_f(rank, dims6, dspace_id, error)
+       call h5dcreate_f(file_id, "epannihil_phi0", H5T_NATIVE_DOUBLE, &
+            dspace_id, dset_id, error)
+       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,Itable_Phi0_epannihil, dims5, error)
+       call h5dclose_f(dset_id, error)
+       call h5sclose_f(dspace_id, error)  
+       cerror = cerror + error   
+       
+       call h5screate_simple_f(rank, dims6, dspace_id, error)
+       call h5dcreate_f(file_id, "epannihil_phi1", H5T_NATIVE_DOUBLE, &
+            dspace_id, dset_id, error)
+       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,Itable_Phi1_epannihil, dims5, error)
        call h5dclose_f(dset_id, error)
        call h5sclose_f(dspace_id, error)  
        cerror = cerror + error
