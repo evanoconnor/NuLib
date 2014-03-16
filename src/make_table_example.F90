@@ -319,7 +319,7 @@ program make_table_example
              10.0d0**(Imin_logeta+dble(ieta-1)/dble(final_Itable_size_eta-1)*(Imax_logeta-Imin_logeta))
      enddo
 
-     !$OMP PARALLEL DO PRIVATE(local_Phi0,local_Phi1,ieta,iinE,ns,ng)
+     !$OMP PARALLEL DO PRIVATE(local_Phi0,local_Phi1,local_Phi0_epannihil,local_Phi1_epannihil,ieta,iinE,ns,ng)
      !loop over temp,eta,inE of table, do each point
      do itemp=1,final_Itable_size_temp
         !must do declarations here for openmp
