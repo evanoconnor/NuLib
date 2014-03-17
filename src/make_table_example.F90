@@ -51,8 +51,8 @@ program make_table_example
   real*8, allocatable,dimension(:) :: Itable_inE
   real*8, allocatable,dimension(:,:,:,:,:) :: Itable_Phi0
   real*8, allocatable,dimension(:,:,:,:,:) :: Itable_Phi1   
-  real*8, allocatable,dimension(:,:,:,:,:,:) :: Itable_Phi0_epannihil !for ep-annihilation kernels, need both production and destruction kernels
-  real*8, allocatable,dimension(:,:,:,:,:,:) :: Itable_Phi1_epannihil !for ep-annihilation kernels, need both production and destruction kernels
+  real*8, allocatable,dimension(:,:,:,:,:,:) :: epannihiltable_Phi0 !for ep-annihilation kernels, need both production and destruction kernels
+  real*8, allocatable,dimension(:,:,:,:,:,:) :: epannihiltable_Phi1 !for ep-annihilation kernels, need both production and destruction kernels
 
 
   !versioning
@@ -305,9 +305,9 @@ program make_table_example
           final_Itable_size_inE,number_output_species,mytable_number_groups))
      allocate(Itable_Phi1(final_Itable_size_temp,final_Itable_size_eta, &
           final_Itable_size_inE,number_output_species,mytable_number_groups))
-     allocate(Itable_Phi0_epannihil(final_Itable_size_temp,final_Itable_size_eta, &
+     allocate(epannihiltable_Phi0(final_Itable_size_temp,final_Itable_size_eta, &
           final_Itable_size_inE,number_output_species,mytable_number_groups,2))
-     allocate(Itable_Phi1_epannihil(final_Itable_size_temp,final_Itable_size_eta, &
+     allocate(epannihiltable_Phi1(final_Itable_size_temp,final_Itable_size_eta, &
           final_Itable_size_inE,number_output_species,mytable_number_groups,2))
 
      do itemp=1,final_Itable_size_temp
@@ -448,10 +448,10 @@ program make_table_example
               !set global table
               do ns=1,number_output_species
                  do ng=1,mytable_number_groups
-                    Itable_Phi0_epannihil(itemp,ieta,iinE,ns,ng,1) = local_Phi0_epannihil(ns,ng,1) !cm^3/s
-                    Itable_Phi0_epannihil(itemp,ieta,iinE,ns,ng,2) = local_Phi0_epannihil(ns,ng,2) !cm^3/s
-                    Itable_Phi1_epannihil(itemp,ieta,iinE,ns,ng,1) = local_Phi1_epannihil(ns,ng,1) !cm^3/s
-                    Itable_Phi1_epannihil(itemp,ieta,iinE,ns,ng,2) = local_Phi1_epannihil(ns,ng,2) !cm^3/s
+                    epannihiltable_Phi0(itemp,ieta,iinE,ns,ng,1) = local_Phi0_epannihil(ns,ng,1) !cm^3/s
+                    epannihiltable_Phi0(itemp,ieta,iinE,ns,ng,2) = local_Phi0_epannihil(ns,ng,2) !cm^3/s
+                    epannihiltable_Phi1(itemp,ieta,iinE,ns,ng,1) = local_Phi1_epannihil(ns,ng,1) !cm^3/s
+                    epannihiltable_Phi1(itemp,ieta,iinE,ns,ng,2) = local_Phi1_epannihil(ns,ng,2) !cm^3/s
                 enddo !do ns=1,number_output_species
               enddo !do ng=1,mytable_number_groups              
 
@@ -765,7 +765,7 @@ contains
        call h5screate_simple_f(rank, dims6, dspace_id, error)
        call h5dcreate_f(file_id, "epannihil_phi0", H5T_NATIVE_DOUBLE, &
             dspace_id, dset_id, error)
-       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,Itable_Phi0_epannihil, dims5, error)
+       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,epannihiltable_Phi0, dims5, error)
        call h5dclose_f(dset_id, error)
        call h5sclose_f(dspace_id, error)  
        cerror = cerror + error   
@@ -773,7 +773,7 @@ contains
        call h5screate_simple_f(rank, dims6, dspace_id, error)
        call h5dcreate_f(file_id, "epannihil_phi1", H5T_NATIVE_DOUBLE, &
             dspace_id, dset_id, error)
-       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,Itable_Phi1_epannihil, dims5, error)
+       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,epannihiltable_Phi1, dims5, error)
        call h5dclose_f(dset_id, error)
        call h5sclose_f(dspace_id, error)  
        cerror = cerror + error
