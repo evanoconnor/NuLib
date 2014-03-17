@@ -55,7 +55,7 @@ function epannihil_Phi_Bruenn(nu_energy_x,nubar_energy_x,matter_eta,neutrino_spe
 
   !local, GPQ integration
   integer :: i
-  real*8 :: electron_x,positron_x,fep,fem !the underscore x denotes /Temp
+  real*8 :: electron_x,positron_x,femtimesfep !the underscore x denotes /Temp
 
   !function declarations
   real*8 :: epannihil_H0_Bruenn !function declaration
@@ -69,21 +69,87 @@ function epannihil_Phi_Bruenn(nu_energy_x,nubar_energy_x,matter_eta,neutrino_spe
      electron_x = (nu_energy_x+nubar_energy_x)/2.0d0*(GPQ_n16_roots(i)+1.0d0) !MeV
      positron_x = max(nu_energy_x+nubar_energy_x-electron_x,1.0d-20) !MeV
      if (pro_or_ann.eq.1) then
-        fem = fermidirac_dimensionless(electron_x,matter_eta)
-        fep = fermidirac_dimensionless(positron_x,-matter_eta)
+        if (electron_x-matter_eta.gt.35.0d0) then
+           !1/(1+e) reduces to e^{-1} since e is big 
+           if (positron_x+matter_eta.gt.35.0d0) then
+              !1/(1+p) reduces to p^{-1} since p is big 
+              femtimesfep = exp(-electron_x-positron_x)
+           else
+              !1/(1+p) cannot be reduced
+              femtimesfep = exp(-electron_x+matter_eta)*fermidirac_dimensionless(positron_x,-matter_eta)
+           endif
+        else if (electron_x-matter_eta.lt.-35.0d0) then
+           !1/(1+e) reduces to 1 since e is small
+           if (positron_x+matter_eta.gt.35.0d0) then
+              !1/(1+p) reduces to p^{-1} since p is big 
+              femtimesfep = exp(-positron_x-matter_eta)
+           else
+              !1/(1+p) cannot be reduced
+              femtimesfep = fermidirac_dimensionless(positron_x,-matter_eta)
+           endif           
+        else
+           !1/(1+e) cannot be reduced
+           if (positron_x+matter_eta.gt.35.0d0) then
+              !1/(1+p) reduces to p^{-1} since p is big 
+              femtimesfep = fermidirac_dimensionless(electron_x,matter_eta)*exp(-positron_x-matter_eta)
+           else
+              !1/(1+p) cannot be reduced
+              femtimesfep = fermidirac_dimensionless(electron_x,matter_eta)* &
+                   fermidirac_dimensionless(positron_x,-matter_eta)
+           endif                      
+        endif
      else if (pro_or_ann.eq.2) then
-        fem = 1.0d0-fermidirac_dimensionless(electron_x,matter_eta)
-        fep = 1.0d0-fermidirac_dimensionless(positron_x,-matter_eta)
+        if (electron_x-matter_eta.gt.35.0d0) then
+           !1-1/(1+e) is e/(1+e) which reduces to 1 since e is big 
+           if (positron_x+matter_eta.gt.35.0d0) then
+              !1-1/(1+p) is p/(1+p) which reduces to 1 since p is big 
+              femtimesfep = 1.0d0
+           else
+              !1-1/(1+p) is p/(1+p) which cannot be reduced
+              femtimesfep = exp(positron_x+matter_eta)*fermidirac_dimensionless(positron_x,-matter_eta)
+           endif
+        else if (electron_x-matter_eta.lt.-35.0d0) then
+           !1-1/(1+e) is e/(1+e) which reduces to e since e is small
+           if (positron_x+matter_eta.gt.35.0d0) then
+              !1-1/(1+p) is p/(1+p) which reduces to 1 since p is big 
+              femtimesfep = exp(electron_x-matter_eta)
+           else
+              !1-1/(1+p) is p/(1+p) which cannot be reduced
+              femtimesfep = exp(electron_x+positron_x)* &
+                   fermidirac_dimensionless(positron_x,-matter_eta)
+           endif           
+        else
+           !1-1/(1+e) is e/(1+e) which cannot be reduced 
+           if (positron_x+matter_eta.gt.35.0d0) then
+              !1-1/(1+p) is p/(1+p) which reduces to 1 since p is big 
+              femtimesfep = fermidirac_dimensionless(electron_x,matter_eta)*exp(electron_x-matter_eta)
+           else
+              !1-1/(1+p) is p/(1+p) which cannot be reduced
+              femtimesfep = exp(electron_x+positron_x)* &
+                   fermidirac_dimensionless(electron_x,matter_eta)* &
+                   fermidirac_dimensionless(positron_x,-matter_eta)
+           endif                      
+        endif
+
+        if (femtimesfep.gt.1.0d0) then
+           write(*,*) electron_x,positron_x,matter_eta,pro_or_ann,femtimesfep
+           stop "femtimesfep terms are greater than 1, this is bad"
+           
+        endif
+        if (femtimesfep.ne.femtimesfep) then
+           stop "femtimesfep is NaN, this is really bad"
+        endif
+
      else
         stop "correctly request whether you want production or annihilation"
      endif
      if (which_l.eq.0) then
         Phi = Phi + &
-             fep*fem*epannihil_H0_Bruenn(nu_energy_x,nubar_energy_x,electron_x,neutrino_species)* &
+             femtimesfep*epannihil_H0_Bruenn(nu_energy_x,nubar_energy_x,electron_x,neutrino_species)* &
              GPQ_n16_weights(i)
      else if (which_l.eq.1) then
         Phi = Phi + &
-             fep*fem*epannihil_H1_Bruenn(nu_energy_x,nubar_energy_x,electron_x,neutrino_species)* &
+             femtimesfep*epannihil_H1_Bruenn(nu_energy_x,nubar_energy_x,electron_x,neutrino_species)* &
              GPQ_n16_weights(i)
      else
         stop "requesting a legendre mode that is not coded"
