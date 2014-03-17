@@ -920,13 +920,15 @@ module nulib
             stop "shouldn't be here"
          endif
          
-         !comming from epannihil_Phi_Bruenn, the kernels have no
-         !units.  we need cm^3/s and need to restore 2 factors of
-         !temperature, Bruenn C62
-         Phi0s = Phi0s*2.0d0*Gfermi**2/(2.0d0*pi)*hbarc_mevcm**2*temperature**2*clight !cm^3/s
-         Phi1s = Phi1s*2.0d0*Gfermi**2/(2.0d0*pi)*hbarc_mevcm**2*temperature**2*clight !cm^3/s
-
       enddo
+
+      !comming from epannihil_Phi_Bruenn, the kernels have no
+      !units.  we need cm^3/s and need to restore 2 factors of
+      !temperature, Bruenn C62
+      Phi0s = Phi0s*2.0d0*Gfermi**2/(2.0d0*pi)*hbarc_mevcm**2*temperature**2*clight !cm^3/s
+      Phi1s = Phi1s*2.0d0*Gfermi**2/(2.0d0*pi)*hbarc_mevcm**2*temperature**2*clight !cm^3/s
+
+
 
     end subroutine single_epannihil_kernel_point_return_all
 
