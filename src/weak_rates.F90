@@ -510,7 +510,7 @@
           t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)  ! Conversion from MeV to GK
 
           if(parameterized_rate) then
-             qec_eff = return_hempel_qec(A,Z,Z-1) - 2.50d0
+             qec_eff = return_hempel_qec(A,Z,Z-1)
           else
              !interpolating rates for given eos_variables and calculating 
              !average neutrino energy from rates for nue, emissivities are
