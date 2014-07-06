@@ -279,6 +279,8 @@ program make_table_example
        add_nutau_Iscattering_electrons.or.add_anutau_Iscattering_electrons) then
 
      doing_inelastic = .true.
+  else
+     doing_inelastic = .false.
   endif
 
   if (add_nue_kernel_epannihil.or.add_anue_kernel_epannihil.or. &
@@ -286,6 +288,8 @@ program make_table_example
        add_nutau_kernel_epannihil.or.add_anutau_kernel_epannihil) then
 
      doing_epannihil = .true.
+else
+     doing_epannihil = .false.
   endif
 
   if (doing_inelastic.or.doing_epannihil) then
