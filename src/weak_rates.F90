@@ -410,7 +410,8 @@
         end subroutine monotonic_interp_2d
 
         function weakrates(A,Z,query1,query2,rate_of_interest) result(interp_val) 
-
+          
+          real*8 :: isobar_modifier
           real*8, allocatable, dimension(:,:) :: Data2d
           real*8 :: query1,query2,value,interp_val
           integer i,j,counter,dim,nucleus,rate_of_interest,A,Z
@@ -456,7 +457,8 @@
           call interpolant(2,1,interp_val)
 
           !for rate variations
-          interp_val = interp_val !+ 1.0d0
+          !interp_val = log10(isobar_modifier(A, 10**(interp_val)))
+          !interp_val = interp_val + 3.0d0
           return
 
         end function weakrates
@@ -558,7 +560,7 @@
              if (parameterized_rate) then
                 normalization_constant = (analytic_weakrates(&
                      0,eos_variables(tempindex),qec_eff,&
-                     eos_variables(mueindex)-m_e))/spectra 
+                     eos_variables(mueindex)-m_e,A))/spectra 
                      !replaced return_hempel_qec(A,Z,Z-1) with qec_eff
              else
                 normalization_constant = &
@@ -989,11 +991,12 @@ function  return_emissivity_from_electron_capture_on_A(&
        A,Z,number_density,eos_variables,neutrino_species,parameterized_rate)
 end function return_emissivity_from_electron_capture_on_A
 
-function analytic_weakrates(n,temperature,q_gs,mue) result(rate)
+function analytic_weakrates(n,temperature,q_gs,mue,A) result(rate)
 
   use nulib
 
   integer, intent(in) :: n ! 0 for electron capture rate, 1 for nuetrino energy loss rate
+  integer, intent(in) :: A
   real*8 :: rate
   real*8 :: temperature
   real*8 :: chi
@@ -1001,6 +1004,7 @@ function analytic_weakrates(n,temperature,q_gs,mue) result(rate)
   real*8 :: q_gs
   real*8 :: mue
   real*8 :: complete_fermi_integral
+  real*8 :: isobar_modifier
 
   chi = (q_gs-2.5d0)/temperature
   eta = mue/temperature + chi
@@ -1010,7 +1014,33 @@ function analytic_weakrates(n,temperature,q_gs,mue) result(rate)
        2.0d0*chi*complete_fermi_integral(3+n,eta) + &
        chi**2.0d0*complete_fermi_integral(2+n,eta))
 
-  !rate = rate*10.0d0   !for rate variations
+  !rate = isobar_modifier(A,rate)
+  !rate = rate*1.0d3
   return
 
 end function analytic_weakrates
+
+
+function isobar_modifier(A,input_rate) result(scaled_rate)
+  integer :: A
+  real*8 :: input_rate, scaled_rate
+  real*8 :: scaling_factor
+  integer :: upper_bound, lower_bound
+
+  upper_bound = 85
+  lower_bound = 0
+  scaling_factor = 1.0d-1
+  if (A.LE.upper_bound) then
+     if (lower_bound.LT.A) then
+        scaled_rate = input_rate*scaling_factor
+     else
+        scaled_rate = input_rate
+     end if
+  else
+     scaled_rate = input_rate
+  end if
+
+  return 
+
+end function isobar_modifier
+ 

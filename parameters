@@ -9,8 +9,8 @@ ffn_rates		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/
 nuclear_masses		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/mass.mas12"
 
 ## Priority ##
-ilmp			=	1	# 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, it will be ignored.
-ilmsh			=	2	# 0 indicates the table will not be used
-ioda			=	3
+ilmp			=	0	# 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, it will be ignored.
+ilmsh			=	1	# 0 indicates the table will not be used
+ioda			=	0
 iffn			=	0
-iapprox			=	4
+iapprox			=	0

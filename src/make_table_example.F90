@@ -59,7 +59,7 @@ program make_table_example
   real*8 :: timestamp
   character(8) :: date
   integer :: values(8)
-  character(100) :: base,vnum,srho,stemp,sye,sng,sns,sItemp,sIeta
+  character(100) :: base,vnum,srho,stemp,sye,sng,sns,sItemp,sIeta,outdir
 
   !local variables to help in making tables
   integer :: irho,itemp,iye,ns,ng
@@ -555,16 +555,17 @@ program make_table_example
           (dble(values(5))+dble(values(6))/60.0d0 + dble(values(7))/3600.0d0 )/24.0
 
      base="NuLib_Hempel"
+     outdir="/mnt/simulations/ceclub/sullivan/nulib/"
      vnum="1.0"
 
      if (doing_inelastic) then
-        finaltable_filename = trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
+        finaltable_filename = trim(adjustl(outdir))//trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
              "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &
              "_ng"//trim(adjustl(sng))//"_ns"//trim(adjustl(sns))// &
              "_Itemp"//trim(adjustl(sItemp))//"_Ieta"//trim(adjustl(sIeta))// &
              "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//"-VARIATION.h5"
      else
-        finaltable_filename = trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
+        finaltable_filename = trim(adjustl(outdir))//trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
              "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &
              "_ng"//trim(adjustl(sng))//"_ns"//trim(adjustl(sns))// &
              "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//".h5"
