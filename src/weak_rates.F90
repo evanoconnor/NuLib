@@ -657,7 +657,7 @@
           end if
 
         end function ec_neutrino_spectra_q_derivative
-
+        
         function qec_solver(avgenergy,qin,eos_variables) result(qec_eff)
 
           use nulib, only : GLQ_n32_roots, GLQ_n32_weights, &
@@ -711,7 +711,7 @@
           GPQ_interval_deriv = 0.0d0
           GPQ_coef = 0.0d0
           GPQ_coef_deriv = 0.0d0
-
+          
           do while (abs((avge_rates - avge_spectra)/avge_rates) > 1.0d-8) 
              lower_bound = -100.0d0
              upper_bound = 100.0d0
@@ -736,7 +736,6 @@
                    !consider checking the effectiveness of this logic statement
                    if(abs(avge_rates - avge_spectra)/avge_rates.lt.1.0d0)then  
                       qec_eff = q
-                      !write(*,*) avge_rates, avge_spectra,(avge_rates - avge_spectra)/avge_rates
                       return
                    end if
                 end if
@@ -917,7 +916,8 @@
                    end if
                 end if
              else if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.&
-                  (nuclei_A(i).gt.40.and.nuclei_A(i).le.65)) then
+                  (nuclei_A(i).gt.40).and.(nuclei_A(i).le.65).and.file_priority(1).gt.0) then !should work for lmp + lmsh
+!                  (nuclei_A(i).gt.40.and.nuclei_A(i).le.65)) then
                 !test to see if outside lmp table bounds
                 if(logrhoYe.lt.1.0d0.or.logrhoYe.gt.12.5d0.or.t9.lt.1.0d-2.or.t9.gt.100.0d0) then
                    if(file_priority(5).gt.0) then
@@ -927,7 +927,7 @@
                    end if
                 end if
              else if(nucleus_index(nuclei_A(i),nuclei_Z(i)).gt.0.and.&
-                  nuclei_A(i).gt.65) then !should work for lmp + lmsh
+                  ((nuclei_A(i).gt.65).or.(nuclei_A(i).ge.65.and.file_priority(1).eq.0))) then !should work for lmp + lmsh
                 !test to see if outside lmsh table bounds
                 if(logrhoYe.lt.9.28493d0.or.&
                      logrhoYe.gt.12.42218d0.or.&
