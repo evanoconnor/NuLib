@@ -509,10 +509,12 @@ module nulib
            temporary_spectra(1,1:number_groups)/blackbody_spectra(1,1:number_groups)
       absorption_opacity(2,1:number_groups) = absorption_opacity(2,1:number_groups) + &
            temporary_spectra(2,1:number_groups)/blackbody_spectra(2,1:number_groups)
-      emissivities(1,1:number_groups) = emissivities(1,1:number_groups) + &
-           temporary_spectra(1,1:number_groups)
-      emissivities(2,1:number_groups) = emissivities(2,1:number_groups) + &
-           temporary_spectra(2,1:number_groups)
+      if (apply_kirchoff_to_pair_creation) then
+         emissivities(1,1:number_groups) = emissivities(1,1:number_groups) + &
+              temporary_spectra(1,1:number_groups)
+         emissivities(2,1:number_groups) = emissivities(2,1:number_groups) + &
+              temporary_spectra(2,1:number_groups)
+      end if
 
       if(debug) then
          write(*,*) "debug #4: absorption opacities after \eta/B_\nu term for species 1:", &
@@ -528,9 +530,11 @@ module nulib
               temporary_spectra(4,1:number_groups)/blackbody_spectra(3,1:number_groups) + & 
               temporary_spectra(5,1:number_groups)/blackbody_spectra(3,1:number_groups) + &
               temporary_spectra(6,1:number_groups)/blackbody_spectra(3,1:number_groups))/4.0d0
-         emissivities(3,1:number_groups) = emissivities(3,1:number_groups) + &
-              temporary_spectra(3,1:number_groups) + temporary_spectra(4,1:number_groups) + &
-              temporary_spectra(5,1:number_groups) + temporary_spectra(6,1:number_groups)
+         if (apply_kirchoff_to_pair_creation) then
+            emissivities(3,1:number_groups) = emissivities(3,1:number_groups) + &
+                 temporary_spectra(3,1:number_groups) + temporary_spectra(4,1:number_groups) + &
+                 temporary_spectra(5,1:number_groups) + temporary_spectra(6,1:number_groups)
+         end if
 
       !average neutrinos and antineutrinos individually
       else if (number_local_species.eq.4) then
@@ -540,10 +544,12 @@ module nulib
          absorption_opacity(4,1:number_groups) = absorption_opacity(4,1:number_groups) + &
               (temporary_spectra(4,1:number_groups)/blackbody_spectra(3,1:number_groups) + &
               temporary_spectra(6,1:number_groups)/blackbody_spectra(3,1:number_groups))/2.0d0
-         emissivities(3,1:number_groups) = emissivities(3,1:number_groups) + &
-              temporary_spectra(3,1:number_groups) + temporary_spectra(5,1:number_groups)
-         emissivities(4,1:number_groups) = emissivities(4,1:number_groups) + &
-              temporary_spectra(4,1:number_groups) + temporary_spectra(6,1:number_groups)
+         if (apply_kirchoff_to_pair_creation) then
+            emissivities(3,1:number_groups) = emissivities(3,1:number_groups) + &
+                 temporary_spectra(3,1:number_groups) + temporary_spectra(5,1:number_groups)
+            emissivities(4,1:number_groups) = emissivities(4,1:number_groups) + &
+                 temporary_spectra(4,1:number_groups) + temporary_spectra(6,1:number_groups)
+         end if
 
       !no averaging at all, what six different species
       else if (number_local_species.eq.6) then
@@ -555,14 +561,16 @@ module nulib
               temporary_spectra(5,1:number_groups)/blackbody_spectra(3,1:number_groups)
          absorption_opacity(6,1:number_groups) = absorption_opacity(6,1:number_groups) + &
               temporary_spectra(6,1:number_groups)/blackbody_spectra(3,1:number_groups)
-         emissivities(3,1:number_groups) = emissivities(3,1:number_groups) + &
-              temporary_spectra(3,1:number_groups)
-         emissivities(4,1:number_groups) = emissivities(4,1:number_groups) + &
-              temporary_spectra(4,1:number_groups)
-         emissivities(5,1:number_groups) = emissivities(5,1:number_groups) + &
-              temporary_spectra(5,1:number_groups)
-         emissivities(6,1:number_groups) = emissivities(6,1:number_groups) + &
-              temporary_spectra(6,1:number_groups)
+         if (apply_kirchoff_to_pair_creation) then
+            emissivities(3,1:number_groups) = emissivities(3,1:number_groups) + &
+                 temporary_spectra(3,1:number_groups)
+            emissivities(4,1:number_groups) = emissivities(4,1:number_groups) + &
+                 temporary_spectra(4,1:number_groups)
+            emissivities(5,1:number_groups) = emissivities(5,1:number_groups) + &
+                 temporary_spectra(5,1:number_groups)
+            emissivities(6,1:number_groups) = emissivities(6,1:number_groups) + &
+                 temporary_spectra(6,1:number_groups)
+         end if
 
       endif
 
