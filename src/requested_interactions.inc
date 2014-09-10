@@ -67,6 +67,8 @@
   logical :: add_nutau_emission_NNBrems = .true.
   logical :: add_anutau_emission_NNBrems = .true.
 
+  logical :: apply_kirchoff_to_pair_creation = .true.
+
   !kernels for full calculation of thermal processes
   logical :: add_nue_kernel_epannihil = .false.
   logical :: add_anue_kernel_epannihil = .false.
