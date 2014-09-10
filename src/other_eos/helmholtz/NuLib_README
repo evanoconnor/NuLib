@@ -1,0 +1,14 @@
+Download Frank Timmes' Helmholtz EOS from
+http://cococubed.asu.edu/code_pages/eos.shtml bunzip2 and untar the
+.dek, .dat, and. f90 files into this directory.  change HELMHOLTZ_EOS
+to 1 in the make.inc file in the main NuLib directory.
+
+Specific notes for Nulib:
+
+1. helmholtz.f90 is set to run as a stand-alone program.  To use it as
+routines only you must comment out the program at the beginning.  
+
+2. helmholtz.f90 will read in helm_table.dat.  This file, which is a
+part of the helmholtz download, must be placed in the main program
+directory, or helmholtz.f90 must be adjusted so it points to this file
+(i.e. helm_table.dat -> src/other_eos/helmholtz/helm_table.dat)

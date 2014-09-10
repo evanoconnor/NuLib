@@ -24,6 +24,12 @@ ifeq ($(NUCLEI_HEMPEL),1)
 	DEFS += -DNUCLEI_HEMPEL
 endif
 
+ifeq ($(HELMHOLTZ_EOS),1)
+	f90_SOURCES = other_eos/helmholtz/helmholtz.f90
+	f90_OBJECTS=$(f90_SOURCES:.f90=.o )
+	DEFS += -DHELMHOLTZ_EOS
+endif
+
 EXTRADEPS = requested_interactions.inc constants.inc
 
 OBJECTS=$(SOURCES:.F90=.o )
@@ -41,7 +47,10 @@ all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINC) -o $@ nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS)
 
 ../point_example:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) point_example.F90
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ point_example.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ point_example.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) 
+
+../point_example_with_HelmholtzEOS:  $(EXTRADEPS) $(f90_OBJECTS) $(F_OBJECTS) $(OBJECTS) point_example_with_HelmholtzEOS.F90
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ point_example_with_HelmholtzEOS.F90 $(OBJECTS) $(F_OBJECTS) $(f90_OBJECTS) $(EXTRAOBJECTS) 
 
 ../make_table_example:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) make_table_example.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_example.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
@@ -55,6 +64,9 @@ $(OBJECTS): %.o: %.F90 $(EXTRADEPS)
 $(F_OBJECTS): %.o: %.f 
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -c $< -o $@	
 
+$(f90_OBJECTS): %.o: %.f90 
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -c $< -o $@	
+
 $(NT_OBJECTS): %.o: %.F90 $(EXTRADEPS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -c $< -o $@
 
@@ -65,8 +77,10 @@ clean:
 	rm -rf ../make_table_example
 	rm -rf ../point_example
 	rm -rf ../nulibtable_driver
+	rm -rf ../point_example_with_HelmholtzEOS
 	rm -rf *.o
 	rm -rf *.mod
 	rm -rf *.a
 	$(MAKE) -C nuc_eos clean	
 	rm -rf ./extra_code_and_tables/sfho_frdm_comp/sfho_frdm_composition_module.o
+	rm -rf ./other_eos/helmholtz/*.o
