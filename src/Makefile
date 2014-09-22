@@ -11,7 +11,8 @@ SOURCES=nulib.F90 \
 	scattering.F90 \
 	weak_magnetism_correction.F90 \
 	inelastic_electron_scattering.F90 \
-	nuclei_distribution_helpers.F90
+	nuclei_distribution_helpers.F90 \
+	eos_interface.F90
 
 NT_SOURCES=nulibtable.F90 \
 	   nulibtable_reader.F90 \
@@ -24,38 +25,39 @@ ifeq ($(NUCLEI_HEMPEL),1)
 	DEFS += -DNUCLEI_HEMPEL
 endif
 
-ifeq ($(HELMHOLTZ_EOS),1)
-	f90_SOURCES = other_eos/helmholtz/helmholtz.f90
-	f90_OBJECTS=$(f90_SOURCES:.f90=.o )
-	DEFS += -DHELMHOLTZ_EOS
-endif
-
-EXTRADEPS = requested_interactions.inc constants.inc
-
 OBJECTS=$(SOURCES:.F90=.o )
 NT_OBJECTS=$(NT_SOURCES:.F90=.o )
 
 #take care of EOS dependences etc
-DEFS += -DHAVE_NUC_EOS
-EXTRAINCS = $(HDF5INCS) -I./nuc_eos
-EXTRADEPS += nuc_eos/nuc_eos.a
-EXTRAOBJECTS = nuc_eos/nuc_eos.a $(HDF5LIBS)
+ifeq ($(HELMHOLTZ_EOS),1)
+	f90_SOURCES = other_eos/helmholtz/helmholtz.f90
+	f90_OBJECTS=$(f90_SOURCES:.f90=.o )
+	DEFS += -DHELMHOLTZ_EOS
+else
+	DEFS += -DHAVE_NUC_EOS
+	EXTRAINCS = -I./nuc_eos
+	EXTRADEPS = nuc_eos/nuc_eos.a
+	EXTRAOBJECTS = nuc_eos/nuc_eos.a
+endif
+EXTRADEPS += requested_interactions.inc constants.inc
+EXTRAINCS += $(HDF5INCS)
+EXTRAOBJECTS += $(HDF5LIBS)
+
+
+
 
 all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
 
 ../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) 
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINC) -o $@ nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS)
 
-../point_example:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) point_example.F90
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ point_example.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) 
+../point_example:  $(EXTRADEPS) $(F_OBJECTS) $(f90_OBJECTS) $(OBJECTS) point_example.F90
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ point_example.F90 $(OBJECTS) $(F_OBJECTS) $(f90_OBJECTS) $(EXTRAOBJECTS) 
 
-../point_example_with_HelmholtzEOS:  $(EXTRADEPS) $(f90_OBJECTS) $(F_OBJECTS) $(OBJECTS) point_example_with_HelmholtzEOS.F90
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ point_example_with_HelmholtzEOS.F90 $(OBJECTS) $(F_OBJECTS) $(f90_OBJECTS) $(EXTRAOBJECTS) 
+../make_table_example:  $(EXTRADEPS) $(F_OBJECTS) $(f90_OBJECTS) $(OBJECTS) make_table_example.F90
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_example.F90 $(OBJECTS) $(f90_OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
 
-../make_table_example:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) make_table_example.F90
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_example.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
-
-nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
+nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) $(f90_OBJECTS) $(NT_OBJECTS)
 	ar -r nulib.a *.o
 
 $(OBJECTS): %.o: %.F90 $(EXTRADEPS)
@@ -77,7 +79,6 @@ clean:
 	rm -rf ../make_table_example
 	rm -rf ../point_example
 	rm -rf ../nulibtable_driver
-	rm -rf ../point_example_with_HelmholtzEOS
 	rm -rf *.o
 	rm -rf *.mod
 	rm -rf *.a
