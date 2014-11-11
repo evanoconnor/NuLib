@@ -7,8 +7,8 @@
   real*8, parameter :: m_e_x2 = (0.510998910d0)**2 !MeV^2
   real*8, parameter :: m_n = 939.565346d0 !MeV
   real*8, parameter :: m_p = 938.272013d0 !MeV
-  real*8, parameter :: m_amu =  931.494061 !MeV
-  real*8, parameter :: sin2thetaW = 0.23 !dimensionless
+  real*8, parameter :: m_amu =  931.494061d0 !MeV
+  real*8, parameter :: sin2thetaW = 0.23d0 !dimensionless
   real*8, parameter :: clight = 29979245800.0d0 !cm/s
   real*8, parameter :: pi = 3.141592653589793238462643383279d0
   real*8, parameter :: hbarc_ergcm = 3.1615262d-17! in erg*cm
