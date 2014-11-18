@@ -1,12 +1,6 @@
 *~
 make.inc
 *.h5
-src/*.o
-src/other_eos/helmholtz/README
-src/other_eos/helmholtz/const.dek
-src/other_eos/helmholtz/helm_table.dat
-src/other_eos/helmholtz/helm_table_storage.dek
-src/other_eos/helmholtz/helmholtz.f90
-src/other_eos/helmholtz/helmholtz.f90~
-src/other_eos/helmholtz/implno.dek
-src/other_eos/helmholtz/vector_eos.dek
+make_table_example
+nulibtable_driver
+point_example
