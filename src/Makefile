@@ -29,15 +29,15 @@ OBJECTS=$(SOURCES:.F90=.o )
 NT_OBJECTS=$(NT_SOURCES:.F90=.o )
 
 #take care of EOS dependences etc
+f90_SOURCES = other_eos/helmholtz/helmholtz.f90
+f90_OBJECTS=$(f90_SOURCES:.f90=.o )
+EXTRAINCS = -I./nuc_eos
+EXTRADEPS = nuc_eos/nuc_eos.a
+EXTRAOBJECTS = nuc_eos/nuc_eos.a
 ifeq ($(HELMHOLTZ_EOS),1)
-	f90_SOURCES = other_eos/helmholtz/helmholtz.f90
-	f90_OBJECTS=$(f90_SOURCES:.f90=.o )
 	DEFS += -DHELMHOLTZ_EOS
 else
 	DEFS += -DHAVE_NUC_EOS
-	EXTRAINCS = -I./nuc_eos
-	EXTRADEPS = nuc_eos/nuc_eos.a
-	EXTRAOBJECTS = nuc_eos/nuc_eos.a
 endif
 EXTRADEPS += requested_interactions.inc constants.inc
 EXTRAINCS += $(HDF5INCS)
