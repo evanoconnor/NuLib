@@ -22,10 +22,10 @@ program make_table_example
   integer :: mytable_number_species = 6
 
   !number of energy groups
-  integer :: mytable_number_groups = 24
+  integer :: mytable_number_groups = 18
 
-  !EOS table (ignored if HELMHOLTZ_EOS)
-  character*200 :: eos_filename = "/Users/evanoc/research/eos/LS220.h5"
+  !EOS table
+  character*200 :: eos_filename = "LS220_234r_136t_50y_analmu_20091212_SVNr26.h5" !from stellarcollapse.org
 
   !final table parameters
   integer :: final_table_size_ye, final_table_size_rho, final_table_size_temp
@@ -72,6 +72,9 @@ program make_table_example
   real*8, allocatable,dimension(:,:,:) :: local_Phi0_epannihil 
   real*8, allocatable,dimension(:,:,:) :: local_Phi1_epannihil 
   real*8, allocatable,dimension(:) :: eos_variables
+  real*8 :: matter_prs,matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe
+  integer :: keytemp,keyerr
+  real*8 :: precision = 1.0d-10
   integer :: i
   real*8 dxfac,mindx
   logical :: doing_inelastic, doing_epannihil
@@ -87,18 +90,21 @@ program make_table_example
                            !add_nux_absorption_on_n_and_p to true)
  
   !set up table
-  final_table_size_ye = 10
-  final_table_size_rho = 10
-  final_table_size_temp = 10
+  final_table_size_ye = 51
+  final_table_size_rho = 82
+  final_table_size_temp = 65
   
-  final_Itable_size_temp = 10
-  final_Itable_size_eta = 10
+  final_Itable_size_temp = 65
+  final_Itable_size_eta = 61
   final_Itable_size_inE = mytable_number_groups
+
+  base="NuLib_LS220"
+  vnum="1.0"
 
   min_ye = 0.035d0
   max_ye = 0.55d0
   min_logrho = 6.0d0
-  max_logrho = 15.0d0
+  max_logrho = 15.8d0
   min_logtemp = log10(0.05d0)
   max_logtemp = log10(200.0d0)
   Imin_logtemp = log10(0.05d0)
@@ -109,9 +115,9 @@ program make_table_example
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
-  mindx = 1.0d0
+  mindx = 2.0d0
   bin_bottom(1) = 0.0d0 !MeV
-  bin_bottom(2) = 4.0d0 !MeV
+  bin_bottom(2) = 2.0d0 !MeV
   bin_bottom(3) = bin_bottom(2)+mindx
   bin_bottom(number_groups) = 250.0d0
   
@@ -461,9 +467,6 @@ else
   timestamp = dble(values(1))*10000.0d0+dble(values(2))*100.0+dble(values(3)) + &
        (dble(values(5))+dble(values(6))/60.0d0 + dble(values(7))/3600.0d0 )/24.0
 
-  base="NuLib_LS220"
-  vnum="1.0"
-
   if (doing_inelastic.or.doing_epannihil) then
      finaltable_filename = trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
           "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &
@@ -745,7 +748,7 @@ contains
        call h5screate_simple_f(rank, dims6, dspace_id, error)
        call h5dcreate_f(file_id, "epannihil_phi0", H5T_NATIVE_DOUBLE, &
             dspace_id, dset_id, error)
-       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,epannihiltable_Phi0, dims5, error)
+       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,epannihiltable_Phi0, dims6, error)
        call h5dclose_f(dset_id, error)
        call h5sclose_f(dspace_id, error)  
        cerror = cerror + error   
@@ -753,7 +756,7 @@ contains
        call h5screate_simple_f(rank, dims6, dspace_id, error)
        call h5dcreate_f(file_id, "epannihil_phi1", H5T_NATIVE_DOUBLE, &
             dspace_id, dset_id, error)
-       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,epannihiltable_Phi1, dims5, error)
+       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,epannihiltable_Phi1, dims6, error)
        call h5dclose_f(dset_id, error)
        call h5sclose_f(dspace_id, error)  
        cerror = cerror + error
