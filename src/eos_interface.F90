@@ -148,7 +148,6 @@ subroutine nse_mass_fractions(rho,T,Ye,xn,xp,xa)
   use nulib
   implicit none
   integer, parameter :: max_count = 100
-  real*8, parameter :: damping = 0.5
   real*8, parameter :: max_error = 1d-6
   real*8, intent(in)  :: rho !g/ccm
   real*8, intent(in)  :: T   !MeV
@@ -176,11 +175,11 @@ subroutine nse_mass_fractions(rho,T,Ye,xn,xp,xa)
   if(Ye<0.5) then
     eta_n = log(rho/(2d0*m_n*mev_to_gram) * (m_n*T/(2.0d0*pi*hbarc_mevcm**2))**(-1.5d0))
     eta_p =  0.5d0 * (log(rho/(m_alpha*mev_to_gram) * (m_alpha*T/(2.0d0*pi*hbarc_mevcm**2))**(-1.5d0)) &
-          - (2d0*m_n + 2d0*m_p - m_alpha)/T) - eta_n !-0.25d0 * (2d0*m_n + 2d0*m_p - m_alpha)/T
+          - (2d0*m_n + 2d0*m_p - m_alpha)/T) - eta_n
   else
     eta_p = log(rho/(2d0*m_p*mev_to_gram) * (m_p*T/(2.0d0*pi*hbarc_mevcm**2))**(-1.5d0))
     eta_n =  0.5d0 * (log(rho/(m_alpha*mev_to_gram) * (m_alpha*T/(2.0d0*pi*hbarc_mevcm**2))**(-1.5d0)) &
-          - (2d0*m_n + 2d0*m_p - m_alpha)/T) - eta_p !-0.25d0 * (2d0*m_n + 2d0*m_p - m_alpha)/T
+          - (2d0*m_n + 2d0*m_p - m_alpha)/T) - eta_p
   end if
   eta_alpha = eta_a(eta_n,eta_p,T)
 
