@@ -1,22 +1,41 @@
 !-*-f90-*-
-subroutine nulibtable_reader(filename)
+subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernels)
   
   use nulibtable
   use hdf5
   implicit none
 
+  !inputs
   character(*) :: filename
+  logical,optional :: include_Ielectron
+  logical,optional :: include_epannihil_kernels
+  
+  logical :: read_Ielectron
+  logical :: read_epannihil
   
   !H5 stuff
   integer :: error,rank,cerror
   integer(HID_T) :: file_id,dset_id,dspace_id
-  integer(HSIZE_T) :: dims1(1), dims2(2), dims3(3), dims4(4), dims5(5)!, etc....
+  integer(HSIZE_T) :: dims1(1), dims2(2), dims3(3), dims4(4), dims5(5), dims6(6)!, etc....
 
   !local
   real*8, allocatable :: nulibtable_temp(:,:,:,:,:)
+  real*8, allocatable :: nulibtable_temp2(:,:,:,:,:,:)
   real*8 :: timestamp
-  integer :: startindex,endindex
-  integer :: i,j
+  integer :: startindex,endindex,index
+  integer :: i,j,k
+
+  if (present(include_Ielectron)) then
+     read_Ielectron = include_Ielectron
+  else
+     read_Ielectron = .false.
+  endif
+
+  if (present(include_epannihil_kernels)) then
+     read_epannihil = include_epannihil_kernels
+  else
+     read_epannihil = .false.
+  endif
 
   cerror = 0
 
@@ -190,6 +209,156 @@ subroutine nulibtable_reader(filename)
   enddo
 
   nulibtable_number_easvariables = 3
+
+  deallocate(nulibtable_temp)
+
+  if (read_Ielectron.or.read_epannihil) then
+
+     !read scalars (rank=1, dims1(1) = 1)
+     rank = 1
+     dims1(1) = 1
+     
+     call h5dopen_f(file_id, "Itemp",dset_id, error)
+     call h5dread_f(dset_id, H5T_NATIVE_INTEGER, nulibtable_nItemp, dims1, error)
+     call h5dclose_f(dset_id, error)
+     cerror = cerror + error
+     
+     call h5dopen_f(file_id, "Ieta",dset_id, error)
+     call h5dread_f(dset_id, H5T_NATIVE_INTEGER, nulibtable_nIeta, dims1, error)
+     call h5dclose_f(dset_id, error)
+     cerror = cerror + error
+
+     allocate(nulibtable_logItemp(nulibtable_nItemp))
+     allocate(nulibtable_logIeta(nulibtable_nIeta))
+
+     rank = 1
+     dims1(1) = nulibtable_nItemp
+     call h5dopen_f(file_id, "temp_Ipoints", dset_id, error)
+     call h5dread_f(dset_id, H5T_NATIVE_DOUBLE,nulibtable_logItemp, dims1, error)
+     call h5dclose_f(dset_id, error)
+     cerror = cerror + error  
+
+     rank = 1
+     dims1(1) = nulibtable_nIeta
+     call h5dopen_f(file_id, "eta_Ipoints", dset_id, error)
+     call h5dread_f(dset_id, H5T_NATIVE_DOUBLE,nulibtable_logIeta, dims1, error)
+     call h5dclose_f(dset_id, error)
+     cerror = cerror + error   
+
+     nulibtable_logItemp = log10(nulibtable_logItemp) 
+     nulibtable_logItemp_min = nulibtable_logItemp(1)
+     nulibtable_logItemp_max = nulibtable_logItemp(nulibtable_nItemp)
+     nulibtable_logIeta = log10(nulibtable_logIeta) 
+     nulibtable_logIeta_min = nulibtable_logIeta(1)
+     nulibtable_logIeta_max = nulibtable_logIeta(nulibtable_nIeta)
+     
+  endif
+
+  if (read_Ielectron) then
+
+     rank = 5
+     dims5(1) = nulibtable_nItemp
+     dims5(2) = nulibtable_nIeta
+     dims5(3) = nulibtable_number_groups
+     dims5(4) = nulibtable_number_species
+     dims5(5) = nulibtable_number_groups
+
+     if (dims5(3).ne.dims5(5)) stop "Inelastic must be square"
+
+     allocate(nulibtable_temp(dims5(1),dims5(2),dims5(3),dims5(4),dims5(5)))
+     allocate(nulibtable_Itable_Phi0(dims5(1),dims5(2),dims5(4)*dims5(3)*(dims5(3)+1)/2))
+     allocate(nulibtable_Itable_Phi1(dims5(1),dims5(2),dims5(4)*dims5(3)*(dims5(3)+1)/2))
+
+     call h5dopen_f(file_id, "inelastic_phi0", dset_id, error)
+     call h5dread_f(dset_id, H5T_NATIVE_DOUBLE,nulibtable_temp, dims5, error)
+     call h5dclose_f(dset_id, error)
+     cerror = cerror + error   
+
+     !only store half of the terms, we'll use symmetry to make the rest
+     index = 0
+     do i=1,nulibtable_number_species !species
+        do j=1,nulibtable_number_groups !incoming E
+           do k=1,j !outgoing E
+              index = index + 1
+              nulibtable_Itable_Phi0(:,:,index) = log10(max(1.0d-200,nulibtable_temp(:,:,j,i,k)))
+           enddo
+        enddo
+     enddo
+
+     call h5dopen_f(file_id, "inelastic_phi1", dset_id, error)
+     call h5dread_f(dset_id, H5T_NATIVE_DOUBLE,nulibtable_temp, dims5, error)
+     call h5dclose_f(dset_id, error)
+     cerror = cerror + error   
+
+     !l=1 term can be negative, store as l=1 term / l=0 term to get a
+     !number of order 1, then we'll linearly interpolate it in
+     !nulibtable.F90
+     index = 0
+     do i=1,nulibtable_number_species !species
+        do j=1,nulibtable_number_groups !incoming E
+           do k=1,j !outgoing E
+              index = index + 1
+              nulibtable_Itable_Phi1(:,:,index) = nulibtable_temp(:,:,j,i,k)/ &
+                   10.0d0**nulibtable_Itable_Phi0(:,:,index)
+           enddo
+        enddo
+     enddo
+
+     deallocate(nulibtable_temp)
+     
+  endif
+
+  if (read_epannihil) then
+
+     rank = 6
+     dims6(1) = nulibtable_nItemp
+     dims6(2) = nulibtable_nIeta
+     dims6(3) = nulibtable_number_groups
+     dims6(4) = nulibtable_number_species
+     dims6(5) = nulibtable_number_groups
+     dims6(6) = 2
+
+     if (dims6(3).ne.dims6(5)) stop "epannihil kernels must be square"
+
+     allocate(nulibtable_temp2(dims6(1),dims6(2),dims6(3),dims6(4),dims6(5),dims6(6)))
+     allocate(nulibtable_epannihiltable_Phi0(dims6(1),dims6(2),dims6(4)*dims6(3)*dims6(3)))
+     allocate(nulibtable_epannihiltable_Phi1(dims6(1),dims6(2),dims6(4)*dims6(3)*dims6(3)))
+
+     call h5dopen_f(file_id, "epannihil_phi0", dset_id, error)
+     call h5dread_f(dset_id, H5T_NATIVE_DOUBLE,nulibtable_temp2, dims6, error)
+     call h5dclose_f(dset_id, error)
+     cerror = cerror + error   
+
+     index = 0
+     do i=1,nulibtable_number_species !species
+        do j=1,nulibtable_number_groups !neutrino E
+           do k=1,nulibtable_number_groups !otherne E
+              index = index + 1
+              nulibtable_epannihiltable_Phi0(:,:,index) = log10(max(1.0d-200,nulibtable_temp2(:,:,j,i,k,2))) !annihilation
+           enddo
+        enddo
+     enddo
+
+     call h5dopen_f(file_id, "epannihil_phi1", dset_id, error)
+     call h5dread_f(dset_id, H5T_NATIVE_DOUBLE,nulibtable_temp2, dims6, error)
+     call h5dclose_f(dset_id, error)
+     cerror = cerror + error   
+
+     !l=1 term can be negative, store as l=1 term / l=0 term to get a number of order 1, then we'll linear interpolate it in nulibtable.F90
+     index = 0
+     do i=1,nulibtable_number_species !species
+        do j=1,nulibtable_number_groups !neutrino E
+           do k=1,nulibtable_number_groups !othernu E
+              index = index + 1
+              nulibtable_epannihiltable_Phi1(:,:,index) = nulibtable_temp2(:,:,j,i,k,2)/ &
+                   10.0d0**nulibtable_epannihiltable_Phi0(:,:,index) !annihilation
+           enddo
+        enddo
+     enddo
+
+     deallocate(nulibtable_temp2)
+
+  endif
 
   !must close h5 files, check for error
   if (cerror.ne.0) then
