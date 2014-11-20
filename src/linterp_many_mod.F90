@@ -111,3 +111,87 @@
       
     end SUBROUTINE intp3d_many_mod
 
+    SUBROUTINE intp2d_many_mod( x, y, f, ft, nx, ny, nvars, xt, yt)
+!
+      implicit none
+!                                                          
+!---------------------------------------------------------------------
+!
+!     purpose: interpolation of a function of three variables in an
+!              equidistant(!!!) table.
+!
+!     method:  4-point Lagrange linear interpolation formula          
+!
+!     x        input vector of first  variable
+!     y        input vector of second variable
+!
+!     f        output vector of interpolated function values
+!
+!     ft       2d array of tabulated function values
+!     nx       x-dimension of table
+!     ny       y-dimension of table
+!     xt       vector of x-coordinates of table
+!     yt       vector of y-coordinates of table
+!
+!---------------------------------------------------------------------
+
+      integer nx,ny,iv,nvars
+      real*8 :: ft(nx,ny,nvars)
+
+      real*8 x,y,f(nvars)
+      real*8 xt(nx),yt(ny)
+      real*8 d1,d2
+!
+!
+      real*8  fh(4,nvars), delx, dely, &
+           a1(nvars), a2(nvars), a3(nvars), a4(nvars)
+      real*8 dx,dy,dxi,dyi,dxyi
+      integer n,ix,iy
+
+!
+!------  determine spacing parameters of (equidistant!!!) table
+!
+      dx    = (xt(nx) - xt(1)) / dble(nx-1)
+      dy    = (yt(ny) - yt(1)) / dble(ny-1)
+!
+      dxi   = 1.0d0 / dx
+      dyi   = 1.0d0 / dy
+!
+      dxyi  = dxi * dyi
+
+!
+!------- determine location in (equidistant!!!) table 
+!                                                                  
+      ix = 2 + int( (x - xt(1) - 1.0d-10) * dxi )
+      iy = 2 + int( (y - yt(1) - 1.0d-10) * dyi )
+!                                                     
+      ix = MAX( 2, MIN( ix, nx ) )
+      iy = MAX( 2, MIN( iy, ny ) )
+
+!
+!------- set-up auxiliary arrays for Lagrange interpolation
+!                                                                 
+      delx = xt(ix) - x
+      dely = yt(iy) - y
+!      
+      do iv = 1, nvars
+         fh(1,iv) = ft(ix  , iy  , iv  )                             
+         fh(2,iv) = ft(ix-1, iy  , iv  )                             
+         fh(3,iv) = ft(ix  , iy-1, iv  )                             
+         fh(4,iv) = ft(ix-1, iy-1, iv  )                             
+!              
+!------ set up coefficients of the interpolation polynomial and 
+!       evaluate function values 
+         a1(iv) = fh(1,iv)                             
+         a2(iv) = dxi   * ( fh(2,iv) - fh(1,iv) )       
+         a3(iv) = dyi   * ( fh(3,iv) - fh(1,iv) )       
+         a4(iv) = dxyi  * ( fh(4,iv) - fh(2,iv) - fh(3,iv) + fh(1,iv) )
+
+         f(iv)  = a1(iv) +  a2(iv) * delx &
+              +  a3(iv) * dely &
+              +  a4(iv) * delx * dely
+
+      enddo
+      
+    end SUBROUTINE intp2d_many_mod
+

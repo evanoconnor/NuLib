@@ -9,6 +9,8 @@ module nulibtable
   real*8, allocatable,save :: nulibtable_logrho(:)
   real*8, allocatable,save :: nulibtable_logtemp(:)
   real*8, allocatable,save :: nulibtable_ye(:)
+  real*8, allocatable,save :: nulibtable_logItemp(:)
+  real*8, allocatable,save :: nulibtable_logIeta(:)
   
   real*8, allocatable,save :: nulibtable_energies(:)
   real*8, allocatable,save :: nulibtable_inv_energies(:)
@@ -20,9 +22,17 @@ module nulibtable
   real*8, allocatable,save :: nulibtable_absopacity(:,:,:,:)
   real*8, allocatable,save :: nulibtable_scatopacity(:,:,:,:)
 
+  real*8, allocatable,save :: nulibtable_Itable_Phi0(:,:,:)
+  real*8, allocatable,save :: nulibtable_Itable_Phi1(:,:,:)
+
+  real*8, allocatable,save :: nulibtable_epannihiltable_Phi0(:,:,:)
+  real*8, allocatable,save :: nulibtable_epannihiltable_Phi1(:,:,:)
+
   integer, save :: nulibtable_nrho
   integer, save :: nulibtable_ntemp
   integer, save :: nulibtable_nye
+  integer, save :: nulibtable_nItemp
+  integer, save :: nulibtable_nIeta
 
   real*8, save :: nulibtable_logrho_min
   real*8, save :: nulibtable_logrho_max
@@ -33,9 +43,29 @@ module nulibtable
   real*8, save :: nulibtable_ye_min
   real*8, save :: nulibtable_ye_max
 
+  real*8, save :: nulibtable_logItemp_min
+  real*8, save :: nulibtable_logItemp_max
+
+  real*8, save :: nulibtable_logIeta_min
+  real*8, save :: nulibtable_logIeta_max
+
   integer, save :: nulibtable_number_easvariables
 
 end module nulibtable
+
+module nulibtable_interface
+
+  interface
+     subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernels)
+       implicit none
+
+       character(*) :: filename
+       logical,optional :: include_Ielectron
+       logical,optional :: include_epannihil_kernels
+     end subroutine nulibtable_reader
+  end interface
+
+end module nulibtable_interface
 
 !this takes rho,temp,ye,species and energy and return eas
 subroutine nulibtable_single_species_single_energy(xrho,xtemp,xye,lns,lng,eas,eas_n1)
@@ -215,3 +245,364 @@ subroutine nulibtable_range_species_range_energy(xrho,xtemp,xye,eas,eas_n1,eas_n
   enddo
 
 end subroutine nulibtable_range_species_range_energy
+
+!this takes temp,eta, and return phi0/1 over energy (both in and out) and species range
+subroutine nulibtable_inelastic_range_species_range_energy(xtemp,xeta, &
+     eas,eas_n1,eas_n2,eas_n3,eas_n4)
+
+  use nulibtable
+  implicit none
+
+  real*8, intent(in) :: xtemp, xeta !inputs
+  real*8 :: xltemp, xleta !log versions
+  integer, intent(in) :: eas_n1,eas_n2,eas_n3,eas_n4
+  real*8, intent(out) :: eas(eas_n1,eas_n2,eas_n3,eas_n4)
+  integer :: ins,ing_in,ing_out
+  real*8 :: xeas(eas_n1*eas_n2*(eas_n2+1)/2)
+  integer :: index
+
+  if(size(eas,1).ne.nulibtable_number_species) then
+     stop "nulibtable_inelastic_range_species_range_energy: supplied array dimensions (1) is not commensurate with table"
+  endif
+  if(size(eas,2).ne.nulibtable_number_groups) then
+     stop "nulibtable_inelastic_range_species_range_energy: supplied array dimensions (2) is not commensurate with table"
+  endif  
+  if(size(eas,3).ne.nulibtable_number_groups) then
+     stop "nulibtable_inelastic_range_species_range_energy: supplied array dimensions (3) is not commensurate with table"
+  endif
+  if(size(eas,4).ne.2) then
+     stop "nulibtable_inelastic_range_species_range_energy: supplied array dimensions (4) is not commensurate with table"
+  endif
+
+  xltemp = log10(xtemp)
+  xleta = log10(xeta)
+
+  if (xltemp.lt.nulibtable_logItemp_min) stop "temp below nulib inelastic table minimum temp"
+  if (xltemp.gt.nulibtable_logItemp_max) stop "temp above nulib inelastic table maximum temp"
+  if (xleta.lt.nulibtable_logIeta_min) stop "eta below nulib inelastic table minimum eta"
+  if (xleta.gt.nulibtable_logIeta_max) stop "eta above nulib inelastic table maximum eta"
+
+  if (allocated(nulibtable_Itable_Phi0).eqv..false.) stop "You need to read in inelastic data"
+
+  xeas = 0.0d0
+  call intp2d_many_mod(xltemp,xleta,xeas,nulibtable_Itable_Phi0,nulibtable_nItemp, &
+       nulibtable_nIeta,eas_n1*eas_n2*(eas_n2+1)/2,nulibtable_logItemp, &
+       nulibtable_logIeta)
+
+  index = 0
+  do ins=1,nulibtable_number_species
+     !interpolate half of the E,Eprime points
+     do ing_in=1,nulibtable_number_groups
+        do ing_out=1,ing_in
+           index = index + 1
+           eas(ins,ing_in,ing_out,1) = 10.0d0**xeas(index)
+        enddo
+     enddo
+     !apply cernohorsky 94 on the rest
+     !also, this assumes nulibtable_energies are in MeV
+     do ing_in=1,nulibtable_number_groups
+        do ing_out=ing_in+1,nulibtable_number_groups
+           eas(ins,ing_in,ing_out,1) =  &
+                exp(-(nulibtable_energies(ing_out)-nulibtable_energies(ing_in))/ &
+                xtemp)*eas(ins,ing_out,ing_in,1)
+        enddo
+     enddo
+  enddo
+
+  xeas = 0.0d0
+  call intp2d_many_mod(xltemp,xleta,xeas,nulibtable_Itable_Phi1,nulibtable_nItemp, &
+       nulibtable_nIeta,eas_n1*eas_n2*(eas_n2+1)/2,nulibtable_logItemp, &
+       nulibtable_logIeta)
+
+  index = 0
+  do ins=1,nulibtable_number_species
+     !interpolate half of the E,Eprime points
+     do ing_in=1,nulibtable_number_groups
+        do ing_out=1,ing_in
+           index = index + 1
+           !this way because we interpolate \phi1/\phi0
+           eas(ins,ing_in,ing_out,2) = xeas(index)*eas(ins,ing_in,ing_out,1)
+        enddo
+     enddo
+     !apply cernohorsky 94 on the rest
+     !also, this assumes nulibtable_energies are in MeV  
+     do ing_in=1,nulibtable_number_groups
+        do ing_out=ing_in+1,nulibtable_number_groups
+           eas(ins,ing_in,ing_out,2) =  &
+                exp(-(nulibtable_energies(ing_out)-nulibtable_energies(ing_in))/ &
+                xtemp)*eas(ins,ing_out,ing_in,2)
+        enddo
+     enddo
+  enddo  
+
+end subroutine nulibtable_inelastic_range_species_range_energy
+
+!this takes temp,eta, and returns phi0/1 over energy (both in and out) range for a single species, use symmetry to get other kernels
+subroutine nulibtable_inelastic_single_species_range_energy(xtemp,xeta, &
+     lns,eas,eas_n1,eas_n2,eas_n3)
+
+  use nulibtable
+  implicit none
+
+  real*8, intent(in) :: xtemp, xeta !inputs
+  real*8 :: xltemp, xleta !log versions
+  integer, intent(in) :: lns,eas_n1,eas_n2,eas_n3
+  real*8, intent(out) :: eas(eas_n1,eas_n2,eas_n3)
+  integer :: ing_in,ing_out
+  real*8 :: xeas(eas_n1*(eas_n1+1)/2)
+  integer :: index
+  integer :: startindex,endindex
+
+  if(size(eas,1).ne.nulibtable_number_groups) then
+     stop "nulibtable_inelastic_single_species_range_energy: supplied array dimensions (1) is not commensurate with table"
+  endif  
+  if(size(eas,2).ne.nulibtable_number_groups) then
+     stop "nulibtable_inelastic_single_species_range_energy: supplied array dimensions (2) is not commensurate with table"
+  endif
+  if(size(eas,3).ne.2) then
+     stop "nulibtable_inelastic_single_species_range_energy: supplied array dimensions (3) is not commensurate with table"
+  endif
+
+  xltemp = log10(xtemp)
+  xleta = log10(xeta)
+
+  if (xltemp.lt.nulibtable_logItemp_min) stop "temp below nulib inelastic table minimum temp"
+  if (xltemp.gt.nulibtable_logItemp_max) stop "temp above nulib inelastic table maximum temp"
+  if (xleta.lt.nulibtable_logIeta_min) stop "eta below nulib inelastic table minimum eta"
+  if (xleta.gt.nulibtable_logIeta_max) stop "eta above nulib inelastic table maximum eta"
+
+  if (allocated(nulibtable_Itable_Phi0).eqv..false.) stop "You need to read in inelastic data"
+
+  startindex = (lns-1)*nulibtable_number_groups*(nulibtable_number_groups+1)/2+1
+  endindex = startindex + nulibtable_number_groups*(nulibtable_number_groups+1)/2 - 1
+
+  xeas = 0.0d0
+  call intp2d_many_mod(xltemp,xleta,xeas,nulibtable_Itable_Phi0(:,:,startindex:endindex), &
+       nulibtable_nItemp,nulibtable_nIeta,eas_n1*(eas_n1+1)/2, &
+       nulibtable_logItemp,nulibtable_logIeta)
+
+  index = 0
+  !interpolate half of the E,Eprime points
+  do ing_in=1,nulibtable_number_groups
+     do ing_out=1,ing_in
+        index = index + 1
+        eas(ing_in,ing_out,1) = 10.0d0**xeas(index)
+     enddo
+  enddo
+  !apply cernohorsky 94 on the rest
+  !also, this assumes nulibtable_energies are in MeV
+  do ing_in=1,nulibtable_number_groups
+     do ing_out=ing_in+1,nulibtable_number_groups
+        eas(ing_in,ing_out,1) =  &
+             exp(-(nulibtable_energies(ing_out)-nulibtable_energies(ing_in))/ &
+             xtemp)*eas(ing_out,ing_in,1)
+     enddo
+  enddo
+
+  xeas = 0.0d0
+  call intp2d_many_mod(xltemp,xleta,xeas,nulibtable_Itable_Phi1(:,:,startindex:endindex), &
+       nulibtable_nItemp,nulibtable_nIeta,eas_n1*(eas_n1+1)/2, &
+       nulibtable_logItemp,nulibtable_logIeta)
+
+  index = 0
+  !interpolate half of the E,Eprime points
+  do ing_in=1,nulibtable_number_groups
+     do ing_out=1,ing_in
+        index = index + 1
+        !this way because we interpolate \phi1/\phi0
+        eas(ing_in,ing_out,2) = xeas(index)*eas(ing_in,ing_out,1)
+     enddo
+  enddo
+
+  !apply cernohorsky 94 on the rest
+  !also, this assumes nulibtable_energies are in MeV
+  do ing_in=1,nulibtable_number_groups
+     do ing_out=ing_in+1,nulibtable_number_groups
+        eas(ing_in,ing_out,2) =  &
+             exp(-(nulibtable_energies(ing_out)-nulibtable_energies(ing_in))/ &
+             xtemp)*eas(ing_out,ing_in,2)
+     enddo
+  enddo
+
+end subroutine nulibtable_inelastic_single_species_range_energy
+
+subroutine nulibtable_epannihil_range_species_range_energy(xtemp,xeta, &
+     eas,eas_n1,eas_n2,eas_n3,eas_n4)
+
+  use nulibtable
+  implicit none
+
+  real*8, intent(in) :: xtemp, xeta !inputs
+  real*8 :: xltemp, xleta !log versions
+  integer, intent(in) :: eas_n1,eas_n2,eas_n3,eas_n4
+  real*8, intent(out) :: eas(eas_n1,eas_n2,eas_n3,eas_n4)
+  integer :: ins,ing_this,ing_that
+  real*8 :: xeas(eas_n1*eas_n2*eas_n3)
+  integer :: index
+
+  if(size(eas,1).ne.nulibtable_number_species) then
+     stop "nulibtable_epannihil_range_species_range_energy: supplied array dimensions (1) is not commensurate with table"
+  endif
+  if(size(eas,2).ne.nulibtable_number_groups) then
+     stop "nulibtable_epannihil_range_species_range_energy: supplied array dimensions (2) is not commensurate with table"
+  endif  
+  if(size(eas,3).ne.nulibtable_number_groups) then
+     stop "nulibtable_enannihil_range_species_range_energy: supplied array dimensions (3) is not commensurate with table"
+  endif
+  if(size(eas,4).ne.4) then
+     stop "nulibtable_epannihil_range_species_range_energy: supplied array dimensions (4) is not commensurate with table"
+  endif
+
+  xltemp = log10(xtemp)
+  xleta = log10(xeta)
+
+  if (xltemp.lt.nulibtable_logItemp_min) stop "temp below nulib epannihil table minimum temp"
+  if (xltemp.gt.nulibtable_logItemp_max) stop "temp above nulib epannihil table maximum temp"
+  if (xleta.lt.nulibtable_logIeta_min) stop "eta below nulib epannihil table minimum eta"
+  if (xleta.gt.nulibtable_logIeta_max) stop "eta above nulib epannihil table maximum eta"
+
+  if (allocated(nulibtable_epannihiltable_Phi0).eqv..false.) stop "You need to read in ep-annihilation data"
+
+  !note, no symmetries are used here, for inelastic electron
+  !scattering these symmetries were crucial so that may be needed here
+  !too, there is really only need for 1/4 of the coefficients, there
+  !is a detailed balence symmetry and a in/out symmetry, for \nu
+  !\nubar annihilation R(\nu,\nu^prime)_\mathrm{species} =
+  !R(\nu^\prime,\nu)_\mathrm{antispecies} (note the antispecies relation)
+  
+  xeas = 0.0d0
+  call intp2d_many_mod(xltemp,xleta,xeas,nulibtable_epannihiltable_Phi0,nulibtable_nItemp, &
+       nulibtable_nIeta,eas_n1*eas_n2*eas_n2,nulibtable_logItemp, &
+       nulibtable_logIeta)
+
+  index = 0
+  do ins=1,nulibtable_number_species
+     do ing_this=1,nulibtable_number_groups
+        do ing_that=1,nulibtable_number_groups
+           index = index + 1
+           eas(ins,ing_this,ing_that,2) = 10.0d0**xeas(index) !annihilation
+
+           !use this if you want to impose detailed balance between
+           !production and annihilation after interpolation, could use
+           !to cut down interpolation by half... - confirm the expression
+           !also, this assumes nulibtable_energies are in MeV
+           eas(ins,ing_this,ing_that,1) = eas(ins,ing_this,ing_that,2)* &
+                exp(-(nulibtable_energies(ing_this)+nulibtable_energies(ing_that))/xtemp) !production
+
+        enddo
+     enddo
+  enddo
+
+  xeas = 0.0d0
+  call intp2d_many_mod(xltemp,xleta,xeas,nulibtable_epannihiltable_Phi1,nulibtable_nItemp, &
+       nulibtable_nIeta,eas_n1*eas_n2*eas_n2,nulibtable_logItemp, &
+       nulibtable_logIeta)
+
+  index = 0
+  do ins=1,nulibtable_number_species
+     do ing_this=1,nulibtable_number_groups
+        do ing_that=1,nulibtable_number_groups
+           !this way because we interpolate \phi1/\phi0
+           index = index + 1
+           eas(ins,ing_this,ing_that,4) = xeas(index)*eas(ins,ing_this,ing_that,2) !annihilation
+
+           !use this if you want to impose detailed balance between
+           !production and annihilation after interpolation, could use
+           !to cut down interpolation by half... - confirm the expression
+           !also, this assumes nulibtable_energies are in MeV
+           eas(ins,ing_this,ing_that,3) = eas(ins,ing_this,ing_that,4)* &
+                exp(-(nulibtable_energies(ing_this)+nulibtable_energies(ing_that))/xtemp) !production
+        enddo
+     enddo
+  enddo  
+
+end subroutine nulibtable_epannihil_range_species_range_energy
+
+subroutine nulibtable_epannihil_single_species_range_energy(xtemp,xeta, &
+     lns,eas,eas_n1,eas_n2,eas_n3)
+
+  use nulibtable
+  implicit none
+
+  real*8, intent(in) :: xtemp, xeta !inputs
+  real*8 :: xltemp, xleta !log versions
+  integer, intent(in) :: lns,eas_n1,eas_n2,eas_n3
+  real*8, intent(out) :: eas(eas_n1,eas_n2,eas_n3)
+  integer :: ing_this,ing_that
+  real*8 :: xeas(eas_n1*eas_n2)
+  integer :: index
+  integer :: startindex,endindex
+
+  if(size(eas,1).ne.nulibtable_number_groups) then
+     stop "nulibtable_epannihil_single_species_range_energy: supplied array dimensions (1) is not commensurate with table"
+  endif  
+  if(size(eas,2).ne.nulibtable_number_groups) then
+     stop "nulibtable_epannihil_single_species_range_energy: supplied array dimensions (2) is not commensurate with table"
+  endif
+  if(size(eas,3).ne.4) then
+     stop "nulibtable_epannihil_single_species_range_energy: supplied array dimensions (3) is not commensurate with table"
+  endif
+
+  xltemp = log10(xtemp)
+  xleta = log10(xeta)
+
+  if (xltemp.lt.nulibtable_logItemp_min) stop "temp below nulib epannihil table minimum temp"
+  if (xltemp.gt.nulibtable_logItemp_max) stop "temp above nulib epannihil table maximum temp"
+  if (xleta.lt.nulibtable_logIeta_min) stop "eta below nulib epannihil table minimum eta"
+  if (xleta.gt.nulibtable_logIeta_max) stop "eta above nulib epannihil table maximum eta"
+
+  if (allocated(nulibtable_epannihiltable_Phi0).eqv..false.) stop "You need to read in ep-annihilation data"
+
+  startindex = (lns-1)*nulibtable_number_groups*nulibtable_number_groups+1
+  endindex = startindex + nulibtable_number_groups*nulibtable_number_groups - 1
+
+  !note, no symmetries are used here, for inelastic electron
+  !scattering these symmetries were crucial so that may be needed here
+  !too, there is really only need for 1/4 of the coefficients, there
+  !is a detailed balence symmetry and a in/out symmetry, for \nu
+  !\nubar annihilation R(\nu,\nu^prime)_\mathrm{species} =
+  !R(\nu^\prime,\nu)_\mathrm{antispecies}
+
+  xeas = 0.0d0
+  call intp2d_many_mod(xltemp,xleta,xeas,nulibtable_epannihiltable_Phi0(:,:,startindex:endindex), &
+       nulibtable_nItemp,nulibtable_nIeta,eas_n1*eas_n2,nulibtable_logItemp,nulibtable_logIeta)
+
+  index = 0
+  do ing_this=1,nulibtable_number_groups
+     do ing_that=1,nulibtable_number_groups
+        index = index + 1
+        eas(ing_this,ing_that,2) = 10.0d0**xeas(index) !annihilation
+
+        !use this if you want to impose detailed balance between
+        !production and annihilation after interpolation, could use to
+        !cut down interpolation by half... - confirm the expression
+        !also, this assumes nulibtable_energies are in MeV
+        eas(ing_this,ing_that,1) = eas(ing_this,ing_that,2)* &
+             exp(-(nulibtable_energies(ing_this)+nulibtable_energies(ing_that))/xtemp) !production
+
+     enddo
+  enddo
+
+  xeas = 0.0d0
+  call intp2d_many_mod(xltemp,xleta,xeas,nulibtable_epannihiltable_Phi1(:,:,startindex:endindex), &
+       nulibtable_nItemp,nulibtable_nIeta,eas_n1*eas_n2,nulibtable_logItemp,nulibtable_logIeta)
+
+  index = 0
+  do ing_this=1,nulibtable_number_groups
+     do ing_that=1,nulibtable_number_groups
+        !this way because we interpolate \phi1/\phi0
+        index = index + 1
+        eas(ing_this,ing_that,4) = xeas(index)*eas(ing_this,ing_that,2)
+
+        !use this if you want to impose detailed balance between
+        !production and annihilation after interpolation, could use to
+        !cut down interpolation by half... - confirm the expression
+        !also, this assumes nulibtable_energies are in MeV
+        eas(ing_this,ing_that,3) = eas(ing_this,ing_that,4)* &
+             exp(-(nulibtable_energies(ing_this)+nulibtable_energies(ing_that))/xtemp) !production
+
+     enddo
+  enddo
+  
+end subroutine nulibtable_epannihil_single_species_range_energy
+

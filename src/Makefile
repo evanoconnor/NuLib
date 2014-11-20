@@ -43,7 +43,7 @@ EXTRAOBJECTS = nuc_eos/nuc_eos.a $(HDF5LIBS)
 
 all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
 
-../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) 
+../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) nulibtable_driver.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINC) -o $@ nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS)
 
 ../point_example:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) point_example.F90
