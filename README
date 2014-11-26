@@ -232,6 +232,13 @@ table.  The large number of variables can lead to long times spent in
 interpolating. I've tried to optimize this but more could be done I'm
 sure.
 
+nulibtable_driver also reads in inelastic kernels and ep-annihilation
+kernels.  two types of symmetries are applied to ensure detailed
+balence for the inelastic electron scattering.  For the
+ep-annihilation, only one symmetry is used, the other, crosses
+neutrino species and it is left to the user if they would like to take
+advantage of it.
+
 Installation.
 -------------
 
