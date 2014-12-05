@@ -84,8 +84,7 @@ program make_table_example
   call initialize_nulib(mytable_neutrino_scheme,mytable_number_species,mytable_number_groups)
 
   !read in EOS table & set reference mass
-  call readtable(eos_filename)
-  m_ref = m_n !m_n for LS
+  call read_eos_table(eos_filename)
  
   adhoc_nux_factor = 0.0d0 !increase for adhoc nux heating (also set
                            !add_nux_absorption_on_n_and_p to true)
@@ -164,8 +163,7 @@ program make_table_example
   enddo
 
   !$OMP PARALLEL DO PRIVATE(itemp,iye,local_emissivity,local_absopacity,local_scatopacity, &
-  !$OMP ns,ng,eos_variables,keytemp,keyerr,matter_prs,matter_ent,matter_cs2,matter_dedt, &
-  !$OMP matter_dpderho,matter_dpdrhoe)
+  !$OMP ns,ng,eos_variables)
   !loop over rho,temp,ye of table, do each point
   do irho=1,final_table_size_rho
      !must do declarations here for openmp
@@ -178,32 +176,13 @@ program make_table_example
         write(*,*) "Temp:", 100.0*dble(itemp-1)/dble(final_table_size_temp),"%"
         do iye=1,final_table_size_ye
 
-           eos_variables = 0.0d0
+           eos_variables(:) = 0.0d0
            eos_variables(rhoindex) = table_rho(irho)
            eos_variables(tempindex) = table_temp(itemp)
            eos_variables(yeindex) = table_ye(iye)
 
            !! EOS stuff
-           keytemp = 1
-           keyerr = 0
-           call nuc_eos_full(eos_variables(rhoindex),eos_variables(tempindex), &
-                eos_variables(yeindex),eos_variables(energyindex),matter_prs, &
-                eos_variables(entropyindex),matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe, &
-                eos_variables(xaindex),eos_variables(xhindex),eos_variables(xnindex), &
-                eos_variables(xpindex),eos_variables(abarindex),eos_variables(zbarindex), &
-                eos_variables(mueindex),eos_variables(munindex),eos_variables(mupindex), &
-                eos_variables(muhatindex),keytemp,keyerr,precision)
-           if (keyerr.ne.0) then
-              write(*,*) "rho: ", eos_variables(rhoindex)
-              write(*,*) "temperature: ", eos_variables(tempindex)
-              write(*,*) "ye: ", eos_variables(yeindex)
-              write(*,*) "eos error", keyerr
-              stop "set_eos_variables: us eos error"
-           endif
-           if(eos_variables(xhindex).lt.1.0d-15) then
-              eos_variables(xhindex) = 0.0d0
-           endif
-           !! Done EOS stuff
+           call set_eos_variables(eos_variables)
 
            !calculate the rho,temp,ye
            call single_point_return_all(eos_variables, &

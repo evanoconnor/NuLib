@@ -38,9 +38,6 @@ program point_example
   real*8, allocatable,dimension(:,:) :: local_Phi0, local_Phi1
   real*8, allocatable,dimension(:,:) :: blackbody_spectra
   real*8, allocatable,dimension(:) :: eos_variables
-  real*8 :: matter_prs,matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe
-  integer :: keytemp,keyerr
-  real*8 :: precision = 1.0d-10
   real*8 :: xrho, xtemp, xye
   integer i,j
   real*8 dxfac,mindx
@@ -56,8 +53,7 @@ program point_example
   call initialize_nulib(mypoint_neutrino_scheme,mypoint_number_species,mypoint_number_groups)
 
   !read in EOS table & set reference mass
-  call readtable(eos_filename)
-  m_ref = m_n !for LS220
+  call read_eos_table(eos_filename)
 
   !example point
   xrho = 1.0d12 !g/cm^3
@@ -88,33 +84,19 @@ program point_example
   bin_top(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups)
 
   allocate(eos_variables(total_eos_variables))
-  eos_variables = 0.0d0
+  eos_variables(:) = 0.0d0
   eos_variables(rhoindex) = xrho
   eos_variables(tempindex) = xtemp
   eos_variables(yeindex) = xye
 
   !! EOS stuff
-  keytemp = 1
-  keyerr = 0
-  call nuc_eos_full(eos_variables(rhoindex),eos_variables(tempindex), &
-       eos_variables(yeindex),eos_variables(energyindex),matter_prs, &
-       matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe, &
-       eos_variables(xaindex),eos_variables(xhindex),eos_variables(xnindex), &
-       eos_variables(xpindex),eos_variables(abarindex),eos_variables(zbarindex), &
-       eos_variables(mueindex),eos_variables(munindex),eos_variables(mupindex), &
-       eos_variables(muhatindex),keytemp,keyerr,precision)
-  if (keyerr.ne.0) then
-     write(*,*) "rho: ", eos_variables(rhoindex)
-     write(*,*) "temperature: ", eos_variables(tempindex)
-     write(*,*) "ye: ", eos_variables(yeindex)
-     write(*,*) "eos error", keyerr
-     stop "set_eos_variables: us eos error"
-  endif
-  if(eos_variables(xhindex).lt.1.0d-15) then
-     eos_variables(xhindex) = 0.0d0
-  endif
-
-  !! Done EOS stuff
+  call set_eos_variables(eos_variables)
+  write(*,*) "Rho: ",eos_variables(rhoindex)," g/ccm"
+  write(*,*) "T: ",eos_variables(tempindex)," MeV"
+  write(*,*) "Ye: ",eos_variables(yeindex)
+  write(*,*) "X_n: ",eos_variables(xnindex)
+  write(*,*) "X_p: ",eos_variables(xpindex)
+  write(*,*) "X_alpha: ",eos_variables(xaindex)
   
   !calculate the full emissivities and opacities, this averages the
   !values based on the mypoint_neutrino_scheme this assumes detailed
