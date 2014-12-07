@@ -88,17 +88,16 @@ subroutine set_eos_variables(eos_variables)
      write(*,*) "ERROR: ye values don't match"
      stop
   end if
-  
 
-  ! set the input vector. pipeline is only 1 element long
+  ! call the eos
+  !$OMP CRITICAL
   temp_row(1) = eos_variables(tempindex)/kelvin_to_mev
   den_row(1)  = eos_variables(rhoindex)
   abar_row(1) = HELM_abar
   zbar_row(1) = HELM_zbar
   jlo_eos = 1 ; jhi_eos = 1
-
-  ! call the eos
   call helmeos
+  !$OMP END CRITICAL
 
   !set eos_variables
   eos_variables(energyindex) = etot_row(1)
