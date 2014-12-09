@@ -14,7 +14,7 @@
    real*8, allocatable,dimension(:),save :: number_densities
    real*8, allocatable,dimension(:),save :: mass_fractions
 
-   integer, allocatable,dimension(:,:),save :: nucleus_index ! output array index for a given (A,Z)
+   integer, allocatable,dimension(:,:),save :: nucleus_index ! output array index for a given (A,Z) in tables, not hempel species or approximation
 
    ! various counters
    integer nuc,nrho,nt9,nnuc,nrate,nspecies
