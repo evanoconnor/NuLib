@@ -13,7 +13,8 @@ SOURCES=nulib.F90 \
 	weak_magnetism_correction.F90 \
 	inelastic_electron_scattering.F90 \
 	nuclei_distribution_helpers.F90 \
-	input_parser.F90
+	input_parser.F90 \
+	eos_interface.F90
 
 NT_SOURCES=nulibtable.F90 \
 	   nulibtable_reader.F90 \
@@ -32,15 +33,27 @@ OBJECTS=$(SOURCES:.F90=.o )
 NT_OBJECTS=$(NT_SOURCES:.F90=.o )
 
 #take care of EOS dependences etc
-DEFS += -DHAVE_NUC_EOS
-EXTRAINCS = $(HDF5INCS) -I./nuc_eos
-EXTRADEPS += nuc_eos/nuc_eos.a
-EXTRAOBJECTS = nuc_eos/nuc_eos.a $(HDF5LIBS)
+f90_SOURCES = other_eos/helmholtz/helmholtz.f90
+f90_OBJECTS=$(f90_SOURCES:.f90=.o )
+EXTRAINCS = -I./nuc_eos
+EXTRADEPS = nuc_eos/nuc_eos.a
+EXTRAOBJECTS = nuc_eos/nuc_eos.a
+ifeq ($(HELMHOLTZ_EOS),1)
+	DEFS += -DHELMHOLTZ_EOS
+else
+	DEFS += -DHAVE_NUC_EOS
+endif
+EXTRADEPS += requested_interactions.inc constants.inc
+EXTRAINCS += $(HDF5INCS)
+EXTRAOBJECTS += $(HDF5LIBS)
 
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_example test
 
-../nulibtable_driver:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ nulibtable_driver.F90 $(OBJECTS) $(F_OBJECTS) $(NT_OBJECTS) $(EXTRAOBJECTS)
+
+
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
+
+../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) 
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINC) -o $@ nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS)
 
 ../point_example:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) point_example.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ point_example.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
@@ -61,6 +74,9 @@ $(OBJECTS): %.o: %.F90 $(EXTRADEPS)
 $(F_OBJECTS): %.o: %.f 
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -c $< -o $@	
 
+$(f90_OBJECTS): %.o: %.f90 
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -c $< -o $@	
+
 $(NT_OBJECTS): %.o: %.F90 $(EXTRADEPS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -c $< -o $@
 
@@ -78,3 +94,4 @@ clean:
 	rm -rf *.a
 	$(MAKE) -C nuc_eos clean	
 	rm -rf ./extra_code_and_tables/sfho_frdm_comp/sfho_frdm_composition_module.o
+	rm -rf ./other_eos/helmholtz/*.o

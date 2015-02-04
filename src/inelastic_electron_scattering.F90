@@ -47,7 +47,7 @@ function NES_Phi0_ThompsonBruenn(nu_energy_in,nu_energy_out,matter_eta,matter_te
   !constants that do not have to do with the integral over electron energy
   !need to restore temperatures, two factors, back to cgs units then
   !needs multiplying these appropriate constants
-  !Gfermi**2*hbarc_mevcm**2*clight/pi, then units are cm^3/s
+  !Gfermi**2*hbarc_mevcm**2*clight/pi, then units are cm^3/s (Bruenn C50)
   Phi0 = matter_temperature**2*Gfermi**2*hbarc_mevcm**2*clight*Phi0/ &
        (nu_energy_in_x**2*nu_energy_out_x**2*pi) 
 

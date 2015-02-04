@@ -1,8 +1,13 @@
 !-*-f90-*-
-program point_example
+program point_example_with_HelmholtzEOS
 
   use nulib
+#if HELMHOLTZ_EOS
+  include 'other_eos/helmholtz/implno.dek'
+  include 'other_eos/helmholtz/vector_eos.dek'
+#else
   implicit none
+#endif
 
   !many people use different number of species, this is to denote how they are devided up.
   ! mytable_neutrino_scheme = 1 (three output species)
@@ -28,7 +33,8 @@ program point_example
   !number of energy groups
   integer :: mypoint_number_groups = 24
 
-  character*200 :: parameters = "/projects/ceclub/gr1dnulib/GitHub/NuLib/parameters"
+  !EOS table
+  character*200 :: eos_filename = "./LS220.h5"
 
   !local variables
   real*8, allocatable,dimension(:,:) :: local_emissivity
@@ -44,33 +50,39 @@ program point_example
   integer i,j
   real*8 dxfac,mindx
 
+  !for the helmholtz EOS, only three species
+  integer, parameter :: HELM_ionmax = 3
+  real*8 HELM_xmass(HELM_ionmax),HELM_aion(HELM_ionmax),HELM_zion(HELM_ionmax),HELM_abar,HELM_zbar
+
   !allocate the arrays for the point values
   allocate(local_emissivity(mypoint_number_output_species,mypoint_number_groups))
   allocate(local_absopacity(mypoint_number_output_species,mypoint_number_groups))
   allocate(local_scatopacity(mypoint_number_output_species,mypoint_number_groups))
   allocate(blackbody_spectra(mypoint_number_output_species,mypoint_number_groups))
 
-  call input_parser(parameters)
-
   !this sets up many cooefficients and creates the energy grid (one
   !zone + log spacing) see nulib.F90:initialize_nulib
   call initialize_nulib(mypoint_neutrino_scheme,mypoint_number_species,mypoint_number_groups)
-  call set_up_Hempel ! set's up EOS for nuclear abundances
+
   !read in EOS table & set reference mass
-  call read_eos_table(eos_filename)
-  m_ref = m_amu !for SFHo_EOS (Hempel)
-  ! m_ref = m_n !for LS220
+#if HELMHOLTZ_EOS
+  call read_helm_table
+  m_ref = m_amu
+#else
+  call readtable(eos_filename)
+  m_ref = m_n !for LS220
+#endif
 
   !example point
-  xrho = 1.0d12 !g/cm^3
-  xtemp = 1.5d0 !MeV
-  xye = 0.35d0 !dimensionless
+  xrho = 1.0d11 !g/cm^3
+  xtemp = 10.0d0 !MeV
+  xye = 0.5d0 !dimensionless
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
   mindx = 1.0d0
   bin_bottom(1) = 0.0d0 !MeV
-  bin_bottom(2) = 1.0d0 !MeV
+  bin_bottom(2) = 4.0d0 !MeV
   bin_bottom(3) = bin_bottom(2)+mindx
   bin_bottom(number_groups) = 250.0d0
   
@@ -90,19 +102,97 @@ program point_example
   bin_top(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups)
 
   allocate(eos_variables(total_eos_variables))
-  eos_variables(:) = 0.0d0
+  eos_variables = 0.0d0
   eos_variables(rhoindex) = xrho
   eos_variables(tempindex) = xtemp
   eos_variables(yeindex) = xye
 
   !! EOS stuff
-  call set_eos_variables(eos_variables)
-  write(*,*) "Rho: ",eos_variables(rhoindex)," g/ccm"
-  write(*,*) "T: ",eos_variables(tempindex)," MeV"
-  write(*,*) "Ye: ",eos_variables(yeindex)
-  write(*,*) "X_n: ",eos_variables(xnindex)
-  write(*,*) "X_p: ",eos_variables(xpindex)
-  write(*,*) "X_alpha: ",eos_variables(xaindex)
+  
+#if HELMHOLTZ_EOS
+  ! set the mass fractions, z's and a's of the composition, there is a
+  ! lot of manual stuff here depending on your application, the
+  ! Helmholtz EOS is very general when it comes to compositions
+
+  ! neutron, protons, alphas - for Helmholtz EOS
+  HELM_xmass(1) = 0.50d0 ; HELM_aion(1)  = 1.0d0  ; HELM_zion(1)  = 0.0d0
+  HELM_xmass(2) = 0.50d0 ; HELM_aion(2)  = 1.0d0  ; HELM_zion(2)  = 1.0d0
+  HELM_xmass(3) = 0.0d0 ; HELM_aion(3)  = 4.0d0 ; HELM_zion(3)  = 2.0d0
+
+  ! for NuLib - adjust!!
+  eos_variables(xaindex) = HELM_xmass(3)
+  eos_variables(xnindex) = HELM_xmass(1)
+  eos_variables(xpindex) = HELM_xmass(2)
+  eos_variables(xhindex) = 0.0d0 !note this
+
+  ! average atomic weight and charge, used in Helmholtz EOS, not the same abar and zbar of NuLib 
+  HELM_abar   = 1.0d0/sum(HELM_xmass(1:HELM_ionmax)/HELM_aion(1:HELM_ionmax))
+  HELM_zbar   = HELM_abar*sum(HELM_xmass(1:HELM_ionmax)*HELM_zion(1:HELM_ionmax)/HELM_aion(1:HELM_ionmax))
+
+  !NuLib does not include neutrons, proton, and alpha in abar and
+  !zbar, unlike the Helmholtz EOS
+  !setting these to 1 since eos_variables(xhindex) = 0.0d0, if you
+  !have heavy nuclei other than neutrons,protons, and alphas, you mus
+  !set these appropiately
+  eos_variables(abarindex) = 1.0d0
+  eos_variables(zbarindex) = 1.0d0
+
+  !this overrides the ye specified above - here zbar and abar are an
+  !average for ALL species, so defines ye, not true for
+  !stellarcollapse.org EOS
+  eos_variables(yeindex) = HELM_zbar/HELM_abar
+
+  ! set the input vector. pipeline is only 1 element long
+  temp_row(1) = eos_variables(tempindex)/kelvin_to_mev
+  den_row(1)  = eos_variables(rhoindex)
+  abar_row(1) = HELM_abar
+  zbar_row(1) = HELM_zbar
+  jlo_eos = 1 ; jhi_eos = 1
+
+  ! call the eos
+  call helmeos
+
+  !set eos_variables
+  eos_variables(energyindex) = etot_row(1)
+  eos_variables(mueindex) = etaele_row(1)*eos_variables(tempindex) + 0.511d0 !add in electron rest mass
+
+  !analytic mu's from EOSmaker on stellarcollapse.org, has correction
+  !to mu_p for coulomb, following our convention, we add in the rest
+  !mass difference of the neutron and proton into the chemical
+  !potentials and into muhat.
+  call mu_np(eos_variables(rhoindex),eos_variables(tempindex)/kelvin_to_mev, &
+       eos_variables(xnindex),eos_variables(xpindex),eos_variables(yeindex), &
+       eos_variables(munindex),eos_variables(mupindex))
+
+  eos_variables(muhatindex) = eos_variables(munindex) - eos_variables(mupindex)
+
+#else
+  keytemp = 1
+  keyerr = 0
+  call nuc_eos_full(eos_variables(rhoindex),eos_variables(tempindex), &
+       eos_variables(yeindex),eos_variables(energyindex),matter_prs, &
+       matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe, &
+       eos_variables(xaindex),eos_variables(xhindex),eos_variables(xnindex), &
+       eos_variables(xpindex),eos_variables(abarindex),eos_variables(zbarindex), &
+       eos_variables(mueindex),eos_variables(munindex),eos_variables(mupindex), &
+       eos_variables(muhatindex),keytemp,keyerr,precision)
+  if (keyerr.ne.0) then
+     write(*,*) "rho: ", eos_variables(rhoindex)
+     write(*,*) "temperature: ", eos_variables(tempindex)
+     write(*,*) "ye: ", eos_variables(yeindex)
+     write(*,*) "eos error", keyerr
+     stop "set_eos_variables: us eos error"
+  endif
+  if(eos_variables(xhindex).lt.1.0d-15) then
+     eos_variables(xhindex) = 0.0d0
+  endif
+#endif
+
+  write(*,*) "Testing: ",eos_variables(xnindex),eos_variables(xpindex), &
+       eos_variables(xaindex),eos_variables(munindex), &
+       eos_variables(mupindex),eos_variables(mueindex),eos_variables(mueindex)-eos_variables(muhatindex)
+  stop
+  !! Done EOS stuff
   
   !calculate the full emissivities and opacities, this averages the
   !values based on the mypoint_neutrino_scheme this assumes detailed
@@ -190,5 +280,5 @@ program point_example
   endif
 
 
-end program point_example
+end program point_example_with_HelmholtzEOS
   

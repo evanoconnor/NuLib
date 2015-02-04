@@ -75,14 +75,25 @@ NuLib v1.0 Neutrino Interactions.
 Emissivities: 
 -------------
 
-1. electron-positron annhilation to \nu - \bar{\nu}, this
-follows Bruenn 1985, only the isotropic case is currently coded but
-the extension to higher legendre mode is trivial as the structure of
-the calculation is laid out.
+1. electron-positron annhilation to \nu - \bar{\nu}. This is currently
+done two ways.  Both follow Bruenn 1985 and while the first one uses
+Burrows, Reddy, Thompson(2006) as well. The first way is a bit of a
+kludge.  It calculates the emission assuming no final state blocking
+and gets an opacity via Kirchhoff's law.  It is not an appropiate use
+of the law, but it generally gives single neutrino interaction rates
+that make sense for he-lepon neutrinos.  It doesn't work so well for
+electron-type neutrinos, but these rates are not expected to be
+dominant for electron-type neutrinos.  The second way is more involved
+for the user and the correct way.  NuLib can calculate both the
+production (via e+e- annihilation) and annihilation (via \nu-\bar{\nu}
+annihilation) kernels (i.e. as a function of the energy of both
+neutrinos).  The user must then make use of these appropiately.  The
+default option is 1, for heavy-lepton neutrinos only.
 
 2. Nucleon-Nucleon Bremsstrahlung, this is an approximation used in
 Burrows Reddy, and Thompson (2006) [BRT06].  A full calculation of
-this reaction would be great!
+this reaction would be great! The default is to use this only for
+heavy-lepton neutrinos.
 
 Scattering Opacities:
 ---------------------
@@ -208,6 +219,13 @@ are several routines available in nulibtable.F90 for accessing the
 table.  The large number of variables can lead to long times spent in
 interpolating. I've tried to optimize this but more could be done I'm
 sure.
+
+nulibtable_driver also reads in inelastic kernels and ep-annihilation
+kernels.  two types of symmetries are applied to ensure detailed
+balence for the inelastic electron scattering.  For the
+ep-annihilation, only one symmetry is used, the other, crosses
+neutrino species and it is left to the user if they would like to take
+advantage of it.
 
 Installation.
 -------------

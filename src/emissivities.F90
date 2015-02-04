@@ -1,5 +1,5 @@
 !-*-f90-*-
-function single_neutrino_emissivity_from_epannhil_given_energyrange( &
+function single_neutrino_emissivity_from_epannihil_given_energyrange( &
      neutrino_species,range_bottom,range_top,eos_variables) result(emissivity)
   
   !taken from BRT06, Bruenn1985 and Pons 1998
@@ -16,7 +16,7 @@ function single_neutrino_emissivity_from_epannhil_given_energyrange( &
   real*8 :: emissivity !total emissivity
 
   !function declarations
-  real*8 :: epannhil_dQdenu_BRT06
+  real*8 :: epannihil_dQdenu_BRT06
   real*8 :: fermidirac_dimensionless
 
   !local, GPQ variables
@@ -36,16 +36,16 @@ function single_neutrino_emissivity_from_epannhil_given_energyrange( &
   do i=1,4
      nu_energy_x = (range_top_x-range_bottom_x)/2.0d0*GPQ_n4_roots(i)+(range_top_x+range_bottom_x)/2.0d0
      emissivity = emissivity + &
-          epannhil_dQdenu_BRT06(nu_energy_x,eta,neutrino_species)* &
+          epannihil_dQdenu_BRT06(nu_energy_x,eta,neutrino_species)* &
           GPQ_n4_weights(i)*nu_energy_x**3
   end do
 
   emissivity = preamble*emissivity*(range_top_x-range_bottom_x)/ &
        (2.0d0*(range_top-range_bottom)*4.0d0*pi) !ergs/cm^3/s/MeV/srad
 
-end function single_neutrino_emissivity_from_epannhil_given_energyrange
+end function single_neutrino_emissivity_from_epannihil_given_energyrange
 
-function single_neutrino_emissivity_from_epannhil_given_energypoint( &
+function single_neutrino_emissivity_from_epannihil_given_energypoint( &
      neutrino_species,nu_energy,eos_variables) result(emissivity)
   
   !taken from BRT06, Bruenn1985 and Pons 1998
@@ -61,7 +61,7 @@ function single_neutrino_emissivity_from_epannhil_given_energypoint( &
   real*8 :: emissivity !total emissivity
 
   !function declarations
-  real*8 :: epannhil_dQdenu_BRT06
+  real*8 :: epannihil_dQdenu_BRT06
   real*8 :: fermidirac_dimensionless
 
   !local, GPQ variables
@@ -75,11 +75,11 @@ function single_neutrino_emissivity_from_epannhil_given_energypoint( &
   eta = eos_variables(mueindex)/eos_variables(tempindex)
   nu_energy_x = nu_energy/eos_variables(tempindex)
 
-  emissivity = epannhil_dQdenu_BRT06(nu_energy_x,eta,neutrino_species)*nu_energy_x**3
+  emissivity = epannihil_dQdenu_BRT06(nu_energy_x,eta,neutrino_species)*nu_energy_x**3
 
   emissivity = preamble*emissivity/(eos_variables(tempindex)*4.0d0*pi) !ergs/cm^3/s/MeV/srad, extra 2 is because emissivity is per pair
 
-end function single_neutrino_emissivity_from_epannhil_given_energypoint
+end function single_neutrino_emissivity_from_epannihil_given_energypoint
 
 !we do the simpliest thing possible here (BRT06+approximations)
 !should improve to include arbitrary degeneracy and better integration (i.e. no BRT06 fits)
@@ -182,9 +182,9 @@ subroutine total_emissivities(neutrino_species,energy_point,energy_bottom,energy
   real*8, intent(out) :: total_emissivity !ergs/cm^-3/s/MeV/srad
 
   !function declarations
-  real*8 :: single_neutrino_emissivity_from_epannhil_given_energyrange
+  real*8 :: single_neutrino_emissivity_from_epannihil_given_energyrange
   real*8 :: single_neutrino_emissivity_from_NNBrem_given_energyrange
-  real*8 :: single_neutrino_emissivity_from_epannhil_given_energypoint
+  real*8 :: single_neutrino_emissivity_from_epannihil_given_energypoint
   real*8 :: single_neutrino_emissivity_from_NNBrem_given_energypoint
 
   total_emissivity = 0.0d0
@@ -194,11 +194,11 @@ subroutine total_emissivities(neutrino_species,energy_point,energy_bottom,energy
      if (add_nue_emission_epannihil) then
         if (do_integrated_BB_and_emissivity) then
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
-                single_neutrino_emissivity_from_epannhil_given_energyrange( &
+                single_neutrino_emissivity_from_epannihil_given_energyrange( &
                 neutrino_species,energy_bottom,energy_top,eos_variables)
         else
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
-                single_neutrino_emissivity_from_epannhil_given_energypoint( &
+                single_neutrino_emissivity_from_epannihil_given_energypoint( &
                 neutrino_species,energy_point,eos_variables)
         endif
      endif
@@ -222,11 +222,11 @@ subroutine total_emissivities(neutrino_species,energy_point,energy_bottom,energy
      if (add_anue_emission_epannihil) then
         if (do_integrated_BB_and_emissivity) then
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
-                single_neutrino_emissivity_from_epannhil_given_energyrange( &
+                single_neutrino_emissivity_from_epannihil_given_energyrange( &
                 neutrino_species,energy_bottom,energy_top,eos_variables)
         else
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
-                single_neutrino_emissivity_from_epannhil_given_energypoint( &
+                single_neutrino_emissivity_from_epannihil_given_energypoint( &
                 neutrino_species,energy_point,eos_variables)
         endif
      endif
@@ -250,11 +250,11 @@ subroutine total_emissivities(neutrino_species,energy_point,energy_bottom,energy
      if (add_numu_emission_epannihil) then
         if (do_integrated_BB_and_emissivity) then
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
-                single_neutrino_emissivity_from_epannhil_given_energyrange( &
+                single_neutrino_emissivity_from_epannihil_given_energyrange( &
                 neutrino_species,energy_bottom,energy_top,eos_variables)
         else
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
-                single_neutrino_emissivity_from_epannhil_given_energypoint( &
+                single_neutrino_emissivity_from_epannihil_given_energypoint( &
                 neutrino_species,energy_point,eos_variables)
         endif
      endif
@@ -278,11 +278,11 @@ subroutine total_emissivities(neutrino_species,energy_point,energy_bottom,energy
      if (add_anumu_emission_epannihil) then
         if (do_integrated_BB_and_emissivity) then
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
-                single_neutrino_emissivity_from_epannhil_given_energyrange( &
+                single_neutrino_emissivity_from_epannihil_given_energyrange( &
                 neutrino_species,energy_bottom,energy_top,eos_variables)
         else
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
-                single_neutrino_emissivity_from_epannhil_given_energypoint( &
+                single_neutrino_emissivity_from_epannihil_given_energypoint( &
                 neutrino_species,energy_point,eos_variables)
         endif
      endif
@@ -306,11 +306,11 @@ subroutine total_emissivities(neutrino_species,energy_point,energy_bottom,energy
      if (add_nutau_emission_epannihil) then
         if (do_integrated_BB_and_emissivity) then
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
-                single_neutrino_emissivity_from_epannhil_given_energyrange( &
+                single_neutrino_emissivity_from_epannihil_given_energyrange( &
                 neutrino_species,energy_bottom,energy_top,eos_variables)
         else
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
-                single_neutrino_emissivity_from_epannhil_given_energypoint( &
+                single_neutrino_emissivity_from_epannihil_given_energypoint( &
                 neutrino_species,energy_point,eos_variables)
         endif
      endif
@@ -334,11 +334,11 @@ subroutine total_emissivities(neutrino_species,energy_point,energy_bottom,energy
      if (add_anutau_emission_epannihil) then
         if (do_integrated_BB_and_emissivity) then
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
-                single_neutrino_emissivity_from_epannhil_given_energyrange( &
+                single_neutrino_emissivity_from_epannihil_given_energyrange( &
                 neutrino_species,energy_bottom,energy_top,eos_variables)
         else
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
-                single_neutrino_emissivity_from_epannhil_given_energypoint( &
+                single_neutrino_emissivity_from_epannihil_given_energypoint( &
                 neutrino_species,energy_point,eos_variables)
         endif
      endif

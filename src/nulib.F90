@@ -142,6 +142,24 @@ module nulib
       if (add_anutau_Iscattering_electrons.and.add_anutau_scattering_electrons) then
          stop "initialize_nulib: you can't both inelastically and elastically scatter off of electrons: anutau"
       endif
+      if (add_nue_kernel_epannihil.and.add_nue_emission_epannihil) then
+         stop "initialize_nulib: you can't both thermally emit nu with/without a kernel: nue"
+      endif
+      if (add_anue_kernel_epannihil.and.add_anue_emission_epannihil) then
+         stop "initialize_nulib: you can't both thermally emit nu with/without a kernel: anue"
+      endif
+      if (add_numu_kernel_epannihil.and.add_numu_emission_epannihil) then
+         stop "initialize_nulib: you can't both thermally emit nu with/without a kernel: numu"
+      endif
+      if (add_anumu_kernel_epannihil.and.add_anumu_emission_epannihil) then
+         stop "initialize_nulib: you can't both thermally emit nu with/without a kernel: anumu"
+      endif
+      if (add_nutau_kernel_epannihil.and.add_nutau_emission_epannihil) then
+         stop "initialize_nulib: you can't both thermally emit nu with/without a kernel: nutau"
+      endif
+      if (add_anutau_kernel_epannihil.and.add_anutau_emission_epannihil) then
+         stop "initialize_nulib: you can't both thermally emit nu with/without a kernel: anutau"
+      endif
 
       if (neutrino_scheme.eq.1) then
          if ((add_numu_Iscattering_electrons.neqv.add_anumu_Iscattering_electrons).or. &
@@ -184,6 +202,11 @@ module nulib
               (add_numu_emission_NNBrems.neqv.add_anutau_emission_NNBrems)) then
             stop "With neutrino scheme 1, all 4 heavy lepton NBrems must be the same"
          endif
+         if ((add_numu_kernel_epannihil.neqv.add_anumu_kernel_epannihil).or. &
+              (add_numu_kernel_epannihil.neqv.add_nutau_kernel_epannihil).or. &
+              (add_numu_kernel_epannihil.neqv.add_anutau_kernel_epannihil)) then
+            stop "With neutrino scheme 1, all 4 heavy lepton kernel epannihils must be the same"
+         endif
       else if (neutrino_scheme.eq.2) then
          if ((add_numu_Iscattering_electrons.neqv.add_nutau_Iscattering_electrons).or. &
               (add_anumu_Iscattering_electrons.neqv.add_anutau_Iscattering_electrons)) then
@@ -217,7 +240,10 @@ module nulib
               (add_anumu_emission_NNBrems.neqv.add_anutau_emission_NNBrems)) then
             stop "With neutrino scheme 2, each heavy lepton nu/anu NBrems must be the same"
          endif
-
+         if ((add_numu_kernel_epannihil.neqv.add_nutau_kernel_epannihil).or. &
+              (add_anumu_kernel_epannihil.neqv.add_anutau_kernel_epannihil)) then
+            stop "With neutrino scheme 2, each heavy lepton nu/anu kernel epannihils must be the same"
+         endif
       endif
 
       !allocate some arrays
@@ -226,7 +252,7 @@ module nulib
       allocate(bin_bottom(number_groups))
       allocate(bin_top(number_groups))
 
-      !setup H0_constants for electron positron annihilation and inelastic electron scattering
+      !setup H0_constants for electron positron annihilation and inelastic electron scattering, also constants for the H1 term...
       !standard
       H0_constants(1,1) =  (0.5d0+2.0d0*sin2thetaW + 0.5d0)**2 !(Cv+Ca)^2, electron neutrino
       H0_constants(2,1) =  (0.5d0+2.0d0*sin2thetaW - 0.5d0)**2 !(Cv-Ca)^2, electron neutrino
@@ -443,7 +469,7 @@ module nulib
            temporary_spectra(1,1:number_groups)
       scattering_opacity(2,1:number_groups) = scattering_opacity(2,1:number_groups) + &
            temporary_spectra(2,1:number_groups)
-      
+
       if (number_local_species.eq.3) then
          scattering_opacity(3,1:number_groups) = scattering_opacity(3,1:number_groups) + &
               (temporary_spectra(3,1:number_groups) + temporary_spectra(4,1:number_groups) + &
@@ -486,10 +512,12 @@ module nulib
       !be 0.0d0 which is not good for the division in the next line
       blackbody_spectra(:,:) = max(1.0d-30,blackbody_spectra(:,:))
      
-      absorption_opacity(1,1:number_groups) = absorption_opacity(1,1:number_groups) + &
-           temporary_spectra(1,1:number_groups)/blackbody_spectra(1,1:number_groups)
-      absorption_opacity(2,1:number_groups) = absorption_opacity(2,1:number_groups) + &
-           temporary_spectra(2,1:number_groups)/blackbody_spectra(2,1:number_groups)
+      if (apply_kirchoff_to_pair_creation) then
+         absorption_opacity(1,1:number_groups) = absorption_opacity(1,1:number_groups) + &
+              temporary_spectra(1,1:number_groups)/blackbody_spectra(1,1:number_groups)
+         absorption_opacity(2,1:number_groups) = absorption_opacity(2,1:number_groups) + &
+              temporary_spectra(2,1:number_groups)/blackbody_spectra(2,1:number_groups)
+      end if
       emissivities(1,1:number_groups) = emissivities(1,1:number_groups) + &
            temporary_spectra(1,1:number_groups)
       emissivities(2,1:number_groups) = emissivities(2,1:number_groups) + &
@@ -504,23 +532,28 @@ module nulib
               absorption_opacity(3,1:number_groups)
       endif
       if (number_local_species.eq.3) then
-         absorption_opacity(3,1:number_groups) = absorption_opacity(3,1:number_groups) + &
-              (temporary_spectra(3,1:number_groups)/blackbody_spectra(3,1:number_groups) + &
-              temporary_spectra(4,1:number_groups)/blackbody_spectra(3,1:number_groups) + & 
-              temporary_spectra(5,1:number_groups)/blackbody_spectra(3,1:number_groups) + &
-              temporary_spectra(6,1:number_groups)/blackbody_spectra(3,1:number_groups))/4.0d0
+
+         if (apply_kirchoff_to_pair_creation) then
+            absorption_opacity(3,1:number_groups) = absorption_opacity(3,1:number_groups) + &
+                 (temporary_spectra(3,1:number_groups)/blackbody_spectra(3,1:number_groups) + &
+                 temporary_spectra(4,1:number_groups)/blackbody_spectra(3,1:number_groups) + &
+                 temporary_spectra(5,1:number_groups)/blackbody_spectra(3,1:number_groups) + &
+                 temporary_spectra(6,1:number_groups)/blackbody_spectra(3,1:number_groups))/4.0d0
+         end if
          emissivities(3,1:number_groups) = emissivities(3,1:number_groups) + &
               temporary_spectra(3,1:number_groups) + temporary_spectra(4,1:number_groups) + &
               temporary_spectra(5,1:number_groups) + temporary_spectra(6,1:number_groups)
 
       !average neutrinos and antineutrinos individually
       else if (number_local_species.eq.4) then
-         absorption_opacity(3,1:number_groups) = absorption_opacity(3,1:number_groups) + &
-              (temporary_spectra(3,1:number_groups)/blackbody_spectra(3,1:number_groups) + &
-              temporary_spectra(5,1:number_groups)/blackbody_spectra(3,1:number_groups))/2.0d0
-         absorption_opacity(4,1:number_groups) = absorption_opacity(4,1:number_groups) + &
-              (temporary_spectra(4,1:number_groups)/blackbody_spectra(3,1:number_groups) + &
-              temporary_spectra(6,1:number_groups)/blackbody_spectra(3,1:number_groups))/2.0d0
+         if (apply_kirchoff_to_pair_creation) then
+            absorption_opacity(3,1:number_groups) = absorption_opacity(3,1:number_groups) + &
+                 (temporary_spectra(3,1:number_groups)/blackbody_spectra(3,1:number_groups) + &
+                 temporary_spectra(5,1:number_groups)/blackbody_spectra(3,1:number_groups))/2.0d0
+            absorption_opacity(4,1:number_groups) = absorption_opacity(4,1:number_groups) + &
+                 (temporary_spectra(4,1:number_groups)/blackbody_spectra(3,1:number_groups) + &
+                 temporary_spectra(6,1:number_groups)/blackbody_spectra(3,1:number_groups))/2.0d0
+         end if
          emissivities(3,1:number_groups) = emissivities(3,1:number_groups) + &
               temporary_spectra(3,1:number_groups) + temporary_spectra(5,1:number_groups)
          emissivities(4,1:number_groups) = emissivities(4,1:number_groups) + &
@@ -528,14 +561,16 @@ module nulib
 
       !no averaging at all, what six different species
       else if (number_local_species.eq.6) then
-         absorption_opacity(3,1:number_groups) = absorption_opacity(3,1:number_groups) + &
-              temporary_spectra(3,1:number_groups)/blackbody_spectra(3,1:number_groups)
-         absorption_opacity(4,1:number_groups) = absorption_opacity(4,1:number_groups) + &
-              temporary_spectra(4,1:number_groups)/blackbody_spectra(3,1:number_groups)
-         absorption_opacity(5,1:number_groups) = absorption_opacity(5,1:number_groups) + &
-              temporary_spectra(5,1:number_groups)/blackbody_spectra(3,1:number_groups)
-         absorption_opacity(6,1:number_groups) = absorption_opacity(6,1:number_groups) + &
-              temporary_spectra(6,1:number_groups)/blackbody_spectra(3,1:number_groups)
+         if (apply_kirchoff_to_pair_creation) then
+            absorption_opacity(3,1:number_groups) = absorption_opacity(3,1:number_groups) + &
+                 temporary_spectra(3,1:number_groups)/blackbody_spectra(3,1:number_groups)
+            absorption_opacity(4,1:number_groups) = absorption_opacity(4,1:number_groups) + &
+                 temporary_spectra(4,1:number_groups)/blackbody_spectra(3,1:number_groups)
+            absorption_opacity(5,1:number_groups) = absorption_opacity(5,1:number_groups) + &
+                 temporary_spectra(5,1:number_groups)/blackbody_spectra(3,1:number_groups)
+            absorption_opacity(6,1:number_groups) = absorption_opacity(6,1:number_groups) + &
+                 temporary_spectra(6,1:number_groups)/blackbody_spectra(3,1:number_groups)
+         end if
          emissivities(3,1:number_groups) = emissivities(3,1:number_groups) + &
               temporary_spectra(3,1:number_groups)
          emissivities(4,1:number_groups) = emissivities(4,1:number_groups) + &
@@ -564,8 +599,8 @@ module nulib
     end subroutine single_point_return_all
 
     !calcualates the expansion of the scattering kernal, This is
-    !R_{out}, it does not contain the
-    !exp(-\beta(\omega-\omega^\prime))
+    !\Phi_{out}_{0/1}, it does not contain the
+    !exp(-\beta(\omega-\omega^\prime)), see make_table_example for symmetries
     subroutine single_Ipoint_return_all(iin,eta,temperature, &
          Phi0s,Phi1s,neutrino_local_scheme)
 
@@ -723,6 +758,195 @@ module nulib
       enddo
 
     end subroutine single_Ipoint_return_all
+
+    !calcualates the expansion of the epannihilation kernal, These are
+    !|phi^{prod/annihl}_{0/1}
+    subroutine single_epannihil_kernel_point_return_all(iin,eta,temperature, &
+         Phi0s,Phi1s,neutrino_local_scheme)
+
+      implicit none
+
+      !input
+      real*8, dimension(:,:,:), intent(out) :: Phi0s !species,other neutrino's energy, prod/annihilation
+      real*8, dimension(:,:,:), intent(out) :: Phi1s !species,other neutrino's energy, prod/annihilation
+      integer, intent(in) :: iin !this neutrinos energy
+      real*8, intent(in) :: eta,temperature
+      integer, intent(in) :: neutrino_local_scheme
+           
+      !neutrino species
+      !1 = electron neutrino !local scheme 1,2,3
+      !2 = electron anti-neutrino !scheme 1,2,3
+      !3 = muon neutrino !scheme 1,2,3
+      !4 = muon anti-neutrino !scheme 2,3
+      !5 = tau neutrino !scheme 3
+      !6 = tau anti-neutrino !scheme 3
+
+      !x neutrino = (3+4+5+6) !scheme 1
+      !y neutrino = (3+5) !scheme 2
+      !z anti-neutrino = (4+6) !scheme 2
+
+      !local
+      integer :: ns,ng
+      integer :: number_local_species
+      real*8  :: nu_energy_x
+      real*8  :: nuother_energy_x
+
+      !functions
+      real*8 :: epannihil_Phi_Bruenn
+
+      if (neutrino_local_scheme.ne.neutrino_scheme) then
+         write(*,*) neutrino_local_scheme, neutrino_scheme
+         stop "you are requesting different schemes"
+      endif
+
+      if (neutrino_scheme.eq.1) then
+         number_local_species = 3
+      else if (neutrino_scheme.eq.2) then
+         number_local_species = 4
+      else if (neutrino_scheme.eq.3) then
+         number_local_species = 6
+      else
+         stop "single_epannihil_kernel_return_all:incorrect neutrino scheme"
+      endif
+
+      if (size(Phi0s,1).ne.number_local_species) then
+         stop "single_epannihil_kernel_return_all:provided array has wrong number of species"
+      endif
+      if (size(Phi0s,2).ne.number_groups) then
+         stop "single_epannihil_kernel_return_all:provided array has wrong number of groups"
+      endif
+      if (size(Phi0s,3).ne.2) then
+         stop "single_epannihil_kernel_return_all:provided array has wrong number of kernels"
+      endif
+
+      if (size(Phi1s,1).ne.number_local_species) then
+         stop "single_epannihil_kernel_return_all:provided array has wrong number of species"
+      endif
+      if (size(Phi1s,2).ne.number_groups) then
+         stop "single_epannihil_kernel_return_all:provided array has wrong number of groups"
+      endif
+      if (size(Phi1s,3).ne.2) then
+         stop "single_epannihil_kernel_return_all:provided array has wrong number of kernels"
+      endif
+      
+      nu_energy_x = energies(iin)/temperature
+
+      Phi0s = 0.0d0
+      Phi1s = 0.0d0
+
+      do ng=1,number_groups
+         nuother_energy_x = energies(ng)/temperature
+         !electron neutrinos
+         if (add_nue_kernel_epannihil) then
+            Phi0s(1,ng,1) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,1,1,0)!production of Phi_0
+            Phi0s(1,ng,2) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,1,2,0)!annihilation of Phi_0
+            Phi1s(1,ng,1) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,1,1,1)!production of Phi_1
+            Phi1s(1,ng,2) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,1,2,1)!annihilation of Phi_1
+         endif
+
+         !electron antineutrinos
+         if (add_anue_kernel_epannihil) then
+            Phi0s(2,ng,1) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,2,1,0)!production of Phi_0
+            Phi0s(2,ng,2) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,2,2,0)!annihilation of Phi_0
+            Phi1s(2,ng,1) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,2,1,1)!production of Phi_1
+            Phi1s(2,ng,2) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,2,2,1)!annihilation of Phi_1
+         endif
+
+         if (number_local_species.eq.3) then
+            !already ensure that all 4 are the all included or not
+            if (add_numu_kernel_epannihil) then
+               Phi0s(3,ng,1) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,3,1,0) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,1,0) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,5,1,0) + & 
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,1,0))/4.0d0 !production of Phi_0
+               Phi0s(3,ng,2) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,3,2,0) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,2,0) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,5,2,0) + & 
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,2,0))/4.0d0 !annihilation of Phi_0
+               Phi1s(3,ng,1) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,3,1,1) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,1,1) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,5,1,1) + & 
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,1,1))/4.0d0 !production of Phi_1
+               Phi1s(3,ng,2) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,3,2,1) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,2,1) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,5,2,1) + & 
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,2,1))/4.0d0 !annihilation of Phi_1
+
+            endif
+
+         else if (number_local_species.eq.4) then
+
+            !already ensure that mu and tau the same
+            if (add_numu_kernel_epannihil) then
+               Phi0s(3,ng,1) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,3,1,0) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,5,1,0))/2.0d0 !production of Phi_0
+               Phi0s(3,ng,2) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,3,2,0) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,5,2,0))/2.0d0 !annihilation of Phi_0
+               Phi1s(3,ng,1) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,3,1,1) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,5,1,1))/2.0d0 !production of Phi_1
+               Phi1s(3,ng,2) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,3,2,1) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,5,2,1))/2.0d0 !annihilation of Phi_1
+
+            endif
+
+            !already ensure that amu and atau the same
+            if (add_anumu_kernel_epannihil) then
+               Phi0s(3,ng,1) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,1,0) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,1,0))/2.0d0 !production of Phi_0
+               Phi0s(3,ng,2) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,2,0) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,2,0))/2.0d0 !annihilation of Phi_0
+               Phi1s(3,ng,1) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,1,1) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,1,1))/2.0d0 !production of Phi_1
+               Phi1s(3,ng,2) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,2,1) + &
+                    epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,2,1))/2.0d0 !annihilation of Phi_1
+
+            endif
+
+         else if (number_local_species.eq.6) then
+
+            if (add_numu_Iscattering_electrons) then
+               Phi0s(3,ng,1) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,3,1,0) !production of Phi_0
+               Phi0s(3,ng,2) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,3,2,0) !annihilation of Phi_0
+               Phi1s(3,ng,1) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,3,1,1) !production of Phi_1
+               Phi1s(3,ng,2) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,3,2,1) !annihilation of Phi_1
+            endif
+
+            if (add_anumu_Iscattering_electrons) then
+               Phi0s(4,ng,1) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,1,0) !production of Phi_0
+               Phi0s(4,ng,2) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,2,0) !annihilation of Phi_0
+               Phi1s(4,ng,1) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,1,1) !production of Phi_1
+               Phi1s(4,ng,2) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,2,1) !annihilation of Phi_1
+            endif
+
+            if (add_nutau_Iscattering_electrons) then
+               Phi0s(5,ng,1) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,5,1,0) !production of Phi_0
+               Phi0s(5,ng,2) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,5,2,0) !annihilation of Phi_0
+               Phi1s(5,ng,1) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,5,1,1) !production of Phi_1
+               Phi1s(5,ng,2) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,5,2,1) !annihilation of Phi_1
+            endif
+
+            if (add_anutau_Iscattering_electrons) then
+               Phi0s(6,ng,1) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,1,0) !production of Phi_0
+               Phi0s(6,ng,2) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,2,0) !annihilation of Phi_0
+               Phi1s(6,ng,1) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,1,1) !production of Phi_1
+               Phi1s(6,ng,2) = epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,2,1) !annihilation of Phi_1
+            endif
+
+         else
+            stop "shouldn't be here"
+         endif
+         
+      enddo
+
+      !comming from epannihil_Phi_Bruenn, the kernels have no
+      !units.  we need cm^3/s and need to restore 2 factors of
+      !temperature, Bruenn C62
+      Phi0s = Phi0s*2.0d0*Gfermi**2/(2.0d0*pi)*hbarc_mevcm**2*temperature**2*clight !cm^3/s
+      Phi1s = Phi1s*2.0d0*Gfermi**2/(2.0d0*pi)*hbarc_mevcm**2*temperature**2*clight !cm^3/s
+
+
+
+    end subroutine single_epannihil_kernel_point_return_all
 
 
  end module nulib

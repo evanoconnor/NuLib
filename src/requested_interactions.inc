@@ -69,3 +69,13 @@
 
   logical :: add_nue_emission_weakinteraction_ecap = .true.
   logical :: add_anue_emission_weakinteraction_poscap = .false.
+
+  logical :: apply_kirchoff_to_pair_creation = .true.
+
+  !kernels for full calculation of thermal processes
+  logical :: add_nue_kernel_epannihil = .false.
+  logical :: add_anue_kernel_epannihil = .false.
+  logical :: add_numu_kernel_epannihil = .false.
+  logical :: add_anumu_kernel_epannihil = .false.
+  logical :: add_nutau_kernel_epannihil = .false.
+  logical :: add_anutau_kernel_epannihil = .false.
