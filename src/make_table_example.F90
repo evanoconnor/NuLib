@@ -83,7 +83,7 @@ program make_table_example
   logical :: doing_inelastic, doing_epannihil
 
   !MPI variables
-  integer :: rank, nprocs, ierror
+  integer :: mpirank, nprocs, ierror
   integer :: table_size,irho_save,remainder_size,counter,nmin,recvcount
   integer, allocatable, dimension(:) :: sendcounts,displs
   real*8, allocatable,dimension(:) :: table_rho_subset
@@ -100,7 +100,7 @@ program make_table_example
   
   !MPI initialization
   call mpi_init(ierror)
-  call mpi_comm_rank(mpi_comm_world, rank, ierror)
+  call mpi_comm_rank(mpi_comm_world, mpirank, ierror)
   call mpi_comm_size(mpi_comm_world, nprocs, ierror)
 
   mpitime1=mpi_wtime()
@@ -176,8 +176,8 @@ program make_table_example
      end if
      displs(i) = counter
      counter = counter + sendcounts(i)
-     if(i.eq.rank)then
-        recvcount = sendcounts(rank)
+     if(i.eq.mpirank)then
+        recvcount = sendcounts(mpirank)
      end if
   end do
 
@@ -252,7 +252,7 @@ program make_table_example
      allocate(local_absopacity(number_output_species,mytable_number_groups))
      allocate(local_scatopacity(number_output_species,mytable_number_groups))
      allocate(eos_variables(total_eos_variables))
-     write(*,*) "Rho:", 100.0*dble(displs(rank)+irho-1)/dble(final_table_size_rho),"%"
+     write(*,*) "Rho:", 100.0*dble(displs(mpirank)+irho-1)/dble(final_table_size_rho),"%"
      do itemp=1,final_table_size_temp
         write(*,*) "Temp:", 100.0*dble(itemp-1)/dble(final_table_size_temp),"%"
         do iye=1,final_table_size_ye
@@ -313,9 +313,9 @@ program make_table_example
            !set global table
            do ns=1,number_output_species
               do ng=1,mytable_number_groups
-                 table_emission_node(displs(rank)+irho,itemp,iye,ns,ng) = local_emissivity(ns,ng) !ergs/cm^3/s/MeV/srad
-                 table_absopacity_node(displs(rank)+irho,itemp,iye,ns,ng) = local_absopacity(ns,ng) !cm^-1
-                 table_scatopacity_node(displs(rank)+irho,itemp,iye,ns,ng) = local_scatopacity(ns,ng) !cm^-1
+                 table_emission_node(displs(mpirank)+irho,itemp,iye,ns,ng) = local_emissivity(ns,ng) !ergs/cm^3/s/MeV/srad
+                 table_absopacity_node(displs(mpirank)+irho,itemp,iye,ns,ng) = local_absopacity(ns,ng) !cm^-1
+                 table_scatopacity_node(displs(mpirank)+irho,itemp,iye,ns,ng) = local_scatopacity(ns,ng) !cm^-1
               enddo !do ns=1,number_output_species
            enddo !do ng=1,mytable_number_groups
            
@@ -330,7 +330,7 @@ program make_table_example
   !$OMP END PARALLEL DO! end do
 
   call mpi_barrier(mpi_comm_world, ierror)
-  if(rank.eq.0)write(*,*) "Finished Opacity Table" 
+  if(mpirank.eq.0)write(*,*) "Finished Opacity Table" 
 
   table_size = final_table_size_rho*final_table_size_temp* &
        final_table_size_ye*number_output_species*mytable_number_groups
@@ -346,7 +346,7 @@ program make_table_example
   !begin inelastic, timing for mpi purposes
   call mpi_barrier(mpi_comm_world, ierror)
   mpitime2 = mpi_wtime()
-  if(rank.eq.0)write(*,*) "Total time = ",mpitime2-mpitime1
+  if(mpirank.eq.0)write(*,*) "Total time = ",mpitime2-mpitime1
   mpitime1 = mpi_wtime()
 
   !now generate the inelastic electron scattering table.  This is
@@ -406,8 +406,8 @@ program make_table_example
         end if
         displs(i) = counter
         counter = counter + sendcounts(i)
-        if(i.eq.rank)then
-           recvcount = sendcounts(rank)
+        if(i.eq.mpirank)then
+           recvcount = sendcounts(mpirank)
         end if
      end do
 
@@ -455,8 +455,8 @@ program make_table_example
         allocate(local_Phi0_epannihil(number_output_species,mytable_number_groups,2))
         allocate(local_Phi1_epannihil(number_output_species,mytable_number_groups,2))
 
-        write(*,*) "Temp:", 100.0*dble(displs(rank)+itemp-1)/dble(final_Itable_size_temp),"%"
-        if(Itable_temp_subset(itemp).ne.Itable_temp(itemp+displs(rank))) stop "###################Itemp NOTEQUAL###################"
+        write(*,*) "Temp:", 100.0*dble(displs(mpirank)+itemp-1)/dble(final_Itable_size_temp),"%"
+        if(Itable_temp_subset(itemp).ne.Itable_temp(itemp+displs(mpirank))) stop "###################Itemp NOTEQUAL###################"
 
         do ieta=1,final_Itable_size_eta
            write(*,*) "Eta:", 100.0*dble(ieta-1)/dble(final_Itable_size_eta),"%"
@@ -476,9 +476,9 @@ program make_table_example
               do ns=1,number_output_species
                  do ng=iinE+1,final_Itable_size_inE
                     local_Phi0(ns,ng) = exp(-(energies(ng)-energies(iinE))/Itable_temp_subset(itemp))* &
-                         Itable_Phi0_node(displs(rank)+itemp,ieta,ng,ns,iinE)
+                         Itable_Phi0_node(displs(mpirank)+itemp,ieta,ng,ns,iinE)
                     local_Phi1(ns,ng) = exp(-(energies(ng)-energies(iinE))/Itable_temp_subset(itemp))* &
-                         Itable_Phi1_node(displs(rank)+itemp,ieta,ng,ns,iinE)
+                         Itable_Phi1_node(displs(mpirank)+itemp,ieta,ng,ns,iinE)
                  enddo
               enddo
 
@@ -515,8 +515,8 @@ program make_table_example
               !set global table
               do ns=1,number_output_species
                  do ng=1,mytable_number_groups
-                    Itable_Phi0_node(displs(rank)+itemp,ieta,iinE,ns,ng) = local_Phi0(ns,ng) !cm^3/s
-                    Itable_Phi1_node(displs(rank)+itemp,ieta,iinE,ns,ng) = local_Phi1(ns,ng) !cm^3/s
+                    Itable_Phi0_node(displs(mpirank)+itemp,ieta,iinE,ns,ng) = local_Phi0(ns,ng) !cm^3/s
+                    Itable_Phi1_node(displs(mpirank)+itemp,ieta,iinE,ns,ng) = local_Phi1(ns,ng) !cm^3/s
                  enddo !do ns=1,number_output_species
               enddo !do ng=1,mytable_number_groups
            
@@ -594,7 +594,7 @@ program make_table_example
      !$OMP END PARALLEL DO! end do
 
      call mpi_barrier(mpi_comm_world, ierror)
-     if(rank.eq.0)write(*,*) "Finished Inelastic Table" 
+     if(mpirank.eq.0)write(*,*) "Finished Inelastic Table" 
      table_size = final_Itable_size_temp*final_Itable_size_eta* &
           final_Itable_size_inE*number_output_species*mytable_number_groups
      call mpi_reduce(Itable_Phi0_node,Itable_Phi0,&
@@ -603,13 +603,13 @@ program make_table_example
           table_size,mpi_double,mpi_sum,0,mpi_comm_world,ierror)
      call mpi_barrier(mpi_comm_world, ierror)
      mpitime2 = mpi_wtime()
-     if(rank.eq.0)write(*,*) "Total inelastic time = ",mpitime2-mpitime1
+     if(mpirank.eq.0)write(*,*) "Total inelastic time = ",mpitime2-mpitime1
 
   endif
 
   !write out table in H5 format
   !only the first mpi node should write
-  if(rank.eq.0)then
+  if(mpirank.eq.0)then
      call date_and_time(DATE=date,VALUES=values)
      write(srho,*) final_table_size_rho
      write(stemp,*) final_table_size_temp
