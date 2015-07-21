@@ -27,6 +27,26 @@ ifeq ($(NUCLEI_HEMPEL),1)
 	DEFS += -DNUCLEI_HEMPEL
 endif
 
+ifeq ($(OPENMP),1)
+ifeq ($(MPI),1)
+$(error MPI and OPENMP cannot be used simultaneously)
+endif
+endif
+
+ifeq ($(OPENMP),1)
+ifeq ($(F90),gfortran)
+	F90FLAGS += -fopenmp
+else
+	F90FLAGS += -openmp
+endif	
+endif
+
+ifeq ($(MPI),1)
+	F90 = mpif90
+	DEFS += -D__MPI__
+endif
+
+
 EXTRADEPS = requested_interactions.inc constants.inc
 
 OBJECTS=$(SOURCES:.F90=.o )
