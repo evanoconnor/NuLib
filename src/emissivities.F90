@@ -402,13 +402,12 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
         emissivity_spectra(ns,ng) = emissivity !ergs/cm^3/s/MeV/srad
      enddo
 
-    !first conditions require rho,T,Ye grid point to be within phase space of the tabulated weak rates
+     !eos composition modules (for NSE) require T>0.1MeV
      if (eos_variables(tempindex).gt.1.0d-1) then
 
         !calculate neutrino emissivity from electron and positron capture on nuclei
         if (add_nue_emission_weakinteraction_ecap.and.ns.eq.1) then
            call microphysical_electron_capture(ns,eos_variables,ec_emissivity)
-           if(Sum(ec_emissivity).ne.Sum(ec_emissivity))write(*,*) "found one"
            emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity(:) !erg/cm^3/s/MeV/srad
         end if
         if (add_anue_emission_weakinteraction_poscap.and.ns.eq.2) then

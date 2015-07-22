@@ -63,7 +63,7 @@ program make_table_example
   real*8 :: timestamp
   character(8) :: date
   integer :: values(8)
-  character(100) :: base,vnum,srho,stemp,sye,sng,sns,sItemp,sIeta,outdir
+  character(100) :: outdir,base,vnum,srho,stemp,sye,sng,sns,sItemp,sIeta
 
   !local variables to help in making tables
   integer :: irho,itemp,iye,ns,ng
@@ -104,29 +104,23 @@ program make_table_example
   call mpi_init(ierror)
   call mpi_comm_rank(mpi_comm_world, mpirank, ierror)
   call mpi_comm_size(mpi_comm_world, nprocs, ierror)
-
   mpitime1=mpi_wtime()
 #endif
 
-
   call input_parser(parameters_filename)
-  !this sets up many cooefficients and creates the energy grid (one
+  !this sets up many coefficients and creates the energy grid (one
   !zone + log spacing) see nulib.F90:initialize_nulib
   call initialize_nulib(mytable_neutrino_scheme,mytable_number_species,mytable_number_groups)
+  call read_eos_table(eos_filename) !read in EOS table & set reference mass
+  call set_up_Hempel !set's up EOS for nuclear abundances  
+  call readrates(table_bounds) !read in weak rates table and build interpolant functions
 
-  !read in EOS table & set reference mass
-  call read_eos_table(eos_filename)
-!  m_ref = m_amu !for SFHo_EOS (Hempel)
-  call set_up_Hempel ! set's up EOS for nuclear abundances
-
-  
-  !read in weak rates table and build interpolant functions
-  weakrates_density_extrapolation = .false.
-  call readrates(table_bounds)  
+  outdir="./"
+  base="NuLib_Hempel"
+  vnum="1.0"
   
   adhoc_nux_factor = 0.0d0 !increase for adhoc nux heating (also set
                            !add_nux_absorption_on_n_and_p to true)
-
   !set up table
   final_table_size_ye = 51
   final_table_size_rho = 82
@@ -244,14 +238,15 @@ program make_table_example
   call mpi_scatterv(table_rho,sendcounts,displs,mpi_double,table_rho_subset,&
        recvcount,mpi_double,0,mpi_comm_world,ierror)
   mpi_final_table_size_rho = recvcount
-
-  do irho=1,mpi_final_table_size_rho
-#else
+#endif
   !$OMP PARALLEL DO PRIVATE(itemp,iye,local_emissivity,local_absopacity,local_scatopacity, &
   !$OMP ns,ng,eos_variables,keytemp,keyerr,matter_prs,matter_ent,matter_cs2,matter_dedt, &
   !$OMP matter_dpderho,matter_dpdrhoe) COPYIN(rates,nuclear_species,nuclei_A,nuclei_Z,t9dat,rhoYedat, &
   !$OMP C,nucleus_index,nuc,nrho,nt9,nnuc,nrate,nspecies,ifiles,file_priority)
   !loop over rho,temp,ye of table, do each point
+#ifdef __MPI__
+  do irho=1,mpi_final_table_size_rho
+#else
   do irho=1,final_table_size_rho
 #endif
      !must do declarations here for openmp
@@ -475,11 +470,12 @@ program make_table_example
      call mpi_scatterv(Itable_temp,sendcounts,displs,mpi_double,Itable_temp_subset,&
           recvcount,mpi_double,0,mpi_comm_world,ierror)
      mpi_final_Itable_size_temp = recvcount
-
+#endif
+     !$OMP PARALLEL DO PRIVATE(local_Phi0,local_Phi1,local_Phi0_epannihil,local_Phi1_epannihil,ieta,iinE,ns,ng)
+     !loop over temp,eta,inE of table, do each point
+#ifdef __MPI__
      do itemp=1,mpi_final_Itable_size_temp
 #else
-     !$OMP PARALLEL DO PRIVATE(local_Phi0,local_Phi1,ieta,iinE,ns,ng)
-     !loop over temp,eta,inE of table, do each point
      do itemp=1,final_Itable_size_temp
 #endif
         !must do declarations here for openmp
@@ -702,16 +698,12 @@ program make_table_example
      timestamp = dble(values(1))*10000.0d0+dble(values(2))*100.0+dble(values(3)) + &
           (dble(values(5))+dble(values(6))/60.0d0 + dble(values(7))/3600.0d0 )/24.0
 
-     base="NuLib_Hempel"
-     outdir="/mnt/simulations/ceclub/sullivan/nulib/"
-     vnum="1.0"
-
      if (doing_inelastic.or.doing_epannihil) then
         finaltable_filename = trim(adjustl(outdir))//trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
              "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &
              "_ng"//trim(adjustl(sng))//"_ns"//trim(adjustl(sns))// &
              "_Itemp"//trim(adjustl(sItemp))//"_Ieta"//trim(adjustl(sIeta))// &
-             "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//"-VARIATION.h5"
+             "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//".h5"
      else
         finaltable_filename = trim(adjustl(outdir))//trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
              "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &

@@ -69,7 +69,6 @@ module nulib
 
   logical :: debug = .false.
   logical :: do_integrated_BB_and_emissivity
-  logical :: weakrates_density_extrapolation
 
   !nuclei distribution global variables
   integer,allocatable :: hempel_lookup_table(:,:)

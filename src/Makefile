@@ -27,6 +27,7 @@ ifeq ($(NUCLEI_HEMPEL),1)
 	DEFS += -DNUCLEI_HEMPEL
 endif
 
+#dual openmp+mpi jobs may work, but are not currently supported
 ifeq ($(OPENMP),1)
 ifeq ($(MPI),1)
 $(error MPI and OPENMP cannot be used simultaneously)
