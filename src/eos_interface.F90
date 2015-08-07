@@ -25,6 +25,7 @@ subroutine set_eos_variables(eos_variables)
   use nulib
   implicit none
   real*8, intent(inout) :: eos_variables(total_eos_variables)
+  logical :: assume_light_nuclei_are_nucleons
   
 #if HELMHOLTZ_EOS
   include 'other_eos/helmholtz/vector_eos.dek'
@@ -136,6 +137,14 @@ subroutine set_eos_variables(eos_variables)
   if(eos_variables(xhindex).lt.1.0d-15) then
      eos_variables(xhindex) = 0.0d0
   endif
+
+  assume_light_nuclei_are_nucleons = .true.
+  if (assume_light_nuclei_are_nucleons) then
+     eos_variables(xpindex) = eos_variables(yeindex) - &
+          0.5d0*eos_variables(xaindex) - eos_variables(zbarindex)/eos_variables(abarindex)*eos_variables(xhindex)
+     eos_variables(xnindex) = 1.0d0 - eos_variables(xpindex) - eos_variables(xnindex) - eos_variables(xhindex)
+  endif
+
 #endif
 end subroutine set_eos_variables
 
