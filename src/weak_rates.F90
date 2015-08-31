@@ -238,6 +238,8 @@
         !         C - Array of spline coefficients. C = C(nucl.,rate,dim,
         !             splineseries,numdatapts,coef) where coef represents 
         !             coefficients a,b,c,d respectively used in the interpolation
+        !             rate :  1 = lbeta-, 2 = lcap-, 3 = lnu_e, 4 = lbeta+,
+        !                     5 = lcap+, 6 = lanu_e, 7 = mu_e     
         !   Reference:
         !       M. Steffen, "A simple method for monotonic interpolation in one dimension" 
         !       Astron. Astrophys. 239, 443-450 (1990)
@@ -340,16 +342,7 @@
              end if
              !extrapolate to lrhoYe at most, consider adding extrapolate flag
           else if (query.gt.rhoYedat(i).and.i.eq.nrho) then
-             if(query.le.15.0d0)then
-                result = C(nuc,nrate,dim,spl,i-1,1)*(query-rhoYedat(i-1))**3 +&
-                     C(nuc,nrate,dim,spl,i-1,2)*(query-rhoYedat(i-1))**2 +&
-                     C(nuc,nrate,dim,spl,i-1,3)*(query-rhoYedat(i-1)) +&
-                     C(nuc,nrate,dim,spl,i-1,4)
-                exit
-             else
-                result = -1.0d2
-                exit
-             end if
+             stop "weak_rates.interpolant :: rho > rhomax"
           end if
 
        end do
@@ -368,7 +361,7 @@
 
        allocate(Data(nt9,2))
        !$OMP PARALLEL COPYIN(nuc,nt9,nrho)
-       allocate(C(nuc,7,2,nrho,nt9,4))  ! 7 = 6 LMP weak rates + chemical potential
+       allocate(C(nuc,7,2,nrho,nt9,4))  
        !$OMP END PARALLEL
 
        nuc = 1
@@ -376,7 +369,7 @@
           do i=1,nrho
              do nrate=1,7
                 do j=1,nt9
-                   Data(j,1)=t9dat(j) ! (NEED TO ADD) prevent t9data being filled more than once
+                   Data(j,1)=t9dat(j) 
                    Data(j,2)=rates(nuc,j,i,nrate)
                 end do
                 call monotonic_interpolator(dim,i,nt9,Data)
@@ -415,7 +408,7 @@
        do i=1,nrho
           do j=1,nt9 
              if (query1 <= t9dat(j)) then
-                if(j==1) then                ! Possible check to prevent extrapolation
+                if(j==1) then         
                    value = C(nucleus,nrate,dim,i,j,1)*(query1-t9dat(j))**3 +&
                         C(nucleus,nrate,dim,i,j,2)*(query1-t9dat(j))**2 +&
                         C(nucleus,nrate,dim,i,j,3)*(query1-t9dat(j)) +&
@@ -429,14 +422,7 @@
                    exit
                 end if
              else if (query1.gt.t9dat(j).and.j.eq.nt9) then
-                if(query1.le.100.0d0)then
-                   stop "Extrapolation is not allowed"
-                   exit
-                else
-                   value = -1.0d2
-                   exit
-                end if
-
+                stop "weak_rates.weakrates :: t > tmax"
              end if
           end do
           Data2d(i,1) = rhoYedat(i)
@@ -522,8 +508,8 @@
              avgenergy(1) = 10.0d0**lnu/(10.0d0**lcap + 10.0d0**lbeta)   
              avgenergy(2) = qec_eff
           else
-             stop "Weak interactions are only nontrivial for electron neutrinos &
-                  and antineutrinos. Exiting."
+             stop "This module only implements electron-neutrino type weak interactions. &
+                  Please restrict neutrino_species to nue/anue."
           endif
 
           !solve for the eff Qec that constrains the effective 
@@ -533,9 +519,9 @@
 
        !calculate normalization constant using effective neutrino spectra
        spectra = 0.0d0
-       GPQ_interval = GPQ_intervals(qec_eff,eos_variables)
-       GPQ_coef(1) = (GPQ_interval(2)-GPQ_interval(1))/2.0d0
-       GPQ_coef(2) = (GPQ_interval(1)+GPQ_interval(2))/2.0d0
+       GPQ_interval = GPQ_intervals(qec_eff,eos_variables)   ! dynamic range finder for matching
+       GPQ_coef(1) = (GPQ_interval(2)-GPQ_interval(1))/2.0d0 ! integration range to the neutrino
+       GPQ_coef(2) = (GPQ_interval(1)+GPQ_interval(2))/2.0d0 ! spectrum width
        do i=1,32
           spectra = spectra + &
                GPQ_coef(1)*GPQ_n32_weights(i)*&
@@ -548,7 +534,7 @@
           if (parameterized_rate) then
              normalization_constant = (analytic_weakrates(&
                   0,eos_variables(tempindex),qec_eff,&
-                  eos_variables(mueindex)-m_e,A))/spectra 
+                  eos_variables(mueindex)-m_e))/spectra 
           else
              normalization_constant = &
                   (10.0d0**weakrates(A,Z,t9,lrhoYe,1)+10.0d0**weakrates(A,Z,t9,lrhoYe,2))/spectra
@@ -564,8 +550,7 @@
 
        !integrate over energy bin or take central value of bin and multiply by the bin width
        if (do_integrated_BB_and_emissivity) then
-          !To be added
-          stop "Integration is not yet supported for ec neutrino emissivities"
+          stop "Integration is not yet supported for ec neutrino emissivities" ! To be added
        else
           do ng=1,number_groups
              nu_spectrum_eval =&
@@ -609,41 +594,6 @@
        !should therefore be multiplied by T^4 (T in MeV)
 
      end function ec_neutrino_spectra
-
-
-     function ec_neutrino_spectra_q_derivative(&
-          nu_energy_per_T,q,uf,T) &
-          result(nu_spectra_derivative)
-       !definition: d/dq n(E) = (ec_neutrino_spectra_q_derivative/T) * n(E)
-
-       include 'constants.inc'
-
-       !local variables
-       real*8 :: T !must be passed in with units of MeV
-       real*8 :: nu_energy_per_T
-       real*8, intent(in) :: q
-       real*8 :: uf
-       real*8 :: nu_spectra_derivative
-       real*8 :: q_T
-       real*8 :: uf_T
-
-       !redefining q and the chemical potential to be dimensionless, T must be in MeV
-       q_T = q/T
-       uf_T = uf/T
-
-       if ((nu_energy_per_T-q_T).le.0.0d0) then
-          !prevent neutrino from having less energy than the Qec value for Qec > 0
-          nu_spectra_derivative = 0.0d0
-       else
-          !ec neutrino spectra derivative with respect to q (q=qec_eff) divided 
-          !by the neutrino spectra
-          nu_spectra_derivative = &
-               (1.0d0-1.0d0/(1.0d0+exp(nu_energy_per_T-q_T-uf_T))-2.0d0/(nu_energy_per_T-q_T))
-          !note a factor of /T was removed to make the spectrum dimensionless, the returned result
-          !should therefore be divided by T in MeV         
-       end if
-
-     end function ec_neutrino_spectra_q_derivative
 
      function qec_solver(avgenergy,qin,eos_variables) result(qec_eff)
 
@@ -706,6 +656,7 @@
           N=0
           nmax_bisections = 1000
           tolerance = 1.0d-8
+
           !low resolution in the shell-model rates can cause the interpolation to produce an
           !average nu energy below the asymptotic limit of <E>_spectra. In this case, the
           !effective q is set to the lower bound -100MeV
@@ -818,6 +769,7 @@
             ec_neutrino_spectra(centroid,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))
        spectra_shift = spectra_centroid/1.0d2          
        spectra_shift = sqrt(spectra_shift)
+       !integration range-finder:
        !If (q+mu)/T is less than 3MeV, the spectra will hug the origin,
        !so an interval from 0 to 25 should be sufficient. For greater values
        !of (q+mu)/T the interval should be determined with the quartic part 
@@ -831,7 +783,7 @@
           interval(1) = 0.0d0
           interval(2) = 25.0d0
        end if
-       ! fail safe in case the above doesn't work
+       ! fail safe in case the above doesn't work 
        if(interval(1).lt.1.0d-5.and.interval(2).lt.0.0d0)then
           interval(2) = max(interval(2),50.0d0)
        end if
@@ -974,12 +926,11 @@ function  return_emissivity_from_electron_capture_on_A(&
        A,Z,number_density,eos_variables,neutrino_species,parameterized_rate)
 end function return_emissivity_from_electron_capture_on_A
 
-function analytic_weakrates(n,temperature,q_gs,mue,A) result(rate)
+function analytic_weakrates(n,temperature,q_gs,mue) result(rate)
 
   use nulib
 
   integer, intent(in) :: n ! 0 for electron capture rate, 1 for nuetrino energy loss rate
-  integer, intent(in) :: A
   real*8 :: rate
   real*8 :: temperature
   real*8 :: chi
