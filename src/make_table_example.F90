@@ -2,7 +2,9 @@
 program make_table_example
 
   use nulib
+#if WEAK_RATES
   use weak_rates
+#endif
   implicit none
 #ifdef __MPI__
   include 'mpif.h'
@@ -112,11 +114,20 @@ program make_table_example
   !zone + log spacing) see nulib.F90:initialize_nulib
   call initialize_nulib(mytable_neutrino_scheme,mytable_number_species,mytable_number_groups)
   call read_eos_table(eos_filename) !read in EOS table & set reference mass
-  call set_up_Hempel !set's up EOS for nuclear abundances  
-  call readrates(table_bounds) !read in weak rates table and build interpolant functions
+#if NUCLEI_HEMPEL
+  call set_up_Hempel !set's up EOS for nuclear abundances
+#endif
+#if WEAK_RATES
+  if (add_nue_emission_weakinteraction_ecap.or.add_anue_emission_weakinteraction_poscap) then
+     call readrates(table_bounds) !read in weak rates table and build interpolant functions
+  else
+     stop "The WEAK_RATES preprocessor flag is set, but no weak interactions are requested. &
+          Did you forget to turn them on in requested_interactions.inc?"
+  endif
+#endif
 
   outdir="./"
-  base="NuLib_Hempel"
+  base="NuLib"
   vnum="1.0"
   
   adhoc_nux_factor = 0.0d0 !increase for adhoc nux heating (also set
@@ -239,11 +250,17 @@ program make_table_example
        recvcount,mpi_double,0,mpi_comm_world,ierror)
   mpi_final_table_size_rho = recvcount
 #endif
+#if WEAK_RATES
   !$OMP PARALLEL DO PRIVATE(itemp,iye,local_emissivity,local_absopacity,local_scatopacity, &
   !$OMP ns,ng,eos_variables,keytemp,keyerr,matter_prs,matter_ent,matter_cs2,matter_dedt, &
   !$OMP matter_dpderho,matter_dpdrhoe) COPYIN(rates,nuclear_species,nuclei_A,nuclei_Z,t9dat,rhoYedat, &
   !$OMP C,nucleus_index,nuc,nrho,nt9,nnuc,nrate,nspecies,ifiles,file_priority)
   !loop over rho,temp,ye of table, do each point
+#else
+  !$OMP PARALLEL DO PRIVATE(itemp,iye,local_emissivity,local_absopacity,local_scatopacity, &
+  !$OMP ns,ng,eos_variables,keytemp,keyerr,matter_prs,matter_ent,matter_cs2,matter_dedt, &
+  !$OMP matter_dpderho,matter_dpdrhoe) 
+#endif
 #ifdef __MPI__
   do irho=1,mpi_final_table_size_rho
 #else

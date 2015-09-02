@@ -6,11 +6,37 @@ lmp_rates     		= 	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_t
 lmsh_rates		= 	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/lmsh-extended.dat"
 oda_rates		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/oda_hires.dat"
 ffn_rates		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/ffn_hires.dat"
-nuclear_masses		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/mass.mas12"
 
-## Priority ##
-ilmp			=	1	# 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, it will be ignored.
-ilmsh			=	2	# 0 indicates the table will not be used
+## Rate table priority hierarchy ##
+ilmp			=	1	
+ilmsh			=	2	
 ioda			=	3
 iffn			=	0
 iapprox			=	4
+
+# 0 indicates the table will not be used
+# 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, they will be ignored.
+# CITATION NOTICE: By using the ilmp/ilmsh/iffn/ioda/iapprox flags you agree to cite the relevant publications in your work.
+------------------------------------------------------------------------------------------
+| iffn    | Fuller, G. M., Fowler, W. A., & Newman, M. J. (1982).                        |
+|         | Stellar weak interaction rates for intermediate-mass nuclei.                 |
+|         | II - A = 21 to A = 60. The Astrophysical Journal, 252, 715.                  |
+|         | http://doi.org/10.1086/159597                                                |
+------------------------------------------------------------------------------------------
+| ioda    | Oda, T., Hino, M., Muto, K., Takahara, M., & Sato, K. (1994).                |
+|         | Rate Tables for the Weak Processes of sd-Shell Nuclei in Stellar Matter.     |
+|         | Atomic Data and Nuclear Data Tables, 56(2), 231-403.                         |
+|         | http://doi.org/10.1006/adnd.1994.1007                                        |
+------------------------------------------------------------------------------------------
+| ilmp    | Langanke, K., & Mart\'{i}nez-Pinedo, G. (2000).                              |
+|         | Shell-model calculations of stellar weak interaction rates:                  |
+|         | II. Weak rates for nuclei in the mass range in supernovae environments.      |
+|         | Nuclear Physics A, 673(1-4), 481-508.                                        |
+|         | http://doi.org/10.1016/S0375-9474(00)00131-7                                 |
+------------------------------------------------------------------------------------------
+| ilmsh   | Langanke, K., & Mart\'{i}nez-Pinedo, G. (2003).                              |
+| iapprox | Electron capture rates on nuclei and implications for stellar core collapse. |
+|         | Physical Review Letters 90, 241102.                                          |
+|         | http://prl.aps.org/abstract/PRL/v90/i24/e241102                              |
+------------------------------------------------------------------------------------------
+

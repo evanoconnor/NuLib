@@ -1,5 +1,6 @@
  !-*-f90-*- 
  module weak_rates
+#if WEAK_RATES
 
    implicit none
 
@@ -119,8 +120,6 @@
 
           end do
 
-          write(*,*) nuc,nrho,nt9/nrho
-
           ! allocate the array's based on dimension
           !$OMP PARALLEL COPYIN(nuc,nt9,nrho)
           allocate(rates(nuc,nt9/nrho,nrho,7))
@@ -192,8 +191,10 @@
 
           !$OMP PARALLEL COPYIN(rates,t9dat,rhoYedat,nucleus_index)  
           !$OMP END PARALLEL
+         
+          write(*,"(A29,I3,A15,I2,A1,I2,A29)") " Done reading weak rates for ",nuc," nuclei across ",nrho,"/",nt9/nrho," log10(rhoYe)/T9 grid points."
+          write(*,"(A25,I4,A9)") " Done loading masses for ",nspecies," species."
 
-          write(*,*) "Weak rate data loaded."
 
           ! build array of interpolating spline coefficients
           nnuc = nuc
@@ -202,7 +203,6 @@
           !$OMP PARALLEL COPYIN(C)
           !$OMP END PARALLEL     
 
-          write(*,*) "Interpolant functions built. Read-in is complete."
        else
           write(*,*) "No weak rate data to load, using analytic approximation everywhere."
           nuc=0
@@ -222,28 +222,28 @@
        end if
 
      end subroutine readrates
+       
+     ! This a 1-D Monotonic cubic spline interpolator. It takes 4 inputs and C 
+     ! is global to the module:
+     !       dim - Short for dimension, indicates which set of coeficients 
+     !             to build. In the 1D case, dim = 1, and all interpolant
+     !             coefficients are saved to C(1,:,:,:).
+     !       spl - Short for spline function. This is an identifier for a
+     !             particular interpolated function. In the 1D case, it is
+     !             always equal to 1. In 2D, it will vary from 1 to N, where
+     !             N is the number of data points.
+     !         N - Number of data points to be interpolated over
+     ! dataArray - Array, built by readfile, containing data in the
+     !             form dataArray(n,1:2) where (x,y) :: (1,2)
+     !         C - Array of spline coefficients. C = C(nucl.,rate,dim,
+     !             splineseries,numdatapts,coef) where coef represents 
+     !             coefficients a,b,c,d respectively used in the interpolation
+     !             rate :  1 = lbeta-, 2 = lcap-, 3 = lnu_e, 4 = lbeta+,
+     !                     5 = lcap+, 6 = lanu_e, 7 = mu_e     
+     !   Reference:
+     !       M. Steffen, "A simple method for monotonic interpolation in one dimension" 
+     !       Astron. Astrophys. 239, 443-450 (1990)
      
-   ! This a 1-D Monotonic cubic spline interpolator. It takes 4 inputs and C 
-   ! is global to the module:
-        !       dim - Short for dimension, indicates which set of coeficients 
-        !             to build. In the 1D case, dim = 1, and all interpolant
-        !             coefficients are saved to C(1,:,:,:).
-        !       spl - Short for spline function. This is an identifier for a
-        !             particular interpolated function. In the 1D case, it is
-        !             always equal to 1. In 2D, it will vary from 1 to N, where
-        !             N is the number of data points.
-        !         N - Number of data points to be interpolated over
-        ! dataArray - Array, built by readfile, containing data in the
-        !             form dataArray(n,1:2) where (x,y) :: (1,2)
-        !         C - Array of spline coefficients. C = C(nucl.,rate,dim,
-        !             splineseries,numdatapts,coef) where coef represents 
-        !             coefficients a,b,c,d respectively used in the interpolation
-        !             rate :  1 = lbeta-, 2 = lcap-, 3 = lnu_e, 4 = lbeta+,
-        !                     5 = lcap+, 6 = lanu_e, 7 = mu_e     
-        !   Reference:
-        !       M. Steffen, "A simple method for monotonic interpolation in one dimension" 
-        !       Astron. Astrophys. 239, 443-450 (1990)
-
      subroutine monotonic_interpolator(dim,spl,N,Data)
        integer N      ! Number of data points (x,y) pairs
        real*8, dimension(N,2) :: Data
@@ -899,6 +899,7 @@
 
      end subroutine microphysical_electron_capture
 
+#endif
 end module weak_rates
 
 !#################################################################################################
@@ -912,6 +913,7 @@ function  return_emissivity_from_electron_capture_on_A(&
      neutrino_species,&
      parameterized_rate)&
      result(emissivity)
+#if WEAK_RATES
 
   use weak_rates
   use nulib, only : number_groups, total_eos_variables
@@ -924,6 +926,8 @@ function  return_emissivity_from_electron_capture_on_A(&
 
   emissivity = emissivity_from_weak_interaction_rates(&
        A,Z,number_density,eos_variables,neutrino_species,parameterized_rate)
+
+#endif
 end function return_emissivity_from_electron_capture_on_A
 
 function analytic_weakrates(n,temperature,q_gs,mue) result(rate)

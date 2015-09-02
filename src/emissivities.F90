@@ -402,6 +402,7 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
         emissivity_spectra(ns,ng) = emissivity !ergs/cm^3/s/MeV/srad
      enddo
 
+#if WEAK_RATES
      !eos composition modules (for NSE) require T>0.1MeV
      if (eos_variables(tempindex).gt.1.0d-1) then
 
@@ -417,7 +418,8 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
         end if
 
      end if
-
+#endif
+     
   enddo
      
 end subroutine return_emissivity_spectra_given_neutrino_scheme

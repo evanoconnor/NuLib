@@ -1,7 +1,7 @@
 include ../make.inc
 
-SOURCES=nulib.F90 \
-	weak_rates.F90 \
+SOURCES=nulib.F90\
+	weak_rates.F90\
 	fermi.F90 \
 	helpers.F90 \
 	gauss_laguerre_helpers.F90 \
@@ -20,11 +20,19 @@ NT_SOURCES=nulibtable.F90 \
 	   nulibtable_reader.F90 \
 	   linterp_many_mod.F90
 
+
+#the weak_rates module requires M. Hempel's
+#EOS dependent NSE distributions
+ifeq ($(WEAK_RATES),1)
+	NUCLEI_HEMPEL=1
+	DEFS += -DWEAK_RATES 
+endif
+
 ifeq ($(NUCLEI_HEMPEL),1)
 	F_SOURCES = extra_code_and_tables/sfho_frdm_comp/sfho_frdm_composition_module.f
 	F_OBJECTS=$(F_SOURCES:.f=.o )
 	MODINC += -I./extra_code_and_tables/sfho_frdm_comp
-	DEFS += -DNUCLEI_HEMPEL
+	DEFS += -DNUCLEI_HEMPEL 
 endif
 
 #dual openmp+mpi jobs may work, but are not currently supported
