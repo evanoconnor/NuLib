@@ -2,17 +2,20 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!! READ THE EOS TABLE INTO MEMORY, SET THE REFERENCE MASS !!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-subroutine read_eos_table(eos_filename)
+subroutine read_eos_table(local_eos_filename)
   use nulib
   implicit none
-  character*200, intent(IN) :: eos_filename !ignored if Helmholtz
+  character*200, intent(IN) :: local_eos_filename !ignored if Helmholtz
 
 #if HELMHOLTZ_EOS
   include 'other_eos/helmholtz/vector_eos.dek'
   call read_helm_table
   m_ref = m_amu
+#elif NUCLEI_HEMPEL
+  call readtable(local_eos_filename)
+  m_ref = m_amu !for SFHo_EOS (Hempel)
 #else
-  call readtable(eos_filename)
+  call readtable(local_eos_filename)
   m_ref = m_n !for LS220 
 #endif
 end subroutine read_eos_table

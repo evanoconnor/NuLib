@@ -24,7 +24,10 @@ module nulib
   real*8, allocatable,dimension(:) :: bin_widths ! MeV, energy width of bin
   real*8, allocatable,dimension(:) :: bin_bottom ! MeV, energy at bottom of bin
   real*8, allocatable,dimension(:) :: bin_top ! MeV, energy at top of bin
-  
+
+  !EOS table
+  character*200 :: eos_filename
+
   !EOS reference mass (Shen, m_amu, LS, m_n)
   real*8 :: m_ref !MeV
 
@@ -69,6 +72,9 @@ module nulib
 
   !nuclei distribution global variables
   integer,allocatable :: hempel_lookup_table(:,:)
+
+  !tabulated weak rate table bounds
+  real*8, dimension(4) :: table_bounds
 
   !special terms
   real*8 :: adhoc_nux_factor = 0.0d0

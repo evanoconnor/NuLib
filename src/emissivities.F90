@@ -362,6 +362,7 @@ end subroutine total_emissivities
 subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eos_variables)
 
   use nulib
+  use weak_rates
   implicit none
   
   !inputs & outputs
@@ -370,12 +371,21 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
   
   !locals
   integer :: ns,ng
-  real*8 emissivity,energy_point,energy_top,energy_bottom
+  real*8 :: emissivity,energy_point,energy_top,energy_bottom
+  real*8 :: ec_emissivity(number_groups)
   real*8 :: eta
 
   !function dec
   real*8 :: get_fermi_integral
-  
+
+  !bounds checking       
+  real*8 :: t9
+  real*8 :: lrhoYe
+
+  lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
+  t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)
+
+
   if (size(emissivity_spectra,1).ne.number_species) then
      stop "return_emissivity_spectra_given_neutrino_scheme:provided array has wrong number of species"
   endif
@@ -391,6 +401,25 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
         call total_emissivities(ns,energy_point,energy_bottom,energy_top,emissivity,eos_variables)
         emissivity_spectra(ns,ng) = emissivity !ergs/cm^3/s/MeV/srad
      enddo
+
+#if WEAK_RATES
+     !eos composition modules (for NSE) require T>0.1MeV
+     if (eos_variables(tempindex).gt.1.0d-1) then
+
+        !calculate neutrino emissivity from electron and positron capture on nuclei
+        if (add_nue_emission_weakinteraction_ecap.and.ns.eq.1) then
+           call microphysical_electron_capture(ns,eos_variables,ec_emissivity)
+           emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity(:) !erg/cm^3/s/MeV/srad
+        end if
+        if (add_anue_emission_weakinteraction_poscap.and.ns.eq.2) then
+           stop "emissivities :: anue weak rates are not yet implemented"
+           call microphysical_electron_capture(ns,eos_variables,ec_emissivity)
+           emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity(:) !erg/cm^3/s/MeV/srad
+        end if
+
+     end if
+#endif
+     
   enddo
-  
+     
 end subroutine return_emissivity_spectra_given_neutrino_scheme
