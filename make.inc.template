@@ -1,8 +1,12 @@
 F90=
 F90FLAGS= -O3
 
-#if you want to take advantage of openmp use this flag
-#F90FLAGS= -O3 -openmp
+#if you want to take advantage of openmp, set OPENMP=1
+OPENMP=0
+
+#if you want to take advantage of mpi, set MPI=1
+#mpif90 must be in your PATH (openmpi)
+MPI = 0
 
 MODINC="-I ./"
 

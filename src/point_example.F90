@@ -28,8 +28,7 @@ program point_example
   !number of energy groups
   integer :: mypoint_number_groups = 24
 
-  !EOS table
-  character*200 :: eos_filename = "/Users/evanoc/research/eos/LS220.h5"
+  character*200 :: parameters = "/projects/ceclub/gr1dnulib/GitHub/NuLib/parameters"
 
   !local variables
   real*8, allocatable,dimension(:,:) :: local_emissivity
@@ -38,6 +37,9 @@ program point_example
   real*8, allocatable,dimension(:,:) :: local_Phi0, local_Phi1
   real*8, allocatable,dimension(:,:) :: blackbody_spectra
   real*8, allocatable,dimension(:) :: eos_variables
+  real*8 :: matter_prs,matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe
+  integer :: keytemp,keyerr
+  real*8 :: precision = 1.0d-10
   real*8 :: xrho, xtemp, xye
   integer i,j
   real*8 dxfac,mindx
@@ -48,12 +50,16 @@ program point_example
   allocate(local_scatopacity(mypoint_number_output_species,mypoint_number_groups))
   allocate(blackbody_spectra(mypoint_number_output_species,mypoint_number_groups))
 
+  call input_parser(parameters)
+
   !this sets up many cooefficients and creates the energy grid (one
   !zone + log spacing) see nulib.F90:initialize_nulib
   call initialize_nulib(mypoint_neutrino_scheme,mypoint_number_species,mypoint_number_groups)
-
+  call set_up_Hempel ! set's up EOS for nuclear abundances
   !read in EOS table & set reference mass
   call read_eos_table(eos_filename)
+  m_ref = m_amu !for SFHo_EOS (Hempel)
+  ! m_ref = m_n !for LS220
 
   !example point
   xrho = 1.0d12 !g/cm^3
@@ -64,7 +70,7 @@ program point_example
   do_integrated_BB_and_emissivity = .false.
   mindx = 1.0d0
   bin_bottom(1) = 0.0d0 !MeV
-  bin_bottom(2) = 4.0d0 !MeV
+  bin_bottom(2) = 1.0d0 !MeV
   bin_bottom(3) = bin_bottom(2)+mindx
   bin_bottom(number_groups) = 250.0d0
   

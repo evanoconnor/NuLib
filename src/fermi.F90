@@ -213,7 +213,7 @@ function complete_fermi_integral(ifermi,eta)
      
   endif
   complete_fermi_integral = fermi_integral_analytical
-  
+
   return
 end function complete_fermi_integral
   
