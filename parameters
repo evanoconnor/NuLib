@@ -8,8 +8,8 @@ oda_rates		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/
 ffn_rates		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/ffn_hires.dat"
 
 ## Rate table priority hierarchy ##
-ilmp			=	1	
-ilmsh			=	2	
+ilmp			=	2	
+ilmsh			=	1	
 ioda			=	3
 iffn			=	0
 iapprox			=	4

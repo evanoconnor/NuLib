@@ -2,6 +2,7 @@
 program make_table_example
 
   use nulib
+  use inputparser
 #if WEAK_RATES
   use weak_rates
 #endif

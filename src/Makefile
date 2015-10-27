@@ -1,7 +1,11 @@
 include ../make.inc
 
 SOURCES=nulib.F90\
-	weak_rates.F90\
+	input_parser.F90 \
+	weakrates/ratetable.F90 \
+	weakrates/rateapprox.F90 \
+	weakrates/ratelibrary.F90 \
+	weak_rates.F90 \
 	fermi.F90 \
 	helpers.F90 \
 	gauss_laguerre_helpers.F90 \
@@ -13,7 +17,6 @@ SOURCES=nulib.F90\
 	weak_magnetism_correction.F90 \
 	inelastic_electron_scattering.F90 \
 	nuclei_distribution_helpers.F90 \
-	input_parser.F90 \
 	eos_interface.F90
 
 NT_SOURCES=nulibtable.F90 \
@@ -79,7 +82,7 @@ EXTRAOBJECTS += $(HDF5LIBS)
 
 
 
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_example test
 
 ../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) 
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINC) -o $@ nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS)
@@ -124,3 +127,5 @@ clean:
 	$(MAKE) -C nuc_eos clean	
 	rm -rf ./extra_code_and_tables/sfho_frdm_comp/sfho_frdm_composition_module.o
 	rm -rf ./other_eos/helmholtz/*.o
+	rm -rf ./weakrates/*.o
+	rm -rf ./weakrates/*~

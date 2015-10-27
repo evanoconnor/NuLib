@@ -2,6 +2,7 @@
 program point_example
 
   use nulib
+  use inputparser
   implicit none
 
   !many people use different number of species, this is to denote how they are devided up.
