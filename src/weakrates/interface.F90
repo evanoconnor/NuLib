@@ -68,7 +68,7 @@ contains
     real*8 :: lcap       !capture rate (electron or positron for nue or anue)
     real*8 :: lnu        !nue or anue energy loss rate
 
-
+    approx_rate_flag = .false.
     GPQ_interval = 0.0d0
     GPQ_coef(:) = 0.0d0
     !set local eos_variables for rate interpolation
@@ -136,8 +136,6 @@ contains
                (10.0d0**return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,1)&
                +10.0d0**return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,2))/spectra
        end if
-       print *, normalization_constant
-       
     else if (neutrino_species.eq.2) then
        if (approx_rate_flag) then
           stop "There is currently no parameterization applicable for positron capture"

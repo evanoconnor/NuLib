@@ -150,9 +150,12 @@ contains
     type(RateLibrary) :: this
     integer :: A, Z
     real*8 :: lrhoye, t9
-    integer :: idxtable, i = 0
-    real*8 :: min = 0.0d0, max = 0.0d0
-    
+    integer :: idxtable, i
+    real*8 :: min, max
+
+    idxtable = 0
+    min = 0.0d0
+    max = 0.0d0
     ! first check if the nucleus is in a table
     do i=1,size(this%tables)
        if (A.gt.size(this%tables(i)%nucleus_index,dim=1).or.Z.gt.size(this%tables(i)%nucleus_index,dim=2)) then
