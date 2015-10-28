@@ -57,7 +57,6 @@ contains
 
     !spectrum integration
     real*8 :: normalization_constant    !nu spectra normalization, units of 1/MeV^5/s
-    real*8 :: analytic_weakrates
     real*8 :: spectra
     real*8 :: t9
     real*8 :: lrhoYe
@@ -137,6 +136,8 @@ contains
                (10.0d0**return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,1)&
                +10.0d0**return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,2))/spectra
        end if
+       print *, normalization_constant
+       
     else if (neutrino_species.eq.2) then
        if (approx_rate_flag) then
           stop "There is currently no parameterization applicable for positron capture"
@@ -422,7 +423,7 @@ contains
     real*8, dimension(number_groups) :: emissivity
     real*8, dimension(number_groups) :: emissivity_temp
     real*8 :: logrhoYe,t9
-    integer :: idxtable, A, Z
+    integer :: idxtable = 0, A, Z
 
 
 
@@ -430,7 +431,8 @@ contains
     call nuclei_distribution_Hempel(&
          weakratelib%approx%nspecies,weakratelib%approx%nuclei_A,&
          weakratelib%approx%nuclei_Z,weakratelib%approx%mass_fractions,&
-         weakratelib%approx%number_densities,eos_variables)          
+         weakratelib%approx%number_densities,eos_variables)
+
     emissivity = 0.0d0
     logrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
     t9 = (eos_variables(tempindex)/kelvin_to_mev)*1.0d-9
@@ -445,8 +447,9 @@ contains
        !if rate data from a table is not present and A>4 with iapprox nonzero,
        !use the parameterized rate function, else skip this nucleus
        ! check if rate exists in a table
-       idxtable = in_table(weakratelib,A,Z,logrhoYe,t9)
-
+       if (size(weakratelib%tables).ne.0)then
+          idxtable = in_table(weakratelib,A,Z,logrhoYe,t9)
+       endif
 
        ! if no table contains the requested rate
        if(idxtable.eq.0) then

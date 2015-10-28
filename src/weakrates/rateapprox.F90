@@ -39,6 +39,11 @@ contains
     allocate(this%nuclei_Z(this%nspecies))
     allocate(this%number_densities(this%nspecies))
     allocate(this%mass_fractions(this%nspecies))
+
+    this%nuclei_A = 0
+    this%nuclei_Z = 0
+    this%number_densities = 0
+    this%mass_fractions = 0
     
     call get_Hempel_As_and_Zs(this%nuclei_A,this%nuclei_Z)    
 

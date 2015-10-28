@@ -50,9 +50,9 @@ contains
     call weakrate_inputparser(parameters,this)
 
     ! construct rate approximation object
-    if(this%priority(5).ne.0)then
-       this%approx = new_RateApprox()
-    endif
+    !if(this%priority(5).ne.0)then
+    this%approx = new_RateApprox()
+    !endif
 
     ! construct rate table objects
     nfiles = 4
@@ -155,7 +155,11 @@ contains
     
     ! first check if the nucleus is in a table
     do i=1,size(this%tables)
-       idxtable = this%tables(i)%nucleus_index(A,Z)
+       if (A.gt.size(this%tables(i)%nucleus_index,dim=1).or.Z.gt.size(this%tables(i)%nucleus_index,dim=2)) then
+          idxtable = 0
+       else
+          idxtable = this%tables(i)%nucleus_index(A,Z)
+       endif
        if (idxtable.ne.0)then
           idxtable = i
           exit
