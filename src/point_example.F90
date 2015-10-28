@@ -3,6 +3,7 @@ program point_example
 
   use nulib
   use inputparser
+  use nuclei_hempel, only : set_up_Hempel
   implicit none
 
   !many people use different number of species, this is to denote how they are devided up.

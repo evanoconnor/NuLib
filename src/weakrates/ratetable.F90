@@ -3,7 +3,7 @@ module class_ratetable
 
   implicit none
   private
-  public :: RateTable, new_RateTable, weakrates
+  public :: RateTable, new_RateTable, weakrates_table
 
   ! constructors declaration
   interface new_RateTable
@@ -13,6 +13,7 @@ module class_ratetable
   ! members
   type RateTable
      integer nrho,nt9,nnuc
+     real*8 :: range_t9(2), range_lrhoye(2)
      real*8, allocatable,dimension(:,:,:,:) :: rates  ! rates[species,T,rhoYe,rates+uf(indexed by nrate)]
      real*8, allocatable,dimension(:,:,:,:,:,:) :: C ! Matrix of spline coefficients (see desc. below)
      real*8, allocatable,dimension(:,:) :: nuclear_species ! nuclear_species[nucleus, (Q, A, Z)]
@@ -167,10 +168,16 @@ contains
 
 20  close(1)
 
+    this%range_t9(1)=minval(this%t9dat)
+    this%range_t9(2)=maxval(this%t9dat)
+    this%range_lrhoye(1)=minval(this%rhoyedat)
+    this%range_lrhoye(2)=maxval(this%rhoyedat)
+
     write(*,"(A29,I3,A15,I2,A1,I2,A29)") &
          "Done reading weak rates for ",nuc,&
          " nuclei across ",this%nrho,"/",this%nt9,&
          " log10(rhoYe)/T9 grid points."
+    !write(*,*) "   GK , log10(g/cm3) : ", this%range_t9, ",", this%range_lrhoye
 
     ! build array of interpolating spline coefficients
     this%nnuc = nuc    
@@ -292,7 +299,7 @@ contains
 
 !------------------------------------------------------------------------------------!   
 
-  function weakrates(this,A,Z,query_t9,query_lrhoye,idxrate) result(interp_val) 
+  function weakrates_table(this,A,Z,query_t9,query_lrhoye,idxrate) result(interp_val) 
 
     type(RateTable), intent(inout) :: this
 
@@ -332,7 +339,7 @@ contains
 
     return
 
-  end function weakrates
+  end function weakrates_table
 
 !------------------------------------------------------------------------------------!   
   

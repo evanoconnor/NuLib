@@ -27,16 +27,20 @@ contains
   
   function new_RateApproxDefault() result(this)
     !""" Default RateApprox constructor """
-    
-    type(RateApprox) this
 
+    use nuclei_hempel
+    implicit none
+    type(RateApprox) this
+    
     ! Initialize Hempel EOS dependencies 
     call get_Hempel_number_of_species(this%nspecies) ! returns the total number of nuclei
 
     allocate(this%nuclei_A(this%nspecies))
     allocate(this%nuclei_Z(this%nspecies))
+    allocate(this%number_densities(this%nspecies))
+    allocate(this%mass_fractions(this%nspecies))
     
-    call get_Hempel_As_and_Zs(this%nuclei_A,this%nuclei_Z)
+    call get_Hempel_As_and_Zs(this%nuclei_A,this%nuclei_Z)    
 
     write(*,"(A25,I4,A9)") " Done loading masses for ", this%nspecies," species."
   end function new_RateApproxDefault
@@ -46,7 +50,7 @@ contains
   function return_hempel_qec(A,Z_p,Z_d) result(q)
 
     use sfho_frdm_composition_module, only : sfho_mass
-    use nulib, only : hempel_lookup_table
+    use nuclei_hempel, only : hempel_lookup_table
 
     implicit none
     real*8 :: q

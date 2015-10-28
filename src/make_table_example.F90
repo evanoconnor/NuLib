@@ -1,10 +1,11 @@
 !-*-f90-*-
 program make_table_example
-
+  
   use nulib
   use inputparser
+  use nuclei_hempel
 #if WEAK_RATES
-  use weak_rates
+  use weakrates_interface
 #endif
   implicit none
 #ifdef __MPI__
@@ -120,7 +121,7 @@ program make_table_example
 #endif
 #if WEAK_RATES
   if (add_nue_emission_weakinteraction_ecap.or.add_anue_emission_weakinteraction_poscap) then
-     call readrates(table_bounds) !read in weak rates table and build interpolant functions
+     call initialize_wirlwind(parameters_filename)
   else
      stop "The WEAK_RATES preprocessor flag is set, but no weak interactions are requested. &
           Did you forget to turn them on in requested_interactions.inc?"
@@ -254,8 +255,7 @@ program make_table_example
 #if WEAK_RATES
   !$OMP PARALLEL DO PRIVATE(itemp,iye,local_emissivity,local_absopacity,local_scatopacity, &
   !$OMP ns,ng,eos_variables,keytemp,keyerr,matter_prs,matter_ent,matter_cs2,matter_dedt, &
-  !$OMP matter_dpderho,matter_dpdrhoe) COPYIN(rates,nuclear_species,nuclei_A,nuclei_Z,t9dat,rhoYedat, &
-  !$OMP C,nucleus_index,nuc,nrho,nt9,nnuc,nrate,nspecies,ifiles,file_priority)
+  !$OMP matter_dpderho,matter_dpdrhoe,weakratelib,hempel_lookup_table)
   !loop over rho,temp,ye of table, do each point
 #else
   !$OMP PARALLEL DO PRIVATE(itemp,iye,local_emissivity,local_absopacity,local_scatopacity, &

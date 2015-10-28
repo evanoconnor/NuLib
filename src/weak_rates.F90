@@ -34,6 +34,8 @@
    contains
 
      subroutine readrates(table_bounds)
+
+       use nuclei_hempel
        
        character lindex
        character*200 :: filename,line,params
@@ -383,7 +385,7 @@
      function return_hempel_qec(A,Z_p,Z_d) result(q)
 
        use sfho_frdm_composition_module, only : sfho_mass
-       use nulib, only : hempel_lookup_table
+       use nuclei_hempel, only : hempel_lookup_table
 
        implicit none
        real*8 :: q
@@ -802,7 +804,8 @@
           eos_variables,&
           emissivity)
        use nulib, only : total_eos_variables, number_groups, &
-            tempindex, hempel_lookup_table, mueindex, rhoindex, yeindex, kelvin_to_mev
+            tempindex, mueindex, rhoindex, yeindex, kelvin_to_mev
+       use nuclei_hempel
        use sfho_frdm_composition_module, only : sfho_mass
 
        integer i
