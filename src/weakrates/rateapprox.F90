@@ -10,7 +10,6 @@ module class_rateapproximation
      module procedure new_RateApproxDefault
   end interface new_RateApprox
 
-  ! members
   type RateApprox
      integer nspecies
      integer, dimension(:),pointer :: nuclei_A ! Hempel EOS nuclei
@@ -19,19 +18,23 @@ module class_rateapproximation
      real*8, dimension(:),pointer :: mass_fractions
   end type RateApprox
 
+  ! class instance
+  type(RateApprox), save, target :: this
+
+  !$OMP THREADPRIVATE(this)
   
   ! methods
 contains
 
 !------------------------------------------------------------------------------------!
   
-  function new_RateApproxDefault() result(this)
+  function new_RateApproxDefault() result(approx)
     !""" Default RateApprox constructor """
 
     use nuclei_hempel
     implicit none
-    type(RateApprox) this
-    
+    type(RateApprox), pointer :: approx
+       
     ! Initialize Hempel EOS dependencies 
     call get_Hempel_number_of_species(this%nspecies) ! returns the total number of nuclei
 
@@ -48,6 +51,10 @@ contains
     call get_Hempel_As_and_Zs(this%nuclei_A,this%nuclei_Z)    
 
     write(*,"(A25,I4,A9)") " Done loading masses for ", this%nspecies," species."
+
+    approx => this
+    !$OMP PARALLEL COPYIN(this)
+    !$OMP END PARALLEL    
   end function new_RateApproxDefault
   
 !------------------------------------------------------------------------------------!

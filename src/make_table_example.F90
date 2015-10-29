@@ -255,7 +255,7 @@ program make_table_example
 #if WEAK_RATES
   !$OMP PARALLEL DO PRIVATE(itemp,iye,local_emissivity,local_absopacity,local_scatopacity, &
   !$OMP ns,ng,eos_variables,keytemp,keyerr,matter_prs,matter_ent,matter_cs2,matter_dedt, &
-  !$OMP matter_dpderho,matter_dpdrhoe,hempel_lookup_table) COPYIN(weakratelib)
+  !$OMP matter_dpderho,matter_dpdrhoe,hempel_lookup_table)
   !loop over rho,temp,ye of table, do each point
 #else
   !$OMP PARALLEL DO PRIVATE(itemp,iye,local_emissivity,local_absopacity,local_scatopacity, &

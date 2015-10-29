@@ -9,8 +9,7 @@ module weakrates_interface
   public :: weakratelib, initialize_wirlwind, microphysical_electron_capture
 
   ! members (singleton)
-  type(RateLibrary),save :: weakratelib
-
+  type(RateLibrary) :: weakratelib
   !$OMP THREADPRIVATE(weakratelib)
 
   ! methods
@@ -21,6 +20,8 @@ contains
   subroutine initialize_wirlwind(parameters_filename)
     character*(*) parameters_filename
     weakratelib = new_RateLibrary(parameters_filename)
+    !$OMP PARALLEL COPYIN(weakratelib)
+    !$OMP END PARALLEL
   end subroutine initialize_wirlwind
 
 !------------------------------------------------------------------------------------!
@@ -94,7 +95,7 @@ contains
           lcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,2)
           lnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,3)
           !using Qgs from table as seed for qec_solver
-          qec_eff = weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z),1) 
+          qec_eff = weakratelib%tables(idxtable)%nuclear_species(gindex(A,Z),1) 
           avgenergy(1) = 10.0d0**lnu/(10.0d0**lcap + 10.0d0**lbeta) 
           avgenergy(2) = qec_eff !necessary to fulfill the first comparison in qec_solver
        else if (neutrino_species.eq.2) then
@@ -103,7 +104,7 @@ contains
           lbeta = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,4)
           lcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,5)
           lnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,6)         
-          qec_eff = -weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z),1) 
+          qec_eff = -weakratelib%tables(idxtable)%nuclear_species(gindex(A,Z),1) 
           avgenergy(1) = 10.0d0**lnu/(10.0d0**lcap + 10.0d0**lbeta)   
           avgenergy(2) = qec_eff
        else
@@ -437,7 +438,7 @@ contains
     emissivity = 0.0d0
     logrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
     t9 = (eos_variables(tempindex)/kelvin_to_mev)*1.0d-9
-
+    
     do i=1,weakratelib%approx%nspecies 
 
        if(weakratelib%approx%number_densities(i).eq.0.0d0)cycle
@@ -448,7 +449,7 @@ contains
        !if rate data from a table is not present and A>4 with iapprox nonzero,
        !use the parameterized rate function, else skip this nucleus
        ! check if rate exists in a table
-       if (size(weakratelib%tables).ne.0)then
+       if (weakratelib%ntables.ne.0)then
           idxtable = in_table(weakratelib,A,Z,logrhoYe,t9)
        endif
 
@@ -469,7 +470,6 @@ contains
              cycle
           end if
        end if
-
        
 
        !emissivity calculation

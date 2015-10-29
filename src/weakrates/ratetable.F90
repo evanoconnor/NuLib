@@ -22,7 +22,6 @@ module class_ratetable
      integer, pointer,dimension(:,:) :: nucleus_index ! output array index for a given (A,Z) in tables
   end type RateTable
 
-  
 ! methods
 contains
 
@@ -37,7 +36,6 @@ contains
 
     ! return value
     type(RateTable) :: this
-    !allocate(this%nucleus_index(nuc,nuc))
 
     this%nrho = nrho
     this%nnuc = nnuc
@@ -64,7 +62,7 @@ contains
     character*200, intent(in) :: filename
     character lindex
     character*200 :: line,params
-    integer i,j,dim,A,Z,nfile,nuc
+    integer i,j,dim,A,Z,nfile,nuc,max_A,max_Z
     real*8 :: t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu
     real*8 :: lrho_prior,nucA,nucZ,nucQ
     logical continue_reading
@@ -73,6 +71,8 @@ contains
     this%nrho = 0
     this%nt9 = 0
     dim = 1
+    max_A=0
+    max_Z=0
     allocate(this%nucleus_index(1000,1000))
     this%nucleus_index = 0
 
@@ -87,6 +87,8 @@ contains
           read(line(index(line(1:),"z=")+2:index(line(1:),"z=")+4),*) nucZ
           A = int(nucA)
           Z = int(nucZ)+1
+          max_A = max(max_A,A)
+          max_Z = max(max_Z,Z)
           if(this%nucleus_index(A,Z).ne.0) then
              continue_reading = .false.
              cycle
@@ -109,7 +111,7 @@ contains
 
 
     deallocate(this%nucleus_index)
-    allocate(this%nucleus_index(nuc,nuc))
+    allocate(this%nucleus_index(max_A,max_A))
     allocate(this%rates(nuc,this%nt9/this%nrho,this%nrho,7))
     allocate(this%nuclear_species(nuc,3))
     allocate(this%t9dat(this%nt9/this%nrho))
@@ -184,6 +186,8 @@ contains
     allocate(this%C(this%nnuc,7,2,this%nrho,this%nt9,4))  
     call monotonic_interp_2d(this)
 
+    !$OMP PARALLEL FIRSTPRIVATE(this)
+    !$OMP END PARALLEL
   end function new_RateTableFromFile
   
 !------------------------------------------------------------------------------------!   
@@ -299,19 +303,16 @@ contains
 
 !------------------------------------------------------------------------------------!   
 
-  function weakrates_table(this,A,Z,query_t9,query_lrhoye,idxrate) result(interp_val) 
+  function weakrates_table(this,idxnuc,query_t9,query_lrhoye,idxrate) result(interp_val) 
 
     type(RateTable), intent(inout) :: this
 
     real*8, allocatable, dimension(:,:) :: Data2d
     real*8 :: query_t9,query_lrhoye,value,interp_val
-    integer i,j,counter,dim,idxnuc,A,Z,idxrate
+    integer i,j,counter,dim,idxnuc,idxrate
     dim = 1
-    print*,"here"
     allocate(Data2d(this%nrho,2))
-    print *, "here2"
-    print*, this%nucleus_index(A,Z)
-    idxnuc = this%nucleus_index(A,Z)
+
 
     do i=1,this%nrho
        do j=1,this%nt9 
@@ -337,6 +338,7 @@ contains
        Data2d(i,2) = value
     end do
 
+    if (this%nrho.eq.0) stop "wtf"
     call monotonic_interpolator(this,idxnuc,idxrate,2,1,this%nrho,Data2d)
     interp_val = interpolant(this,idxnuc,idxrate,2,1,query_lrhoye)
 

@@ -7,7 +7,7 @@ module class_ratelibrary
   
   implicit none
   private
-  public :: RateLibrary, new_RateLibrary, in_table, return_weakrate
+  public :: RateLibrary, new_RateLibrary, in_table, return_weakrate, gindex
 
   ! constructors declaration
   interface new_RateLibrary
@@ -18,8 +18,9 @@ module class_ratelibrary
      module procedure return_weakrate_dynamic_search, return_weakrate_from_table, return_weakrate_from_approx
   end interface return_weakrate
 
-  ! members
   type RateLibrary
+     ! number of allocated tables
+     integer :: ntables
      ! array of rate tables
      type(RateTable), dimension(:), pointer :: tables
      ! approximate weak rate object
@@ -29,39 +30,45 @@ module class_ratelibrary
      ! table priorities
      integer, dimension(NUM_TABLES+1) :: priority
      ! file ordering
-     integer, dimension(NUM_TABLES) :: ifiles   
+     integer, dimension(NUM_TABLES) :: ifiles
   end type RateLibrary
+  
+  ! class instance
+  type(RateLibrary), save, target :: this
+  ! members
+  type(RateTable), dimension(NUM_TABLES), save, target :: ratetables
+  integer, dimension(500,500),save :: gindex
 
+  !$OMP THREADPRIVATE(this,gindex,ratetables)
   
   ! methods
 contains
 
 !------------------------------------------------------------------------------------!
   
-  function new_RateLibraryDefault(parameters) result(this)
+  function new_RateLibraryDefault(parameters) result(library)
     !""" Default RateLibrary constructor """
     
     implicit none
-    type(RateLibrary) :: this
+    type(RateLibrary), pointer :: library
     character*200 :: parameters
-    integer :: idxfiles=0,nfiles=0,i=0,j=0
+    integer :: idxfiles=0,nfiles=0,i=0,j=0,k=0
     character*200 :: filename
-    
+
     call weakrate_inputparser(parameters,this)
 
     ! construct rate approximation object
-    !if(this%priority(5).ne.0)then
     this%approx = new_RateApprox()
-    !endif
-
+    
     ! construct rate table objects
     nfiles = 4
+    this%ntables = 0    
     this%ifiles = 0
     do i=1,nfiles
        if(this%priority(i).gt.0)idxfiles = idxfiles + 1
     end do
     nfiles = idxfiles
-    allocate(this%tables(nfiles))
+!    allocate(this%ratetables(nfiles))
 
     do i=1,size(this%ifiles)       ! order to load file
        do j=1,size(this%ifiles)    ! files in order
@@ -75,10 +82,26 @@ contains
           if(this%ifiles(i).eq.0) cycle
           filename=this%files_to_load(this%ifiles(i))
           print *, ">> Loading table  = ",filename
-          this%tables(i) = new_RateTable(filename)          
+          ratetables(i) = new_RateTable(filename)
+          this%ntables = this%ntables + 1
+       enddo
+       do i=this%ntables,1,-1
+          do j=1,size(ratetables(i)%nucleus_index,dim=1)
+             do k=1,size(ratetables(i)%nucleus_index,dim=2)
+                gindex(j,k) = ratetables(i)%nucleus_index(j,k)
+                print *,j,k,gindex(j,k)
+             enddo
+          enddo          
        enddo
     endif
+
+    library => this
+    this%tables => ratetables  
     
+    !$OMP PARALLEL COPYIN(this,gindex,ratetables)
+    !$OMP END PARALLEL
+
+    return
   end function new_RateLibraryDefault
   
 !------------------------------------------------------------------------------------!
@@ -90,9 +113,9 @@ contains
     integer :: A, Z, idxtable, idxrate
     real*8 :: query_t9, query_lrhoye
     real*8 :: rate
-
-    if (idxtable.eq.0) print*, "idxtable is 0, how did this happen"
-    rate = weakrates_table(this%tables(idxtable),A,Z,query_t9,query_lrhoye,idxrate)
+    
+    if (idxtable.eq.0) print*, "idxtable is 0, how did this happen",A,Z,gindex(A,Z)
+    rate = weakrates_table(ratetables(idxtable),gindex(A,Z),query_t9,query_lrhoye,idxrate)
     return
     
   end function return_weakrate_from_table
@@ -139,7 +162,7 @@ contains
        endif
     endif
     ! interpolate correct rate table - defined by the priority hierarchy set in parameters
-    rate = weakrates_table(this%tables(idxtable),A,Z,t9,lrhoye,idxrate)
+    rate = weakrates_table(ratetables(idxtable),gindex(A,Z),t9,lrhoye,idxrate)
     return
 
   end function return_weakrate_dynamic_search
@@ -158,12 +181,11 @@ contains
     min = 0.0d0
     max = 0.0d0
     ! first check if the nucleus is in a table
-    do i=1,size(this%tables)
-       print *, size(this%tables(i)%nucleus_index,dim=1), size(this%tables(i)%nucleus_index,dim=1)
-       if (A.gt.size(this%tables(i)%nucleus_index,dim=1).or.Z.gt.size(this%tables(i)%nucleus_index,dim=2)) then
+    do i=1,this%ntables
+       if (A.gt.size(ratetables(i)%nucleus_index,dim=1).or.Z.gt.size(ratetables(i)%nucleus_index,dim=2)) then
           idxtable = 0
        else
-          idxtable = this%tables(i)%nucleus_index(A,Z)
+          idxtable = gindex(A,Z) !ratetables(i)%nucleus_index(A,Z)
        endif
        if (idxtable.ne.0)then
           idxtable = i
@@ -176,9 +198,9 @@ contains
     endif
 
     ! check if the requested point is in the grid    
-    if (t9.ge.this%tables(idxtable)%range_t9(1).and.t9.le.this%tables(idxtable)%range_t9(2)&
+    if (t9.ge.ratetables(idxtable)%range_t9(1).and.t9.le.ratetables(idxtable)%range_t9(2)&
          .and.&
-         lrhoye.ge.this%tables(idxtable)%range_lrhoye(1).and.lrhoye.le.this%tables(idxtable)%range_lrhoye(2)) then
+         lrhoye.ge.ratetables(idxtable)%range_lrhoye(1).and.lrhoye.le.ratetables(idxtable)%range_lrhoye(2)) then
     else
        idxtable = 0
     endif
