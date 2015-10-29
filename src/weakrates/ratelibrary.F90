@@ -21,7 +21,7 @@ module class_ratelibrary
   ! members
   type RateLibrary
      ! array of rate tables
-     type(RateTable), allocatable, dimension(:) :: tables
+     type(RateTable), dimension(:), pointer :: tables
      ! approximate weak rate object
      type(RateApprox) :: approx
      ! weak interaction rate data table file names
@@ -90,7 +90,8 @@ contains
     integer :: A, Z, idxtable, idxrate
     real*8 :: query_t9, query_lrhoye
     real*8 :: rate
-    
+
+    if (idxtable.eq.0) print*, "idxtable is 0, how did this happen"
     rate = weakrates_table(this%tables(idxtable),A,Z,query_t9,query_lrhoye,idxrate)
     return
     
@@ -158,6 +159,7 @@ contains
     max = 0.0d0
     ! first check if the nucleus is in a table
     do i=1,size(this%tables)
+       print *, size(this%tables(i)%nucleus_index,dim=1), size(this%tables(i)%nucleus_index,dim=1)
        if (A.gt.size(this%tables(i)%nucleus_index,dim=1).or.Z.gt.size(this%tables(i)%nucleus_index,dim=2)) then
           idxtable = 0
        else

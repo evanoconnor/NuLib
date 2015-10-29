@@ -14,12 +14,12 @@ module class_ratetable
   type RateTable
      integer nrho,nt9,nnuc
      real*8 :: range_t9(2), range_lrhoye(2)
-     real*8, allocatable,dimension(:,:,:,:) :: rates  ! rates[species,T,rhoYe,rates+uf(indexed by nrate)]
-     real*8, allocatable,dimension(:,:,:,:,:,:) :: C ! Matrix of spline coefficients (see desc. below)
-     real*8, allocatable,dimension(:,:) :: nuclear_species ! nuclear_species[nucleus, (Q, A, Z)]
-     real*8, allocatable,dimension(:) :: t9dat
-     real*8, allocatable,dimension(:) :: rhoyedat
-     integer, allocatable,dimension(:,:) :: nucleus_index ! output array index for a given (A,Z) in tables
+     real*8, pointer,dimension(:,:,:,:) :: rates  ! rates[species,T,rhoYe,rates+uf(indexed by nrate)]
+     real*8, pointer,dimension(:,:,:,:,:,:) :: C ! Matrix of spline coefficients (see desc. below)
+     real*8, pointer,dimension(:,:) :: nuclear_species ! nuclear_species[nucleus, (Q, A, Z)]
+     real*8, pointer,dimension(:) :: t9dat
+     real*8, pointer,dimension(:) :: rhoyedat
+     integer, pointer,dimension(:,:) :: nucleus_index ! output array index for a given (A,Z) in tables
   end type RateTable
 
   
@@ -307,7 +307,10 @@ contains
     real*8 :: query_t9,query_lrhoye,value,interp_val
     integer i,j,counter,dim,idxnuc,A,Z,idxrate
     dim = 1
+    print*,"here"
     allocate(Data2d(this%nrho,2))
+    print *, "here2"
+    print*, this%nucleus_index(A,Z)
     idxnuc = this%nucleus_index(A,Z)
 
     do i=1,this%nrho

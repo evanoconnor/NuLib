@@ -9,7 +9,9 @@ module weakrates_interface
   public :: weakratelib, initialize_wirlwind, microphysical_electron_capture
 
   ! members (singleton)
-  type(RateLibrary) :: weakratelib
+  type(RateLibrary),save :: weakratelib
+
+  !$OMP THREADPRIVATE(weakratelib)
 
   ! methods
 contains
@@ -48,7 +50,7 @@ contains
     integer :: idxtable
 
 
-    logical :: approx_rate_flag = .false.
+    logical :: approx_rate_flag
     real*8 :: emissivity(number_groups) !final answer in erg/cm^/s/srad/MeV
     real*8 :: avgenergy(2)
     real*8 :: GPQ_interval(2)
@@ -83,6 +85,7 @@ contains
     if(approx_rate_flag) then
        qec_eff = return_hempel_qec(A,Z,Z-1)
     else
+       if (approx_rate_flag.or.idxtable.eq.0) stop "wtf"
        !interpolating rates for given eos_variables and calculating 
        !average neutrino energy from rates for nue, emissivities are
        !from the betaplus direction; for anue, emissivities in the betaminus direction

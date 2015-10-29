@@ -13,10 +13,10 @@ module class_rateapproximation
   ! members
   type RateApprox
      integer nspecies
-     integer, allocatable,dimension(:) :: nuclei_A ! Hempel EOS nuclei
-     integer, allocatable,dimension(:) :: nuclei_Z ! Hempel EOS nuclei
-     real*8, allocatable,dimension(:) :: number_densities
-     real*8, allocatable,dimension(:) :: mass_fractions
+     integer, dimension(:),pointer :: nuclei_A ! Hempel EOS nuclei
+     integer, dimension(:),pointer :: nuclei_Z ! Hempel EOS nuclei
+     real*8, dimension(:),pointer :: number_densities
+     real*8, dimension(:),pointer :: mass_fractions
   end type RateApprox
 
   
