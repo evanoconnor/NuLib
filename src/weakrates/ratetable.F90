@@ -296,9 +296,9 @@ contains
           end if
        end do
     end do
-
+    
     return
-
+    
   end subroutine monotonic_interpolator
 
 !------------------------------------------------------------------------------------!   
@@ -338,7 +338,6 @@ contains
        Data2d(i,2) = value
     end do
 
-    if (this%nrho.eq.0) stop "wtf"
     call monotonic_interpolator(this,idxnuc,idxrate,2,1,this%nrho,Data2d)
     interp_val = interpolant(this,idxnuc,idxrate,2,1,query_lrhoye)
 

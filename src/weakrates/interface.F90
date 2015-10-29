@@ -47,8 +47,7 @@ contains
     real*8, intent(in) :: eos_variables(total_eos_variables)
     real*8, intent(in) :: number_density
     integer, intent(in) :: neutrino_species
-    ! table index
-    integer :: idxtable
+    integer,intent(in) :: idxtable
 
 
     logical :: approx_rate_flag
@@ -64,13 +63,15 @@ contains
     real*8 :: t9
     real*8 :: lrhoYe
     real*8 :: nu_spectrum_eval
-    integer i,ng,j
+    integer i,ng,j, omp_get_thread_num
 
     !local rate variables
     real*8 :: lbeta      !beta decay rate (plus or minus depending on neutrino species)
     real*8 :: lcap       !capture rate (electron or positron for nue or anue)
     real*8 :: lnu        !nue or anue energy loss rate
 
+
+    !print *, idxtable, omp_get_thread_num()
     approx_rate_flag = .false.
     GPQ_interval = 0.0d0
     GPQ_coef(:) = 0.0d0
@@ -136,17 +137,13 @@ contains
                0,eos_variables(tempindex),qec_eff,&
                eos_variables(mueindex)-m_e))/spectra 
        else
-          normalization_constant = &
-               (10.0d0**return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,1)&
-               +10.0d0**return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,2))/spectra
+          normalization_constant = (10.0d0**lbeta+10.0d0**lcap)/spectra
        end if
     else if (neutrino_species.eq.2) then
        if (approx_rate_flag) then
           stop "There is currently no parameterization applicable for positron capture"
        else
-          normalization_constant = &
-               (10.0d0**return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,4)&
-               +10.0d0**return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,5))/spectra
+          normalization_constant = (10.0d0**lbeta+10.0d0**lcap)/spectra
        end if
     end if
 
@@ -425,9 +422,9 @@ contains
     real*8, dimension(number_groups) :: emissivity
     real*8, dimension(number_groups) :: emissivity_temp
     real*8 :: logrhoYe,t9
-    integer :: idxtable = 0, A, Z
+    integer :: idxtable, A, Z ! if idxtable=0 here, omp fails
 
-
+    idxtable = 0
 
     !Hempel EOS and number of species are set up in readrates
     call nuclei_distribution_Hempel(&
