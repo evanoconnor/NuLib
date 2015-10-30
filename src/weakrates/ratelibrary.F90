@@ -52,16 +52,20 @@ contains
     implicit none
     type(RateLibrary), pointer :: library
     character*200 :: parameters
-    integer :: idxfiles=0,nfiles=0,i=0,j=0,k=0
+    integer :: idxfiles,nfiles,i  ,j  ,k
     character*200 :: filename
 
+    !$OMP CRITICAL
     call weakrate_inputparser(parameters,this)
+    !$OMP END CRITICAL
+
 
     ! construct rate approximation object
     this%approx = new_RateApprox()
     
     ! construct rate table objects
     nfiles = 4
+    idxfiles = 0
     this%ntables = 0    
     this%ifiles = 0
     do i=1,nfiles
@@ -89,7 +93,6 @@ contains
           do j=1,size(ratetables(i)%nucleus_index,dim=1)
              do k=1,size(ratetables(i)%nucleus_index,dim=2)
                 gindex(j,k) = ratetables(i)%nucleus_index(j,k)
-                print *,j,k,gindex(j,k)
              enddo
           enddo          
        enddo

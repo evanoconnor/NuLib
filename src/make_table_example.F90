@@ -121,7 +121,7 @@ program make_table_example
 #endif
 #if WEAK_RATES
   if (add_nue_emission_weakinteraction_ecap.or.add_anue_emission_weakinteraction_poscap) then
-     call initialize_wirlwind(parameters_filename)
+     call initialize_weakratelib(parameters_filename)
   else
      stop "The WEAK_RATES preprocessor flag is set, but no weak interactions are requested. &
           Did you forget to turn them on in requested_interactions.inc?"

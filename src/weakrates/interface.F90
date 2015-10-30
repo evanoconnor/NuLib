@@ -1,12 +1,12 @@
 !-*-f90-*-
 module weakrates_interface
-  !""" Main interface between wirlwind and nulib """
+  !""" Main interface between weakratelib and nulib """
     
   use class_ratelibrary
   
   implicit none
   private
-  public :: weakratelib, initialize_wirlwind, microphysical_electron_capture
+  public :: initialize_weakratelib, microphysical_electron_capture
 
   ! members (singleton)
   type(RateLibrary) :: weakratelib
@@ -17,12 +17,12 @@ contains
 
 !------------------------------------------------------------------------------------!
   
-  subroutine initialize_wirlwind(parameters_filename)
+  subroutine initialize_weakratelib(parameters_filename)
     character*(*) parameters_filename
-    weakratelib = new_RateLibrary(parameters_filename)
     !$OMP PARALLEL COPYIN(weakratelib)
+    weakratelib = new_RateLibrary(parameters_filename)
     !$OMP END PARALLEL
-  end subroutine initialize_wirlwind
+  end subroutine initialize_weakratelib
 
 !------------------------------------------------------------------------------------!
 
@@ -87,7 +87,6 @@ contains
     if(approx_rate_flag) then
        qec_eff = return_hempel_qec(A,Z,Z-1)
     else
-       if (approx_rate_flag.or.idxtable.eq.0) stop "wtf"
        !interpolating rates for given eos_variables and calculating 
        !average neutrino energy from rates for nue, emissivities are
        !from the betaplus direction; for anue, emissivities in the betaminus direction

@@ -76,6 +76,7 @@ contains
     allocate(this%nucleus_index(1000,1000))
     this%nucleus_index = 0
 
+    !$OMP CRITICAL
     open(1,file=filename,status='old')
     do
        read(1,'(A)',end=10) line
@@ -122,6 +123,7 @@ contains
     this%nrho = 0
     this%nt9 = 0
     this%nucleus_index = 0
+
     open(1,file=filename,status='old')
     do
        read(1,'(A)',end=20) line
@@ -169,6 +171,9 @@ contains
     end do
 
 20  close(1)
+
+    !$OMP END CRITICAL
+
 
     this%range_t9(1)=minval(this%t9dat)
     this%range_t9(2)=maxval(this%t9dat)
