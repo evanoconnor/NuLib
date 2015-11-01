@@ -7,7 +7,7 @@ module class_ratelibrary
   
   implicit none
   private
-  public :: RateLibrary, new_RateLibrary, in_table, return_weakrate, gindex
+  public :: RateLibrary, new_RateLibrary, in_table, return_weakrate
 
   ! constructors declaration
   interface new_RateLibrary
@@ -33,13 +33,14 @@ module class_ratelibrary
      integer, dimension(NUM_TABLES) :: ifiles
   end type RateLibrary
   
-  ! class instance
+  ! class instance (singleton)
   type(RateLibrary), save, target :: this
+
   ! members
   type(RateTable), dimension(NUM_TABLES), save, target :: ratetables
-  integer, dimension(500,500),save :: gindex
+  !integer, dimension(500,500),save :: gindex
 
-  !$OMP THREADPRIVATE(this,gindex,ratetables)
+  !$OMP THREADPRIVATE(this,ratetables)
   
   ! methods
 contains
@@ -89,19 +90,12 @@ contains
           ratetables(i) = new_RateTable(filename)
           this%ntables = this%ntables + 1
        enddo
-       do i=this%ntables,1,-1
-          do j=1,size(ratetables(i)%nucleus_index,dim=1)
-             do k=1,size(ratetables(i)%nucleus_index,dim=2)
-                gindex(j,k) = ratetables(i)%nucleus_index(j,k)
-             enddo
-          enddo          
-       enddo
     endif
 
     library => this
     this%tables => ratetables  
     
-    !$OMP PARALLEL COPYIN(this,gindex,ratetables)
+    !$OMP PARALLEL COPYIN(this,ratetables)
     !$OMP END PARALLEL
 
     return
@@ -117,8 +111,7 @@ contains
     real*8 :: query_t9, query_lrhoye
     real*8 :: rate
     
-    if (idxtable.eq.0) print*, "idxtable is 0, how did this happen",A,Z,gindex(A,Z)
-    rate = weakrates_table(ratetables(idxtable),gindex(A,Z),query_t9,query_lrhoye,idxrate)
+    rate = weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),query_t9,query_lrhoye,idxrate)
     return
     
   end function return_weakrate_from_table
@@ -165,7 +158,7 @@ contains
        endif
     endif
     ! interpolate correct rate table - defined by the priority hierarchy set in parameters
-    rate = weakrates_table(ratetables(idxtable),gindex(A,Z),t9,lrhoye,idxrate)
+    rate = weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),t9,lrhoye,idxrate)
     return
 
   end function return_weakrate_dynamic_search
@@ -188,7 +181,7 @@ contains
        if (A.gt.size(ratetables(i)%nucleus_index,dim=1).or.Z.gt.size(ratetables(i)%nucleus_index,dim=2)) then
           idxtable = 0
        else
-          idxtable = gindex(A,Z) !ratetables(i)%nucleus_index(A,Z)
+          idxtable = ratetables(i)%nucleus_index(A,Z)
        endif
        if (idxtable.ne.0)then
           idxtable = i

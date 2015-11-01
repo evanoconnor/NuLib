@@ -95,7 +95,7 @@ contains
           lcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,2)
           lnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,3)
           !using Qgs from table as seed for qec_solver
-          qec_eff = weakratelib%tables(idxtable)%nuclear_species(gindex(A,Z),1) 
+          qec_eff = weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z),1) 
           avgenergy(1) = 10.0d0**lnu/(10.0d0**lcap + 10.0d0**lbeta) 
           avgenergy(2) = qec_eff !necessary to fulfill the first comparison in qec_solver
        else if (neutrino_species.eq.2) then
@@ -104,7 +104,7 @@ contains
           lbeta = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,4)
           lcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,5)
           lnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,6)         
-          qec_eff = -weakratelib%tables(idxtable)%nuclear_species(gindex(A,Z),1) 
+          qec_eff = -weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z),1) 
           avgenergy(1) = 10.0d0**lnu/(10.0d0**lcap + 10.0d0**lbeta)   
           avgenergy(2) = qec_eff
        else
@@ -479,6 +479,7 @@ contains
     end do
     weakratelib%approx%number_densities = 0.0d0
     weakratelib%approx%mass_fractions = 0.0d0
+!    print *, sum(emissivity)
     return
 
   end subroutine microphysical_electron_capture

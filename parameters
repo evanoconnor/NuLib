@@ -10,9 +10,9 @@ ffn_rates		=	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/extra_code_and_tables/
 ## Rate table priority hierarchy ##
 ilmp			=	1
 ilmsh			=	0
-ioda			=	0
+ioda			=	2
 iffn			=	0
-iapprox			=	2
+iapprox			=	3
 
 # 0 indicates the table will not be used
 # 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, they will be ignored.
