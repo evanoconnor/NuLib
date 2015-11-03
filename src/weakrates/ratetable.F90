@@ -51,7 +51,7 @@ contains
 
 !------------------------------------------------------------------------------------!   
 
-  function new_RateTableFromFile(filename) result(this)
+  function new_RateTableFromFile(directory,filename) result(this)
     ! """ RateTable constructor (from data file) """
 
     implicit none
@@ -60,6 +60,8 @@ contains
 
     ! inputs
     character*200, intent(in) :: filename
+    character*200 :: path
+    character*(*) directory
     character lindex
     character*200 :: line,params
     integer i,j,dim,A,Z,nfile,nuc,max_A,max_Z
@@ -75,9 +77,12 @@ contains
     max_Z=0
     allocate(this%nucleus_index(1000,1000))
     this%nucleus_index = 0
+    path = trim(adjustl(directory))//trim(adjustl(filename))
 
+    call print_reference(filename)
+    
     !$OMP CRITICAL
-    open(1,file=filename,status='old')
+    open(1,file=path,status='old')
     do
        read(1,'(A)',end=10) line
        read(line,*) lindex
@@ -124,7 +129,7 @@ contains
     this%nt9 = 0
     this%nucleus_index = 0
 
-    open(1,file=filename,status='old')
+    open(1,file=path,status='old')
     do
        read(1,'(A)',end=20) line
        read(line,*) lindex
@@ -174,17 +179,21 @@ contains
 
     !$OMP END CRITICAL
 
-
     this%range_t9(1)=minval(this%t9dat)
     this%range_t9(2)=maxval(this%t9dat)
     this%range_lrhoye(1)=minval(this%rhoyedat)
     this%range_lrhoye(2)=maxval(this%rhoyedat)
-
-    write(*,"(A29,I3,A15,I2,A1,I2,A29)") &
-         "Done reading weak rates for ",nuc,&
+    
+    !$OMP SINGLE
+    write(*,"(A37,I3,A15,I2,A1,I2,A29)") &
+         "      - Done reading weak rates for ",nuc,&
          " nuclei across ",this%nrho,"/",this%nt9,&
          " log10(rhoYe)/T9 grid points."
-    !write(*,*) "   GK , log10(g/cm3) : ", this%range_t9, ",", this%range_lrhoye
+    write(*,"(A18,F5.2,A1,F6.2,A27,F5.2,A1,F5.2,A1)") &
+         "      - T9(GK): [", this%range_t9(1),",",this%range_t9(2),&
+         "] , log10(rhoYe (g/cm3)): [", this%range_lrhoye(1),",",&
+         this%range_lrhoye(2),"]"
+    !$OMP END SINGLE
 
     ! build array of interpolating spline coefficients
     this%nnuc = nuc    
@@ -195,7 +204,7 @@ contains
     !$OMP END PARALLEL
   end function new_RateTableFromFile
   
-!------------------------------------------------------------------------------------!   
+  !------------------------------------------------------------------------------------!
 
   subroutine monotonic_interp_2d(this) 
 
@@ -345,6 +354,7 @@ contains
 
     call monotonic_interpolator(this,idxnuc,idxrate,2,1,this%nrho,Data2d)
     interp_val = interpolant(this,idxnuc,idxrate,2,1,query_lrhoye)
+    deallocate(Data2d)
 
     return
 
@@ -388,6 +398,53 @@ contains
     return
     
   end function interpolant
+
 !------------------------------------------------------------------------------------!     
+
+  subroutine print_reference(filename)
+    implicit none
+    character*200, intent(in) :: filename
+    !$OMP SINGLE
+    select case (filename)
+    case ("lmprates.dat")
+       print *, "    Loading LMP table. Make reference to: "
+       print *, "    ------------------------------------------------------------------------------------------"
+       print *, "    | ilmp    | Langanke, K., & Mart\'{i}nez-Pinedo, G. (2000).                              |"
+       print *, "    |         | Shell-model calculations of stellar weak interaction rates:                  |"
+       print *, "    |         | II. Weak rates for nuclei in the mass range in supernovae environments.      |"
+       print *, "    |         | Nuclear Physics A, 673(1-4), 481-508.                                        |"
+       print *, "    |         | http://doi.org/10.1016/S0375-9474(00)00131-7                                 |"
+       print *, "    ------------------------------------------------------------------------------------------"
+    case ("lmshrates.dat")
+       print *, "    Loading LMSH table. Make reference to: "
+       print *, "    ------------------------------------------------------------------------------------------"
+       print *, "    | ilmsh   | Langanke, K., & Mart\'{i}nez-Pinedo, G. (2003).                              |"
+       print *, "    |         | Electron capture rates on nuclei and implications for stellar core collapse. |"
+       print *, "    |         | Physical Review Letters 90, 241102.                                          |"
+       print *, "    |         | http://prl.aps.org/abstract/PRL/v90/i24/e241102                              |"
+       print *, "    ------------------------------------------------------------------------------------------"
+    case ("odarates.dat")
+       print *, "    Loading Oda et al. table. Make reference to: "
+       print *, "    ------------------------------------------------------------------------------------------"
+       print *, "    | ioda    | Oda, T., Hino, M., Muto, K., Takahara, M., & Sato, K. (1994).                |"
+       print *, "    |         | Rate Tables for the Weak Processes of sd-Shell Nuclei in Stellar Matter.     |"
+       print *, "    |         | Atomic Data and Nuclear Data Tables, 56(2), 231-403.                         |"
+       print *, "    |         | http://doi.org/10.1006/adnd.1994.1007                                        |"
+       print *, "    ------------------------------------------------------------------------------------------"
+    case ("ffnrates.dat")
+       print *, "    Loading FFN table. Make reference to: "
+       print *, "    ------------------------------------------------------------------------------------------"
+       print *, "    | iffn    | Fuller, G. M., Fowler, W. A., & Newman, M. J. (1982).                        |"
+       print *, "    |         | Stellar weak interaction rates for intermediate-mass nuclei.                 |"
+       print *, "    |         | II - A = 21 to A = 60. The Astrophysical Journal, 252, 715.                  |"
+       print *, "    |         | http://doi.org/10.1086/159597                                                |"
+       print *, "    ------------------------------------------------------------------------------------------"       
+    case default
+       stop "No default"
+    end select
+    !$OMP END SINGLE
+    
+  end subroutine print_reference  
+!------------------------------------------------------------------------------------!   
 end module class_ratetable
 

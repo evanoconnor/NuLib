@@ -71,7 +71,6 @@ contains
     real*8 :: lnu        !nue or anue energy loss rate
 
 
-    !print *, idxtable, omp_get_thread_num()
     approx_rate_flag = .false.
     GPQ_interval = 0.0d0
     GPQ_coef(:) = 0.0d0
@@ -479,7 +478,6 @@ contains
     end do
     weakratelib%approx%number_densities = 0.0d0
     weakratelib%approx%mass_fractions = 0.0d0
-!    print *, sum(emissivity)
     return
 
   end subroutine microphysical_electron_capture

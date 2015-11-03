@@ -25,6 +25,8 @@ module class_ratelibrary
      type(RateTable), dimension(:), pointer :: tables
      ! approximate weak rate object
      type(RateApprox) :: approx
+     ! path to directory containing weakrate tables
+     character*200 :: directory
      ! weak interaction rate data table file names
      character*200, dimension(NUM_TABLES) :: files_to_load
      ! table priorities
@@ -53,16 +55,13 @@ contains
     implicit none
     type(RateLibrary), pointer :: library
     character*200 :: parameters
-    integer :: idxfiles,nfiles,i  ,j  ,k
+    integer :: idxfiles,nfiles,i,j,k
     character*200 :: filename
 
     !$OMP CRITICAL
     call weakrate_inputparser(parameters,this)
     !$OMP END CRITICAL
-
-
-    ! construct rate approximation object
-    this%approx = new_RateApprox()
+    call print_reference
     
     ! construct rate table objects
     nfiles = 4
@@ -73,7 +72,6 @@ contains
        if(this%priority(i).gt.0)idxfiles = idxfiles + 1
     end do
     nfiles = idxfiles
-!    allocate(this%ratetables(nfiles))
 
     do i=1,size(this%ifiles)       ! order to load file
        do j=1,size(this%ifiles)    ! files in order
@@ -85,13 +83,17 @@ contains
     if(Sum(this%ifiles).ne.0)then
        do i=1,size(this%ifiles)
           if(this%ifiles(i).eq.0) cycle
-          filename=this%files_to_load(this%ifiles(i))
-          print *, ">> Loading table  = ",filename
-          ratetables(i) = new_RateTable(filename)
+          filename=this%files_to_load(this%ifiles(i))          
+          ratetables(i) = new_RateTable(this%directory,filename)
           this%ntables = this%ntables + 1
        enddo
     endif
 
+    ! construct rate approximation object
+    call print_approx_reference
+    this%approx = new_RateApprox()
+
+    
     library => this
     this%tables => ratetables  
     
@@ -213,6 +215,7 @@ contains
     character*(*) fn
     type(RateLibrary) :: library
 
+    call get_string_parameter(fn,'directory',library%directory)
     call get_string_parameter(fn,'lmp_rates',library%files_to_load(1))
     call get_string_parameter(fn,'lmsh_rates',library%files_to_load(2))
     call get_string_parameter(fn,'oda_rates',library%files_to_load(3))
@@ -224,6 +227,22 @@ contains
     call get_integer_parameter(fn,'iapprox',library%priority(5))
     
   end subroutine weakrate_inputparser
+
+!------------------------------------------------------------------------------------!
+
+  subroutine print_reference
+    !$OMP SINGLE
+    print *, 
+    print *, "Loading weak rate library. Make reference to:"    
+    print *, "------------------------------------------------------------------------------------"
+    print *, "| Sullivan, C., O'Connor, E., Zegers, R. G. T., Grubb, T., & Austin, S. M. (2015). |"
+    print *, "| The Sensitivity of Core-Collapse Supernovae to Nuclear Electron Capture.         |"
+    print *, "| http://arxiv.org/abs/1508.07348                                                  |"
+    print *, "| Contact: Chris Sullivan <sullivan@nscl.msu.edu>                                  |"
+    print *, "------------------------------------------------------------------------------------"
+    !$OMP END SINGLE
+  end subroutine print_reference
+  
 !------------------------------------------------------------------------------------!
 end module class_ratelibrary
 

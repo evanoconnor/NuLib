@@ -3,7 +3,7 @@ module class_rateapproximation
 
   implicit none
   private
-  public :: RateApprox, new_RateApprox, return_hempel_qec, weakrates_approx
+  public :: RateApprox, new_RateApprox, return_hempel_qec, weakrates_approx, print_approx_reference
 
   ! constructor declaration
   interface new_RateApprox
@@ -50,8 +50,10 @@ contains
     
     call get_Hempel_As_and_Zs(this%nuclei_A,this%nuclei_Z)    
 
-    write(*,"(A25,I4,A9)") " Done loading masses for ", this%nspecies," species."
-
+    !$OMP SINGLE
+    write(*,"(A29,I4,A9)") "    Done loading masses for ", this%nspecies," species."
+    !$OMP END SINGLE
+    
     approx => this
     !$OMP PARALLEL COPYIN(this)
     !$OMP END PARALLEL    
@@ -99,5 +101,16 @@ contains
     return
 
   end function weakrates_approx
-!------------------------------------------------------------------------------------!
+  !------------------------------------------------------------------------------------!
+  subroutine print_approx_reference
+    !$OMP SINGLE
+    print *, "    Loading approximation. Make reference to: "
+    print *, "    ------------------------------------------------------------------------------------------"
+    print *, "    | iapprox | Langanke, K., & Mart\'{i}nez-Pinedo, G. (2003).                              |"
+    print *, "    |         | Electron capture rates on nuclei and implications for stellar core collapse. |"
+    print *, "    |         | Physical Review Letters 90, 241102.                                          |"
+    print *, "    |         | http://prl.aps.org/abstract/PRL/v90/i24/e241102                              |"
+    print *, "    ------------------------------------------------------------------------------------------"
+    !$OMP END SINGLE
+  end subroutine print_approx_reference
 end module class_rateapproximation
