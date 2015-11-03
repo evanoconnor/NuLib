@@ -66,9 +66,9 @@ contains
     integer i,ng,j, omp_get_thread_num
 
     !local rate variables
-    real*8 :: lbeta      !beta decay rate (plus or minus depending on neutrino species)
-    real*8 :: lcap       !capture rate (electron or positron for nue or anue)
-    real*8 :: lnu        !nue or anue energy loss rate
+    real*8 :: rbeta      !beta decay rate (plus or minus depending on neutrino species)
+    real*8 :: rcap       !capture rate (electron or positron for nue or anue)
+    real*8 :: rnu        !nue or anue energy loss rate
 
 
     approx_rate_flag = .false.
@@ -90,21 +90,21 @@ contains
        !average neutrino energy from rates for nue, emissivities are
        !from the betaplus direction; for anue, emissivities in the betaminus direction
        if (neutrino_species.eq.1) then
-          lbeta = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,1)
-          lcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,2)
-          lnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,3)
+          rbeta = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,1)
+          rcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,2)
+          rnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,3)
           !using Qgs from table as seed for qec_solver
           qec_eff = weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z),1) 
-          avgenergy(1) = 10.0d0**lnu/(10.0d0**lcap + 10.0d0**lbeta) 
+          avgenergy(1) = 10.0d0**rnu/(10.0d0**rcap + 10.0d0**rbeta) 
           avgenergy(2) = qec_eff !necessary to fulfill the first comparison in qec_solver
        else if (neutrino_species.eq.2) then
           stop "Positron capture effective q is bugged and not currently working,&
                please turn it off in requested_interactions.inc."
-          lbeta = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,4)
-          lcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,5)
-          lnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,6)         
+          rbeta = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,4)
+          rcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,5)
+          rnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,6)         
           qec_eff = -weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z),1) 
-          avgenergy(1) = 10.0d0**lnu/(10.0d0**lcap + 10.0d0**lbeta)   
+          avgenergy(1) = rnu/(rcap + rbeta)   
           avgenergy(2) = qec_eff
        else
           stop "This module only implements electron-neutrino type weak interactions. &
@@ -135,19 +135,19 @@ contains
                0,eos_variables(tempindex),qec_eff,&
                eos_variables(mueindex)-m_e))/spectra 
        else
-          normalization_constant = (10.0d0**lbeta+10.0d0**lcap)/spectra
+          normalization_constant = (rbeta+rcap)/spectra
        end if
     else if (neutrino_species.eq.2) then
        if (approx_rate_flag) then
-          stop "There is currently no parameterization applicable for positron capture"
+          stop "There is currently no approximate rate for positron capture"
        else
-          normalization_constant = (10.0d0**lbeta+10.0d0**lcap)/spectra
+          normalization_constant = (rbeta+rcap)/spectra
        end if
     end if
 
     !integrate over energy bin or take central value of bin and multiply by the bin width
     if (do_integrated_BB_and_emissivity) then
-       stop "Integration is not yet supported for ec neutrino emissivities" ! To be added
+       stop "Integration is not yet supported for electron-capture emissivities" 
     else
        do ng=1,number_groups
           nu_spectrum_eval =&

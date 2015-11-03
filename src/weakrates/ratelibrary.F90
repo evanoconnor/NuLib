@@ -112,8 +112,8 @@ contains
     integer :: A, Z, idxtable, idxrate
     real*8 :: query_t9, query_lrhoye
     real*8 :: rate
-    
-    rate = weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),query_t9,query_lrhoye,idxrate)
+
+    rate = 10.0d0**(weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),query_t9,query_lrhoye,idxrate))
     return
     
   end function return_weakrate_from_table
