@@ -4,6 +4,7 @@ program make_table_example
   use nulib
   use inputparser
   use nuclei_hempel
+  use weakrates_interface
   implicit none
 #ifdef __MPI__
   include 'mpif.h'
@@ -113,9 +114,12 @@ program make_table_example
   !zone + log spacing) see nulib.F90:initialize_nulib
   call initialize_nulib(mytable_neutrino_scheme,mytable_number_species,mytable_number_groups)
   call read_eos_table(eos_filename) !read in EOS table & set reference mass
-#if NUCLEI_HEMPEL
   call set_up_Hempel !set's up EOS for nuclear abundances
-#endif
+
+  ! initialize weak-rate library if it is turned on in requested_interactions.inc
+  if (add_nue_emission_weakinteraction_ecap.or.add_anue_emission_weakinteraction_poscap) then
+     call initialize_weakratelib(parameters_filename)
+  endif
 
   outdir="./"
   base="NuLib"
@@ -242,9 +246,11 @@ program make_table_example
   mpi_final_table_size_rho = recvcount
 #endif
 
+  
   !$OMP PARALLEL DO PRIVATE(itemp,iye,local_emissivity,local_absopacity,local_scatopacity, &
   !$OMP ns,ng,eos_variables,keytemp,keyerr,matter_prs,matter_ent,matter_cs2,matter_dedt, &
-  !$OMP matter_dpderho,matter_dpdrhoe) 
+  !$OMP matter_dpderho,matter_dpdrhoe,hempel_lookup_table)
+  !loop over rho,temp,ye of table, do each point
 #ifdef __MPI__
   do irho=1,mpi_final_table_size_rho
 #else

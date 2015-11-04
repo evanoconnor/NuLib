@@ -95,7 +95,7 @@ contains
           rnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,3)
           !using Qgs from table as seed for qec_solver
           qec_eff = weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z),1) 
-          avgenergy(1) = 10.0d0**rnu/(10.0d0**rcap + 10.0d0**rbeta) 
+          avgenergy(1) = rnu/(rcap + rbeta) 
           avgenergy(2) = qec_eff !necessary to fulfill the first comparison in qec_solver
        else if (neutrino_species.eq.2) then
           stop "Positron capture effective q is bugged and not currently working,&

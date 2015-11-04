@@ -79,10 +79,11 @@ EXTRADEPS += requested_interactions.inc constants.inc
 EXTRAINCS += $(HDF5INCS)
 EXTRAOBJECTS += $(HDF5LIBS)
 
-
-
-
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_example test
+ifeq ($(WEAK_RATES),1)
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates
+else
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
+endif
 
 ../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) 
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINC) -o $@ nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS)
@@ -92,6 +93,9 @@ all: nulib.a ../nulibtable_driver ../point_example ../make_table_example test
 
 ../make_table_example:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) make_table_example.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_example.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
+
+../make_table_weakrates:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) make_table_weakrates.F90
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_weakrates.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
 
 nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
 	ar -r nulib.a *.o
@@ -117,6 +121,7 @@ nuc_eos/nuc_eos.a: nuc_eos/*.F90 nuc_eos/*.f
 
 clean:
 	rm -rf ../make_table_example
+	rm -rf ../make_table_weakrates
 	rm -rf ../point_example
 	rm -rf ../nulibtable_driver
 	rm -rf test

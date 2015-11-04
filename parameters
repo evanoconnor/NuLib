@@ -1,8 +1,8 @@
 # ####### EOS parameters #######
-eos_table_name 		= 	"/user/sullivan/gr1d/GitHub/NuLib/src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
+eos_table_name 		= 	"./src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
 
 ####### Weak interaction parameters #######
-directory     		= 	"/projects/ceclub/gr1dnulib/GitHub/NuLib/src/weakrates/tables/"
+directory     		= 	"./src/weakrates/tables/"
 lmp_rates     		= 	"lmprates.dat"
 lmsh_rates		= 	"lmshrates.dat"
 oda_rates		=	"odarates.dat"
