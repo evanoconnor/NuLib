@@ -1,7 +1,12 @@
 include ../make.inc
 
 SOURCES=nulib.F90\
-	weak_rates.F90\
+	input_parser.F90 \
+	nuclei_distribution_helpers.F90 \
+	weakrates/ratetable.F90 \
+	weakrates/rateapprox.F90 \
+	weakrates/ratelibrary.F90 \
+	weakrates/interface.F90 \
 	fermi.F90 \
 	helpers.F90 \
 	gauss_laguerre_helpers.F90 \
@@ -12,8 +17,6 @@ SOURCES=nulib.F90\
 	scattering.F90 \
 	weak_magnetism_correction.F90 \
 	inelastic_electron_scattering.F90 \
-	nuclei_distribution_helpers.F90 \
-	input_parser.F90 \
 	eos_interface.F90
 
 NT_SOURCES=nulibtable.F90 \
@@ -76,10 +79,11 @@ EXTRADEPS += requested_interactions.inc constants.inc
 EXTRAINCS += $(HDF5INCS)
 EXTRAOBJECTS += $(HDF5LIBS)
 
-
-
-
+ifeq ($(WEAK_RATES),1)
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates
+else
 all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
+endif
 
 ../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) 
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINC) -o $@ nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS)
@@ -89,6 +93,9 @@ all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
 
 ../make_table_example:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) make_table_example.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_example.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
+
+../make_table_weakrates:  $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) make_table_weakrates.F90
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_weakrates.F90 $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
 
 nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
 	ar -r nulib.a *.o
@@ -114,6 +121,7 @@ nuc_eos/nuc_eos.a: nuc_eos/*.F90 nuc_eos/*.f
 
 clean:
 	rm -rf ../make_table_example
+	rm -rf ../make_table_weakrates
 	rm -rf ../point_example
 	rm -rf ../nulibtable_driver
 	rm -rf test
@@ -124,3 +132,5 @@ clean:
 	$(MAKE) -C nuc_eos clean	
 	rm -rf ./extra_code_and_tables/sfho_frdm_comp/sfho_frdm_composition_module.o
 	rm -rf ./other_eos/helmholtz/*.o
+	rm -rf ./weakrates/*.o
+
