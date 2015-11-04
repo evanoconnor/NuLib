@@ -70,9 +70,6 @@ module nulib
   logical :: debug = .false.
   logical :: do_integrated_BB_and_emissivity
 
-  !nuclei distribution global variables
-  integer,allocatable :: hempel_lookup_table(:,:)
-
   !tabulated weak rate table bounds
   real*8, dimension(4) :: table_bounds
 

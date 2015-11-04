@@ -362,7 +362,7 @@ end subroutine total_emissivities
 subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eos_variables)
 
   use nulib
-  use weak_rates
+  use weakrates_interface
   implicit none
   
   !inputs & outputs
