@@ -81,7 +81,7 @@ ifeq ($(HELMHOLTZ_EOS),1)
 else
 	DEFS += -DHAVE_NUC_EOS
 endif
-EXTRADEPS += requested_interactions.inc constants.inc ../make.inc
+EXTRADEPS += requested_interactions.inc constants.inc ../make.inc Makefile
 EXTRAINCS += $(HDF5INCS)
 EXTRAOBJECTS += $(HDF5LIBS)
 
