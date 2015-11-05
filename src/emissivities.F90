@@ -362,7 +362,9 @@ end subroutine total_emissivities
 subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eos_variables)
 
   use nulib
+#if WEAK_RATES
   use weakrates_interface
+#endif
   implicit none
   
   !inputs & outputs
@@ -377,14 +379,6 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
 
   !function dec
   real*8 :: get_fermi_integral
-
-  !bounds checking       
-  real*8 :: t9
-  real*8 :: lrhoYe
-
-  lrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
-  t9 = (eos_variables(tempindex)/kelvin_to_mev)/(10.0d0**9.0d0)
-
 
   if (size(emissivity_spectra,1).ne.number_species) then
      stop "return_emissivity_spectra_given_neutrino_scheme:provided array has wrong number of species"
