@@ -3,7 +3,9 @@ program make_table_example
   
   use nulib
   use inputparser
+#if NUCLEI_HEMPEL
   use nuclei_hempel
+#endif
   implicit none
 #ifdef __MPI__
   include 'mpif.h'
