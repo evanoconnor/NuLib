@@ -42,6 +42,7 @@ endif
 		   weakrates/interface.F90 \
 
 	DEFS += -DWEAK_RATES 
+
 endif
 
 
@@ -65,9 +66,6 @@ ifeq ($(MPI),1)
 	DEFS += -D__MPI__
 endif
 
-
-EXTRADEPS = requested_interactions.inc constants.inc
-
 MOD_OBJECTS=$(MODULES:.F90=.o )
 OBJECTS=$(SOURCES:.F90=.o )
 NT_OBJECTS=$(NT_SOURCES:.F90=.o )
@@ -83,7 +81,7 @@ ifeq ($(HELMHOLTZ_EOS),1)
 else
 	DEFS += -DHAVE_NUC_EOS
 endif
-EXTRADEPS += requested_interactions.inc constants.inc
+EXTRADEPS += requested_interactions.inc constants.inc ../make.inc Makefile
 EXTRAINCS += $(HDF5INCS)
 EXTRAOBJECTS += $(HDF5LIBS)
 
