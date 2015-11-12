@@ -362,12 +362,19 @@ subroutine total_absorption_opacities(neutrino_species,neutrino_energy,absorptio
   !add in the electron neutrino absorption on free neutrons
   if (add_nue_absorption_on_n.and.neutrino_species.eq.1) then
 
-     absorption_opacity = absorption_opacity + & !total opacity, dimensions cm^-1
-          nue_absorption_on_n(neutrino_energy,eos_variables)* & !crosssection, cm^2
-          neutron_number_density* &! # neutons/cm^3
-          max(0.0d0,(proton_number_density/neutron_number_density-1.0d0)/ & !final state proton blocking, =1 if blocking is irrelevant
-          (exp(-matter_muhat0/eos_variables(tempindex))-1.0d0)) !Bruenn 1985, Eq. C14
-     
+     !some low density, low temperature regions give issues with nucleon blocking, so if rho<1e11, assume no nulceon blocking
+     if (eos_variables(rhoindex).ge.1.0d11) then
+        absorption_opacity = absorption_opacity + & !total opacity, dimensions cm^-1
+             nue_absorption_on_n(neutrino_energy,eos_variables)* & !crosssection, cm^2
+             neutron_number_density* &! # neutons/cm^3
+             max(0.0d0,(proton_number_density/neutron_number_density-1.0d0)/ & !final state proton blocking, =1 if blocking is irrelevant
+             (exp(-matter_muhat0/eos_variables(tempindex))-1.0d0)) !Bruenn 1985, Eq. C14
+     else
+        absorption_opacity = absorption_opacity + & !total opacity, dimensions cm^-1
+             nue_absorption_on_n(neutrino_energy,eos_variables)* & !crosssection, cm^2
+             neutron_number_density! # neutons/cm^3
+     endif
+
      !just a check
      if (absorption_opacity.ne.absorption_opacity) then
         write(*,*) eos_variables(rhoindex),eos_variables(tempindex),eos_variables(yeindex)
@@ -380,11 +387,18 @@ subroutine total_absorption_opacities(neutrino_species,neutrino_energy,absorptio
   if (add_anue_absorption_on_p.and.neutrino_species.eq.2) then
 
      !use minus electron chemical potential, equals positron chemical potential
-     absorption_opacity = absorption_opacity + & ! total opacity, dimensions cm^-1
-          anue_absorption_on_p(neutrino_energy,eos_variables)* & !crosssection, cm^2
-          proton_number_density* & ! # protons/cm^3
-          max(0.0d0,(neutron_number_density/proton_number_density-1.0d0)/ & !final state neutron blocking, =1 if blocking is irrelevant
-          (exp(matter_muhat0/eos_variables(tempindex))-1.0d0)) !Bruenn 1985, Eq. C14, with n and p switched
+     !some low density, low temperature regions give issues with nucleon blocking, so if rho<1e11, assume no nulceon blocking
+     if (eos_variables(rhoindex).ge.1.0d11) then
+        absorption_opacity = absorption_opacity + & ! total opacity, dimensions cm^-1
+             anue_absorption_on_p(neutrino_energy,eos_variables)* & !crosssection, cm^2
+             proton_number_density* & ! # protons/cm^3
+             max(0.0d0,(neutron_number_density/proton_number_density-1.0d0)/ & !final state neutron blocking, =1 if blocking is irrelevant
+             (exp(matter_muhat0/eos_variables(tempindex))-1.0d0)) !Bruenn 1985, Eq. C14, with n and p switched
+     else
+        absorption_opacity = absorption_opacity + & ! total opacity, dimensions cm^-1
+             anue_absorption_on_p(neutrino_energy,eos_variables)* & !crosssection, cm^2
+             proton_number_density ! # protons/cm^3
+     endif
 
      !just a check
      if (absorption_opacity.ne.absorption_opacity) then
