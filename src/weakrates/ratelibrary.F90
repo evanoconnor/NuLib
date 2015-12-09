@@ -160,7 +160,7 @@ contains
        endif
     endif
     ! interpolate correct rate table - defined by the priority hierarchy set in parameters
-    rate = weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),t9,lrhoye,idxrate)
+    rate = 10.0d0**(weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),t9,lrhoye,idxrate))
     return
 
   end function return_weakrate_dynamic_search
