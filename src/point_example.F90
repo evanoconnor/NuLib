@@ -2,6 +2,10 @@
 program point_example
 
   use nulib
+  use inputparser
+#if NUCLEI_HEMPEL
+  use nuclei_hempel, only : set_up_Hempel
+#endif
   implicit none
 
   !many people use different number of species, this is to denote how they are devided up.
@@ -55,7 +59,9 @@ program point_example
   !this sets up many cooefficients and creates the energy grid (one
   !zone + log spacing) see nulib.F90:initialize_nulib
   call initialize_nulib(mypoint_neutrino_scheme,mypoint_number_species,mypoint_number_groups)
+#if NUCLEI_HEMPEL
   call set_up_Hempel ! set's up EOS for nuclear abundances
+#endif
   !read in EOS table & set reference mass
   call read_eos_table(eos_filename)
   m_ref = m_amu !for SFHo_EOS (Hempel)
