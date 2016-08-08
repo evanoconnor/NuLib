@@ -69,6 +69,8 @@ endif
 MOD_OBJECTS=$(MODULES:.F90=.o )
 OBJECTS=$(SOURCES:.F90=.o )
 NT_OBJECTS=$(NT_SOURCES:.F90=.o )
+F90FLAGS += -fPIC
+LDFLAGS=-shared
 
 #take care of EOS dependences etc
 f90_SOURCES = other_eos/helmholtz/helmholtz.f90
@@ -86,9 +88,9 @@ EXTRAINCS += $(HDF5INCS)
 EXTRAOBJECTS += $(HDF5LIBS)
 
 ifeq ($(WEAK_RATES),1)
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates libNuLib.so
 else
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_example libNuLib.so
 endif
 
 ../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) 
@@ -105,6 +107,9 @@ endif
 
 nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
 	ar -r nulib.a *.o nuc_eos/*.o
+
+libNuLib.so: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) $(LDFLAGS) -o $@ $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
 
 test:	$(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS)  test.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o test test.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
