@@ -41,7 +41,8 @@ endif
 		   weakrates/ratelibrary.F90 \
 		   weakrates/interface.F90 \
 
-	DEFS += -DWEAK_RATES 
+	DEFS += -DWEAK_RATES
+	SOURCES += pyinterface.F90
 
 endif
 
@@ -88,7 +89,7 @@ EXTRAINCS += $(HDF5INCS)
 EXTRAOBJECTS += $(HDF5LIBS)
 
 ifeq ($(WEAK_RATES),1)
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates libNuLib.so
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates libNuLib.so PyNuLib test
 else
 all: nulib.a ../nulibtable_driver ../point_example ../make_table_example libNuLib.so
 endif
@@ -111,9 +112,16 @@ nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
 libNuLib.so: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) $(LDFLAGS) -o $@ $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
 
-test:	$(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS)  test.F90
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o test test.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
+PyNuLib:
+	f90wrap --abort-func "abort; print *," -m $@ pyinterface.F90
+	$(F90) $(F90FLAGS) $(EXTRAINCS) $(MODINC) f90wrap_*.f90 -c
+	f2py -m _$@ -h $@.pyf f90wrap_*.f90
+	f2py -L/projects/ceclub/gr1dnulib/mesasdk/lib -lhdf5 -lhdf5_fortran -lhdf5 -lz  -l$(realpath ./)/NuLib --f90flags="-ffree-line-length-none" --f77flags="-ffree-line-length-none -ffixed-line-length-none" -c $@.pyf pyinterface.o f90wrap_pyinterface.o
+	cp _$@.so ..
+	cp $@.py ..
 
+test:	libNuLib.so  test.F90
+	$(F90) $(F90FLAGS) $(DEFS) -o test $^ -Wl,-rpath,src
 
 $(OBJECTS): %.o: %.F90 $(EXTRADEPS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -c $< -o $@
@@ -140,11 +148,15 @@ clean:
 	rm -rf ../nulibtable_driver
 	rm -rf test
 	rm -rf *.o
+	rm -rf *.so
 	rm -rf *~
 	rm -rf *.mod
 	rm -rf *.a
-	$(MAKE) -C nuc_eos clean	
+	rm -rf *.pyf
+	rm -rf *.pyc
+	rm -rf f90wrap*
+	rm -rf PyNuLib.py
+	$(MAKE) -C nuc_eos clean
 	rm -rf ./extra_code_and_tables/sfho_frdm_comp/sfho_frdm_composition_module.o
 	rm -rf ./other_eos/helmholtz/*.o
 	rm -rf ./weakrates/*.o
-

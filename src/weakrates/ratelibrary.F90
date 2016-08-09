@@ -33,6 +33,8 @@ module class_ratelibrary
      integer, dimension(NUM_TABLES+1) :: priority
      ! file ordering
      integer, dimension(NUM_TABLES) :: ifiles
+     ! path to eos file
+     character*200 :: eos_path
   end type RateLibrary
   
   ! class instance (singleton)
@@ -225,6 +227,7 @@ contains
     call get_integer_parameter(fn,'ioda',library%priority(3))
     call get_integer_parameter(fn,'iffn',library%priority(4))
     call get_integer_parameter(fn,'iapprox',library%priority(5))
+    call get_string_parameter(fn,'eos_table_name',library%eos_path)
     
   end subroutine weakrate_inputparser
 
