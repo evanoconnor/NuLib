@@ -79,6 +79,7 @@ f90_OBJECTS=$(f90_SOURCES:.f90=.o )
 EXTRAINCS = -I./nuc_eos
 EXTRADEPS = nuc_eos/nuc_eos.a
 EXTRAOBJECTS = nuc_eos/nuc_eos.a
+
 ifeq ($(HELMHOLTZ_EOS),1)
 	DEFS += -DHELMHOLTZ_EOS
 else
@@ -86,12 +87,12 @@ else
 endif
 EXTRADEPS += requested_interactions.inc constants.inc ../make.inc Makefile
 EXTRAINCS += $(HDF5INCS)
-EXTRAOBJECTS += $(HDF5LIBS)
+EXTRAOBJECTS += $(HDF5LIBS) -Wl,-rpath,$(HDF5DIR)/lib
 
 ifeq ($(WEAK_RATES),1)
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates libNuLib.so PyNuLib test
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates ../libNuLib.so PyNuLib test
 else
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_example libNuLib.so
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_example ../libNuLib.so
 endif
 
 ../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) 
@@ -109,18 +110,18 @@ endif
 nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
 	ar -r nulib.a *.o nuc_eos/*.o
 
-libNuLib.so: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
+../libNuLib.so: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) $(LDFLAGS) -o $@ $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
 
 PyNuLib:
 	f90wrap --abort-func "abort; print *," -m $@ pyinterface.F90
 	$(F90) $(F90FLAGS) $(EXTRAINCS) $(MODINC) f90wrap_*.f90 -c
 	f2py -m _$@ -h $@.pyf f90wrap_*.f90
-	f2py -L/projects/ceclub/gr1dnulib/mesasdk/lib -lhdf5 -lhdf5_fortran -lhdf5 -lz  -l$(realpath ./)/NuLib --f90flags="-ffree-line-length-none" --f77flags="-ffree-line-length-none -ffixed-line-length-none" -c $@.pyf pyinterface.o f90wrap_pyinterface.o
-	cp _$@.so ..
-	cp $@.py ..
+	f2py  --f90flags="-ffree-line-length-none" --f77flags="-ffree-line-length-none -ffixed-line-length-none" -c $@.pyf pyinterface.o f90wrap_pyinterface.o $(HDF5LIBS) -L.. -lNuLib
+	mv _$@.so ..
+	mv $@.py ..
 
-test:	libNuLib.so  test.F90
+test:	../libNuLib.so  test.F90
 	$(F90) $(F90FLAGS) $(DEFS) -o test $^ -Wl,-rpath,src
 
 $(OBJECTS): %.o: %.F90 $(EXTRADEPS)
@@ -154,8 +155,12 @@ clean:
 	rm -rf *.a
 	rm -rf *.pyf
 	rm -rf *.pyc
+	rm -rf ../*.pyf
+	rm -rf ../*.pyc
+	rm -rf ../__pycache__
+	rm -rf ../PyNuLib.py
+	rm -rf ../*.so
 	rm -rf f90wrap*
-	rm -rf PyNuLib.py
 	$(MAKE) -C nuc_eos clean
 	rm -rf ./extra_code_and_tables/sfho_frdm_comp/sfho_frdm_composition_module.o
 	rm -rf ./other_eos/helmholtz/*.o
