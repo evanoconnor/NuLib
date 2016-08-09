@@ -104,7 +104,7 @@ endif
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_weakrates.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
 
 nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
-	ar -r nulib.a *.o
+	ar -r nulib.a *.o nuc_eos/*.o
 
 test:	$(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS)  test.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o test test.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
