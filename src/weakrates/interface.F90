@@ -422,6 +422,11 @@ contains
     real*8 :: logrhoYe,t9
     integer :: idxtable, A, Z ! if idxtable=0 here, omp fails
 
+!    integer j, k, myIndex
+    !number of nuclei in the high sensitivity region, 74 or 315
+!    integer, parameter :: nNuclei = 315
+!    real*8, dimension(nNuclei) :: hsA, hsZ
+
     idxtable = 0
 
     !Hempel EOS and number of species are set up in readrates
@@ -434,6 +439,18 @@ contains
     logrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
     t9 = (eos_variables(tempindex)/kelvin_to_mev)*1.0d-9
     
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!     open(10,file='/projects/ceclub/rachel/GitHub/hs_nuclei.txt',&
+!        form='formatted',status='old')
+!     rewind(10)
+
+!     do k=1, nNuclei
+!        read(10,*,end=11)hsZ(k),hsA(k)
+!     end do
+!     11 close(10)
+
+!    myIndex = 1
+
     do i=1,weakratelib%approx%nspecies 
 
        if(weakratelib%approx%number_densities(i).eq.0.0d0)cycle
@@ -461,11 +478,28 @@ contains
              if(hempel_lookup_table(A,Z).eq.0.or.hempel_lookup_table(A,Z-1).eq.0) then
                 cycle
              end if             
+             
+             
+             ! !high-sensitivity region cuts
+             ! do j=1,nNuclei
+             !    if(hsA(j).eq.A.and.hsZ(j).eq.Z) then
+             !       !got a match, rate needs to be 0
+             !       !print *, "flag worked"
+             !       myIndex = -1
+             !       exit !exit the do loop and go to the next iteration of i
+             !    else
+             !       !no match, carry on with the j loop
+             !    end if
+             ! end do
+             
+             !if(myIndex.lt.0) then
+             !   cycle
+             !end if
+
           else
              cycle
           end if
        end if
-       
 
        !emissivity calculation
        emissivity_temp = emissivity_from_weak_interaction_rates(A,Z,&

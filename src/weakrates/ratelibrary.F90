@@ -1,5 +1,5 @@
 !-*-f90-*-
-#define NUM_TABLES 4
+#define NUM_TABLES 8
 module class_ratelibrary
 
   use class_ratetable
@@ -220,11 +220,20 @@ contains
     call get_string_parameter(fn,'lmsh_rates',library%files_to_load(2))
     call get_string_parameter(fn,'oda_rates',library%files_to_load(3))
     call get_string_parameter(fn,'ffn_rates',library%files_to_load(4))
+    call get_string_parameter(fn,'pruet_rates1',library%files_to_load(5))
+    call get_string_parameter(fn,'pruet_rates2',library%files_to_load(6))
+    call get_string_parameter(fn,'pruet_rates3',library%files_to_load(7))
+    call get_string_parameter(fn,'calc_rates',library%files_to_load(8))
+
     call get_integer_parameter(fn,'ilmp',library%priority(1))
     call get_integer_parameter(fn,'ilmsh',library%priority(2))
     call get_integer_parameter(fn,'ioda',library%priority(3))
     call get_integer_parameter(fn,'iffn',library%priority(4))
-    call get_integer_parameter(fn,'iapprox',library%priority(5))
+    call get_integer_parameter(fn,'ipruet1',library%priority(5))
+    call get_integer_parameter(fn,'ipruet2',library%priority(6))
+    call get_integer_parameter(fn,'ipruet3',library%priority(7))
+    call get_integer_parameter(fn,'icalc',library%priority(8))
+    call get_integer_parameter(fn,'iapprox',library%priority(9))
     
   end subroutine weakrate_inputparser
 

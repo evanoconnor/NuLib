@@ -710,12 +710,12 @@ program make_table_example
              "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &
              "_ng"//trim(adjustl(sng))//"_ns"//trim(adjustl(sns))// &
              "_Itemp"//trim(adjustl(sItemp))//"_Ieta"//trim(adjustl(sIeta))// &
-             "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//".h5"
+             "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//"-pruetbase.h5"
      else
         finaltable_filename = trim(adjustl(outdir))//trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
              "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &
              "_ng"//trim(adjustl(sng))//"_ns"//trim(adjustl(sns))// &
-             "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//".h5"
+             "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//"-pruetbase.h5"
      endif
 
      call write_h5(finaltable_filename,timestamp)
