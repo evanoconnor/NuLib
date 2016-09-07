@@ -41,7 +41,8 @@ endif
 		   weakrates/ratelibrary.F90 \
 		   weakrates/interface.F90 \
 
-	DEFS += -DWEAK_RATES 
+	DEFS += -DWEAK_RATES
+	SOURCES += pyinterface.F90
 
 endif
 
@@ -69,6 +70,8 @@ endif
 MOD_OBJECTS=$(MODULES:.F90=.o )
 OBJECTS=$(SOURCES:.F90=.o )
 NT_OBJECTS=$(NT_SOURCES:.F90=.o )
+F90FLAGS += -fPIC
+LDFLAGS=-shared
 
 #take care of EOS dependences etc
 f90_SOURCES = other_eos/helmholtz/helmholtz.f90
@@ -76,6 +79,7 @@ f90_OBJECTS=$(f90_SOURCES:.f90=.o )
 EXTRAINCS = -I./nuc_eos
 EXTRADEPS = nuc_eos/nuc_eos.a
 EXTRAOBJECTS = nuc_eos/nuc_eos.a
+
 ifeq ($(HELMHOLTZ_EOS),1)
 	DEFS += -DHELMHOLTZ_EOS
 else
@@ -83,12 +87,12 @@ else
 endif
 EXTRADEPS += requested_interactions.inc constants.inc ../make.inc Makefile
 EXTRAINCS += $(HDF5INCS)
-EXTRAOBJECTS += $(HDF5LIBS)
+EXTRAOBJECTS += $(HDF5LIBS) -Wl,-rpath,$(HDF5DIR)/lib
 
 ifeq ($(WEAK_RATES),1)
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates ../libNuLib.so PyNuLib test
 else
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_example ../libNuLib.so
 endif
 
 ../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) 
@@ -106,9 +110,19 @@ endif
 nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
 	ar -r nulib.a *.o nuc_eos/*.o
 
-test:	$(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS)  test.F90
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o test test.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
+../libNuLib.so: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) $(LDFLAGS) -o $@ $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
 
+PyNuLib:
+	f90wrap --abort-func "abort; print *," -m $@ pyinterface.F90
+	$(F90) $(F90FLAGS) $(EXTRAINCS) $(MODINC) f90wrap_*.f90 -c
+	f2py -m _$@ -h $@.pyf f90wrap_*.f90
+	f2py  --f90flags="-ffree-line-length-none" --f77flags="-ffree-line-length-none -ffixed-line-length-none" -c $@.pyf pyinterface.o f90wrap_pyinterface.o $(HDF5LIBS) -L.. -lNuLib
+	mv _$@.so ..
+	mv $@.py ..
+
+test:	../libNuLib.so  test.F90
+	$(F90) $(F90FLAGS) $(DEFS) -o test $^ -Wl,-rpath,src
 
 $(OBJECTS): %.o: %.F90 $(EXTRADEPS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -c $< -o $@
@@ -135,11 +149,19 @@ clean:
 	rm -rf ../nulibtable_driver
 	rm -rf test
 	rm -rf *.o
+	rm -rf *.so
 	rm -rf *~
 	rm -rf *.mod
 	rm -rf *.a
-	$(MAKE) -C nuc_eos clean	
+	rm -rf *.pyf
+	rm -rf *.pyc
+	rm -rf ../*.pyf
+	rm -rf ../*.pyc
+	rm -rf ../__pycache__
+	rm -rf ../PyNuLib.py
+	rm -rf ../*.so
+	rm -rf f90wrap*
+	$(MAKE) -C nuc_eos clean
 	rm -rf ./extra_code_and_tables/sfho_frdm_comp/sfho_frdm_composition_module.o
 	rm -rf ./other_eos/helmholtz/*.o
 	rm -rf ./weakrates/*.o
-

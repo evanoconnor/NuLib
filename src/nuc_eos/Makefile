@@ -7,18 +7,21 @@ CLEANSTUFF=rm -rf *.o *.mod *.a driver
 
 OBJECTS=$(SOURCES:.F90=.o)
 FOBJECTS=$(FSOURCES:.f=.o)
-
+F90FLAGS += -fPIC
 EXTRADEPS=
 
 MODINC=$(HDF5INCS)
 
-all: nuc_eos.a driver
+all: nuc_eos.a nuc_eos.so driver
 
 driver: nuc_eos.a driver.F90
 	$(F90) $(F90FLAGS) -o driver driver.F90 nuc_eos.a $(HDF5LIBS)
 
 nuc_eos.a: $(OBJECTS) $(FOBJECTS)
 	ar r nuc_eos.a *.o
+
+nuc_eos.so: $(OBJECTS) $(FOBJECTS)
+	$(F90) $(F90FLAGS) -shared -o $@ $(OBJECTS) $(FOBJECTS)
 
 $(OBJECTS): %.o: %.F90 $(EXTRADEPS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) -c $< -o $@
