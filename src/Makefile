@@ -62,7 +62,6 @@ endif
 endif
 
 ifeq ($(MPI),1)
-	F90 = mpif90
 	DEFS += -D__MPI__
 endif
 
