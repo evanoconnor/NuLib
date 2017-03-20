@@ -1,5 +1,8 @@
 !-*-f90-*-
-#define NUM_TABLES 8
+#define NUM_TABLES 7
+#define gScale 1.0d0
+#define scale_all .false.
+#define scale_diamond .false.
 module class_ratelibrary
 
   use class_ratetable
@@ -104,7 +107,63 @@ contains
 
     return
   end function new_RateLibraryDefault
-  
+
+  !------
+
+  function scaling_factor(A,Z) result(scale)
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!added by rachel!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    integer j, myIndex, A, Z
+    !number of nuclei in the high sensitivity region, 30, 74 or 315
+    integer, parameter :: nNuclei = 74
+    integer hsA(nNuclei), hsZ(nNuclei)
+
+!!! YOU'RE SCALING ALL RATES AT THE MOMENT
+!!! GO CHANGE THE SCALING IF THIS IS NOT CORRECT
+    
+    real*8 :: scale
+
+    !specific rate scaling happens here
+    if (scale_all) then
+       ! scale everything
+       scale = gScale
+       return
+    else if (scale_diamond) then
+       !nucleus is in the diamond, scale the rate
+       hsZ = (/ 26,26,27,27,27,27,28,28,28,28,28,28,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,31,31,31,31,31,31,31,31,31,31,31,32,32,32,32,32,32,32,32,32,32,33,33,33,33,33,33,33,33,33,33,33,34,34,34,34,34,34,35,35,35,35,36,36 /)
+
+       hsA = (/ 75,76,75,76,77,78,75,76,77,78,79,80,75,76,77,78,79,80,81,82,75,76,77,78,79,80,81,82,83,84,75,76,77,78,79,80,81,82,83,84,85,76,77,78,79,80,81,82,83,84,85,75,76,77,78,79,80,81,82,83,84,85,80,81,82,83,84,85,82,83,84,85,84,85 /)
+
+       myIndex = 0
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+       do j=1,nNuclei
+          if(hsA(j).eq.A.and.hsZ(j).eq.Z) then
+             !got a match, rate needs to be scaled
+             !print *, "flag worked"
+             myIndex = -1
+             exit !exit the do loop and continue with the next lines
+          else
+             !no match, carry on with the j loop searching for a match
+          end if
+       end do
+
+       if (myIndex.lt.0) then
+          scale = gScale
+          return 
+       else
+          scale = 1.0d0
+          return
+       end if
+
+    else
+       ! not scaling anything
+       scale = 1.0d0
+       return
+    endif
+    
+    
+  end function scaling_factor
 !------------------------------------------------------------------------------------!
 
   function return_weakrate_from_table(this,A,Z,query_t9,query_lrhoye,idxtable,idxrate) result(rate) 
@@ -115,22 +174,22 @@ contains
     real*8 :: query_t9, query_lrhoye
     real*8 :: rate
 
-    rate = 10.0d0**(weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),query_t9,query_lrhoye,idxrate))
+    rate = scaling_factor(A,Z) * 10.0d0**(weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),query_t9,query_lrhoye,idxrate))
     return
     
   end function return_weakrate_from_table
   
 !------------------------------------------------------------------------------------!
 
-  function return_weakrate_from_approx(idxrate,xtemp,xq,xmue) result(rate) 
+  function return_weakrate_from_approx(idxrate,xtemp,xq,xmue,A,Z) result(rate) 
     
     implicit none
     type(RateLibrary) :: this
-    integer :: idxrate
+    integer :: idxrate, A, Z
     real*8 :: xtemp, xmue, xq
     real*8 :: rate
     
-    rate = weakrates_approx(idxrate,xtemp,xq,xmue)
+    rate = scaling_factor(A,Z) * weakrates_approx(idxrate,xtemp,xq,xmue)
     return
     
   end function return_weakrate_from_approx
@@ -155,14 +214,14 @@ contains
        ! use approx if no table contains a rate for (A,Z) at the req. point
        if (idxrate.eq.2.or.idxrate.eq.3)then
           q = return_hempel_qec(A,Z,Z-1)
-          rate = weakrates_approx(idxrate-2,xtemp,q,xmue) ! xmue should be mu_e-m_e
+          rate = scaling_factor(A,Z) * weakrates_approx(idxrate-2,xtemp,q,xmue) ! xmue should be mu_e-m_e
           return
        else
           stop "RateLibrary Error: approximate rates only exist for electron capture and neutrino e-loss"
        endif
     endif
     ! interpolate correct rate table - defined by the priority hierarchy set in parameters
-    rate = 10.0d0**(weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),t9,lrhoye,idxrate))
+    rate = scaling_factor(A,Z) * 10.0d0**(weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),t9,lrhoye,idxrate))
     return
 
   end function return_weakrate_dynamic_search
@@ -177,14 +236,19 @@ contains
     integer :: idxtable, i
     real*8 :: min, max
 
+!    print *, "hi"
+    
     idxtable = 0
     min = 0.0d0
     max = 0.0d0
     ! first check if the nucleus is in a table
     do i=1,this%ntables
        if (A.gt.size(ratetables(i)%nucleus_index,dim=1).or.Z.gt.size(ratetables(i)%nucleus_index,dim=2)) then
+!          print *, "if"
           idxtable = 0
        else
+!          print *, "else"
+!          print *, ratetables(i)%nucleus_index(A,Z)
           idxtable = ratetables(i)%nucleus_index(A,Z)
        endif
        if (idxtable.ne.0)then
@@ -192,6 +256,9 @@ contains
           exit
        endif       
     end do
+
+!    print *, "hi2"
+    
     ! return if the requested nucleus i not found in a table
     if (idxtable.eq.0)then
        return
@@ -204,6 +271,8 @@ contains
     else
        idxtable = 0
     endif
+
+!    print *, "hi3"
     
     return
     
@@ -225,7 +294,7 @@ contains
     call get_string_parameter(fn,'pruet_rates1',library%files_to_load(5))
     call get_string_parameter(fn,'pruet_rates2',library%files_to_load(6))
     call get_string_parameter(fn,'pruet_rates3',library%files_to_load(7))
-    call get_string_parameter(fn,'calc_rates',library%files_to_load(8))
+!    call get_string_parameter(fn,'calc_rates',library%files_to_load(8))
 
     call get_integer_parameter(fn,'ilmp',library%priority(1))
     call get_integer_parameter(fn,'ilmsh',library%priority(2))
@@ -234,7 +303,7 @@ contains
     call get_integer_parameter(fn,'ipruet1',library%priority(5))
     call get_integer_parameter(fn,'ipruet2',library%priority(6))
     call get_integer_parameter(fn,'ipruet3',library%priority(7))
-    call get_integer_parameter(fn,'icalc',library%priority(8))
+!    call get_integer_parameter(fn,'icalc',library%priority(8))
     call get_integer_parameter(fn,'iapprox',library%priority(9))
     call get_string_parameter(fn,'eos_table_name',library%eos_path)
     

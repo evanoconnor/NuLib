@@ -168,27 +168,8 @@ module pynulib
       logrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
       t9 = (eos_variables(tempindex)/kelvin_to_mev)*1.0d-9
 
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! open(10,file='/projects/ceclub/rachel/GitHub/hs_nuclei_small.txt',&
-      !    form='formatted',status='old')
-      ! rewind(10)
-      
-      ! do k=1, nNuclei
-      !    read(10,*,end=11)hsZ(k),hsA(k)
-      ! end do
-      ! 11 close(10)
-
-      ! hsZ = (/ 26,26,27,27,27,27,28,28,28,28,28,28,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,31,31,31,31,31,31,31,31,31,31,31,32,32,32,32,32,32,32,32,32,32,33,33,33,33,33,33,33,33,33,33,33,34,34,34,34,34,34,35,35,35,35,36,36 /)
-    
-      ! hsA = (/ 75,76,75,76,77,78,75,76,77,78,79,80,75,76,77,78,79,80,81,82,75,76,77,78,79,80,81,82,83,84,75,76,77,78,79,80,81,82,83,84,85,76,77,78,79,80,81,82,83,84,85,75,76,77,78,79,80,81,82,83,84,85,80,81,82,83,84,85,82,83,84,85,84,85 /)
-      
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-!      print *, "test3"
-      
       do i=1,nspecies
          
-!!!         myIndex = 1
          parameterized_rate = .false.
 
          if(number_densities(i).eq.0.0d0)cycle
@@ -196,23 +177,19 @@ module pynulib
          A = nuclei_A(i) 
          Z = nuclei_Z(i)
 
-!         print *, "test3.1"
-
          !if rate data from a table is not present and A>4 with iapprox nonzero,
          !use the parameterized rate function, else skip this nucleus
          ! check if rate exists in a table
          if (weakratelib%ntables.ne.0)then
-!            print *, "test3.1.1"
-            idxtable = in_table(weakratelib,A,Z,logrhoYe,t9)
-!            print *, "test3.1.2"
-         endif
 
-!         print *, "test3.2"
+            idxtable = in_table(weakratelib,A,Z,logrhoYe,t9)
+
+         endif
 
          ! if no table contains the requested rate
          if(idxtable.eq.0) then
             ! and if the approximation is turned on
-            if(weakratelib%priority(5).gt.0) then
+            if(weakratelib%priority(size(weakratelib%priority)).gt.0) then
                ! and the nucleus is above the A=4 isobars and below
                if (A.gt.4) then
                else
@@ -223,41 +200,17 @@ module pynulib
                   cycle
                end if
 
-!               print *, "test3.3"
-               
-               !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               !high-sensitivity region cuts
-               ! do j=1,nNuclei
-               !    if(hsA(j).eq.A.and.hsZ(j).eq.Z) then
-               !       !got a match, rate needs to be 0
-               !       !print *, "flag worked"
-               !       myIndex = -1
-               !       exit !exit the do loop and go to the next iteration of i
-               !    else
-               !       !no match, carry on with the j loop
-               !    end if
-               ! end do
-               
-               ! if(myIndex.lt.0) then
-               !   cycle
-               ! end if
-               !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!               print *, "test3.4"
             else
                cycle
             end if
          end if
 
-!         print *, "test4"
-         
          !emissivity calculation
          global_emissivity(i,:) = emissivity_from_weak_interaction_rates(A,Z,&
               number_densities(i),eos_variables,1,idxtable)
-!         write(*,"(a)",advance="no") " "
 
          !calculate dyedt
          global_dyedt(i) = (4.0d0*pi/6.02214129d23/mev_to_erg/eos_variables(rhoindex))*Sum(bin_widths(:)*global_emissivity(i,:)*global_blocking_factor(:)/energies(:))
-         !print *, "here2"
 
       end do
       

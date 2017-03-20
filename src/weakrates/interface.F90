@@ -74,19 +74,6 @@ contains
     real*8 :: rcap       !capture rate (electron or positron for nue or anue)
     real*8 :: rnu        !nue or anue energy loss rate
     
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !!!!!!!!!added by rachel!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    integer l, k, myIndex
-    !number of nuclei in the high sensitivity region, 30, 74 or 315
-    integer, parameter :: nNuclei = 74
-    integer hsA(nNuclei), hsZ(nNuclei)
-
-    hsZ = (/ 26,26,27,27,27,27,28,28,28,28,28,28,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,31,31,31,31,31,31,31,31,31,31,31,32,32,32,32,32,32,32,32,32,32,33,33,33,33,33,33,33,33,33,33,33,34,34,34,34,34,34,35,35,35,35,36,36 /)
-    
-    hsA = (/ 75,76,75,76,77,78,75,76,77,78,79,80,75,76,77,78,79,80,81,82,75,76,77,78,79,80,81,82,83,84,75,76,77,78,79,80,81,82,83,84,85,76,77,78,79,80,81,82,83,84,85,75,76,77,78,79,80,81,82,83,84,85,80,81,82,83,84,85,82,83,84,85,84,85 /)
-
-    myIndex = 0
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     approx_rate_flag = .false.
     GPQ_interval = 0.0d0
@@ -99,6 +86,7 @@ contains
     if (idxtable.eq.0) then
        approx_rate_flag = .true.
     endif
+
     
     if(approx_rate_flag) then
        qec_eff = return_hempel_qec(A,Z,Z-1)
@@ -107,35 +95,11 @@ contains
        !average neutrino energy from rates for nue, emissivities are
        !from the betaplus direction; for anue, emissivities in the betaminus direction
        if (neutrino_species.eq.1) then
+
           rbeta = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,1)
-
-          !specific rate scaling happens here
-
-          do j=1,nNuclei
-             if(hsA(j).eq.A.and.hsZ(j).eq.Z) then
-                !got a match, rate needs to be scaled
-                !print *, "flag worked"
-                myIndex = -1
-                exit !exit the do loop and continue with the next lines
-             else
-                !no match, carry on with the j loop
-             end if
-          end do
-          
-          if(myIndex.lt.0) then
-             !nucleus is in the diamond, scale the rate
-             rcap = 0.0001 * return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,2)
-          else
-             !nucleus is not in the diamond, leav it as is
-             rcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,2)
-          end if
-
-!!!          rcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,2)
-
-          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
           rnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,3)
+          rcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,2)
+
           !using Qgs from table as seed for qec_solver
           qec_eff = weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z),1)
           avgenergy(1) = rnu/(rcap + rbeta) 
@@ -174,9 +138,9 @@ contains
     spectra = (eos_variables(tempindex)**5)*spectra          
     if (neutrino_species.eq.1) then
        if (approx_rate_flag) then
-          normalization_constant = (return_weakrate(&
+          normalization_constant = ((return_weakrate(&
                0,eos_variables(tempindex),qec_eff,&
-               eos_variables(mueindex)-m_e))/spectra 
+               eos_variables(mueindex)-m_e,A,Z))/spectra)
        else
           normalization_constant = (rbeta+rcap)/spectra
        end if
@@ -465,11 +429,6 @@ contains
     real*8 :: logrhoYe,t9
     integer :: idxtable, A, Z ! if idxtable=0 here, omp fails
 
-    ! integer j, k, myIndex
-    ! !number of nuclei in the high sensitivity region, 30, 74 or 315
-    ! integer, parameter :: nNuclei = 74
-    ! real*8, dimension(nNuclei) :: hsA, hsZ
-
     idxtable = 0
 
     !Hempel EOS and number of species are set up in readrates
@@ -482,24 +441,9 @@ contains
     logrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
     t9 = (eos_variables(tempindex)/kelvin_to_mev)*1.0d-9
     
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ! open(10,file='/projects/ceclub/rachel/GitHub/hs_nuclei_small.txt',&
-    !    form='formatted',status='old')
-    ! rewind(10)
-
-    ! do k=1, nNuclei
-    !    read(10,*,end=11)hsZ(k),hsA(k)
-    ! end do
-    ! 11 close(10)
-    
-    ! hsZ = (/ 26,26,27,27,27,27,28,28,28,28,28,28,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,31,31,31,31,31,31,31,31,31,31,31,32,32,32,32,32,32,32,32,32,32,33,33,33,33,33,33,33,33,33,33,33,34,34,34,34,34,34,35,35,35,35,36,36 /)
-    
-    ! hsA = (/ 75,76,75,76,77,78,75,76,77,78,79,80,75,76,77,78,79,80,81,82,75,76,77,78,79,80,81,82,83,84,75,76,77,78,79,80,81,82,83,84,85,76,77,78,79,80,81,82,83,84,85,75,76,77,78,79,80,81,82,83,84,85,80,81,82,83,84,85,82,83,84,85,84,85 /)
-
 
     do i=1,weakratelib%approx%nspecies 
 
-!!!       myIndex = 1
 
        if(weakratelib%approx%number_densities(i).eq.0.0d0)cycle
 
@@ -516,7 +460,8 @@ contains
        ! if no table contains the requested rate
        if(idxtable.eq.0) then
           ! and if the approximation is turned on
-          if(weakratelib%priority(5).gt.0) then
+          ! [02/10/2017] fixed bug, approx should always be last in parameters file priority list
+          if(weakratelib%priority(size(weakratelib%priority)).gt.0) then
              ! and the nucleus is above the A=4 isobars and below
              if (A.gt.4) then
              else
@@ -527,22 +472,6 @@ contains
                 cycle
              end if             
              
-             
-             ! ! !high-sensitivity region cuts
-             ! do j=1,nNuclei
-             !    if(hsA(j).eq.A.and.hsZ(j).eq.Z) then
-             !       !got a match, rate needs to be 0
-             !       !print *, "flag worked"
-             !       myIndex = -1
-             !       exit !exit the do loop and continue with the next lines
-             !    else
-             !       !no match, carry on with the j loop
-             !    end if
-             ! end do
-             
-             ! if(myIndex.lt.0) then
-             !   cycle
-             ! end if
              
           else
              cycle

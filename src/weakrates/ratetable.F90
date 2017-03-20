@@ -455,14 +455,6 @@ contains
        print *, "    |         |                                                                              |"
        print *, "    |         |                                                                              |"  
        print *, "    ------------------------------------------------------------------------------------------"       
-    case ("calcrates.dat")
-       print *, "    Loading calculated rates table. Make reference to: "
-       print *, "    ------------------------------------------------------------------------------------------"
-       print *, "    | icalc   | Rates calculated from shell model by me                                      |" 
-       print *, "    |         |                                                                              |"
-       print *, "    |         |                                                                              |"
-       print *, "    |         |                                                                              |"  
-       print *, "    ------------------------------------------------------------------------------------------"
     case default
        stop "No default"
     end select
