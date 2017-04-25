@@ -439,21 +439,14 @@ contains
        print *, "    |         | II - A = 21 to A = 60. The Astrophysical Journal, 252, 715.                  |"
        print *, "    |         | http://doi.org/10.1086/159597                                                |"
        print *, "    ------------------------------------------------------------------------------------------"       
-    case ("pruet_66_80.dat":"pruet_66_80_leftover.dat")
-       print *, "    Loading Pruet & Fuller table. Make reference to: "
+    case ("pruet_66_80.dat":"pruet_66_80_leftover.dat":"pruet_81_110.dat")
+       print *, "    Loading Pruet & Fuller tables. Make reference to: "
        print *, "    ------------------------------------------------------------------------------------------"
-       print *, "    | ipruet1 | ****************., Pruet. A=66 to A=80                                       |" 
-       print *, "    | ipruet2 |                                                                              |"
-       print *, "    |         |                                                                              |"
-       print *, "    |         |                                                                              |"  
-       print *, "    ------------------------------------------------------------------------------------------"       
-    case ("pruet_81_110.dat")
-       print *, "    Loading Pruet & Fuller table. Make reference to: "
-       print *, "    ------------------------------------------------------------------------------------------"
-       print *, "    | ipruet3 | ****************., Pruet. A=81 to A=110                                      |" 
-       print *, "    |         |                                                                              |"
-       print *, "    |         |                                                                              |"
-       print *, "    |         |                                                                              |"  
+       print *, "    | ipruet1 | Pruet, J. & Fuller, G. M. (2003)  A=80                                       |" 
+       print *, "    | ipruet2 | Estimates of Stellar Weak Interaction Rates for Nuclei in the Mass Range     |"
+       print *, "    | ipruet3 | A = 65 - 80. The Astrophysical Journal, 149, 1.                              |"
+       print *, "    |         | http://dx.doi.org/10.1086/376753                                             |"  
+       print *, "    |         | And private communication                                                    |"
        print *, "    ------------------------------------------------------------------------------------------"       
     case default
        stop "No default"
