@@ -936,13 +936,15 @@ contains
     call h5sclose_f(dspace_id, error)  
     cerror = cerror + error   
 
-    call h5screate_simple_f(rank, dims5, dspace_id, error)
-    call h5dcreate_f(file_id, "scattering_delta", H5T_NATIVE_DOUBLE, &
-         dspace_id, dset_id, error)
-    call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,table_delta, dims5, error)
-    call h5dclose_f(dset_id, error)
-    call h5sclose_f(dspace_id, error)  
-    cerror = cerror + error   
+    if(.not. do_transport_opacities) then
+       call h5screate_simple_f(rank, dims5, dspace_id, error)
+       call h5dcreate_f(file_id, "scattering_delta", H5T_NATIVE_DOUBLE, &
+            dspace_id, dset_id, error)
+       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,table_delta, dims5, error)
+       call h5dclose_f(dset_id, error)
+       call h5sclose_f(dspace_id, error)
+       cerror = cerror + error
+    endif
     
     if (doing_inelastic.or.doing_epannihil) then
 
