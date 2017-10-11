@@ -7,6 +7,7 @@
   logical :: do_electronpolarization_correction = .true.
   logical :: do_nc_virial_correction = .false.
   logical :: do_strange_coupling = .false.
+  logical :: do_transport_opacities = .true.
   real*8, parameter :: gAs = -0.2d0 !dimensionless, for the strange coupling
 
   !absorptions

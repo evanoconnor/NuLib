@@ -339,8 +339,8 @@ program make_table_example
                          eos_variables(tempindex),eos_variables(yeindex),ns,ng
                     stop
                  endif
-                 if (local_delta(ns,ng).lt.0.0d0) then
-                    write(*,"(a,1P4E18.9,i6,i6)") "delta < 0", &
+                 if (local_delta(ns,ng).lt.-1.0d0) then
+                    write(*,"(a,1P4E18.9,i6,i6)") "delta < -1", &
                          local_delta(ns,ng),eos_variables(rhoindex), &
                          eos_variables(tempindex),eos_variables(yeindex),ns,ng
                     stop
