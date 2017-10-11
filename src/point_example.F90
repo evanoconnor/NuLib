@@ -38,6 +38,7 @@ program point_example
   real*8, allocatable,dimension(:,:) :: local_emissivity
   real*8, allocatable,dimension(:,:) :: local_absopacity
   real*8, allocatable,dimension(:,:) :: local_scatopacity
+  real*8, allocatable,dimension(:,:) :: local_delta
   real*8, allocatable,dimension(:,:) :: local_Phi0, local_Phi1
   real*8, allocatable,dimension(:,:) :: blackbody_spectra
   real*8, allocatable,dimension(:) :: eos_variables
@@ -52,6 +53,7 @@ program point_example
   allocate(local_emissivity(mypoint_number_output_species,mypoint_number_groups))
   allocate(local_absopacity(mypoint_number_output_species,mypoint_number_groups))
   allocate(local_scatopacity(mypoint_number_output_species,mypoint_number_groups))
+  allocate(local_delta(mypoint_number_output_species,mypoint_number_groups))
   allocate(blackbody_spectra(mypoint_number_output_species,mypoint_number_groups))
 
   call input_parser(parameters)
@@ -115,14 +117,15 @@ program point_example
   !balance and uses the opacities to fullying calculate the
   !emissivities and vice versa, see single_point_return_all.
   call single_point_return_all(eos_variables, &
-       local_emissivity,local_absopacity,local_scatopacity, &
+       local_emissivity,local_absopacity,local_scatopacity,local_delta, &
        mypoint_neutrino_scheme)
 
   write(*,*) "Example of a single point call with returning all emissivity, absorptive opacity, and scattering opacity"
   write(*,*) 
   do i=1,mypoint_number_output_species
      do j=1,mypoint_number_groups
-        write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j),local_scatopacity(i,j)
+        write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j), &
+             local_scatopacity(i,j),local_delta(i,j)
      enddo
   enddo
 
@@ -139,10 +142,12 @@ program point_example
   deallocate(local_emissivity)
   deallocate(local_absopacity)
   deallocate(local_scatopacity)
+  deallocate(local_delta)
   !allocate the arrays for the point values
   allocate(local_emissivity(mypoint_number_species,mypoint_number_groups))
   allocate(local_absopacity(mypoint_number_species,mypoint_number_groups))
   allocate(local_scatopacity(mypoint_number_species,mypoint_number_groups))
+  allocate(local_delta(mypoint_number_species,mypoint_number_groups))
 
   write(*,*) "Example of single point but only emissivity"
   write(*,*) 
@@ -154,11 +159,12 @@ program point_example
 
   write(*,*) "Example of single point but only scattering opacity"
   write(*,*) 
-  call return_scattering_opacity_spectra_given_neutrino_scheme(local_scatopacity,eos_variables)
+  call return_scattering_opacity_spectra_given_neutrino_scheme(local_scatopacity,local_delta,eos_variables)
 
   do i=1,mypoint_number_output_species
      do j=1,mypoint_number_groups
-        write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j),local_scatopacity(i,j)
+        write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j), &
+             local_scatopacity(i,j),local_delta(i,j)
      enddo
   enddo
 

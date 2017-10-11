@@ -51,7 +51,12 @@ subroutine nu_scatter_elastic_e_total(neutrino_energy,transport,lepton,eos_varia
   !   stop "no transport crosssection?"
   !endif
 
-
+  ! check output
+  if(delta<0.0d0 .or. delta>1.0d0) then
+     write(*,*) "Invalid value of delta: ",delta
+     stop
+  endif
+     
 end subroutine nu_scatter_elastic_e_total
 
 subroutine nu_scatter_elastic_alpha_total(neutrino_energy,transport,lepton,crosssection,delta)
@@ -76,6 +81,12 @@ subroutine nu_scatter_elastic_alpha_total(neutrino_energy,transport,lepton,cross
   delta = 0
   !end if
 
+  ! check output
+  if(delta<0.0d0 .or. delta>1.0d0) then
+     write(*,*) "Invalid value of delta: ",delta
+     stop
+  endif
+  
 end subroutine nu_scatter_elastic_alpha_total
 
 subroutine nu_scatter_elastic_p_total(neutrino_energy,transport,lepton,eos_variables,crosssection,delta)
@@ -171,6 +182,12 @@ subroutine nu_scatter_elastic_p_total(neutrino_energy,transport,lepton,eos_varia
      delta = delta_p
   endif
   
+  ! check output
+  if(delta<0.0d0 .or. delta>1.0d0) then
+     write(*,*) "Invalid value of delta: ",delta
+     stop
+  endif
+
 end subroutine nu_scatter_elastic_p_total
 
 subroutine nu_scatter_elastic_n_total(neutrino_energy,transport,lepton,eos_variables,crosssection,delta)
@@ -258,6 +275,12 @@ subroutine nu_scatter_elastic_n_total(neutrino_energy,transport,lepton,eos_varia
      endif
      crosssection = crosssection*weak_mag !implicit integration over \Omega
      delta = delta_n
+  endif
+
+  ! check output
+  if(delta<0.0d0 .or. delta>1.0d0) then
+     write(*,*) "Invalid value of delta: ",delta
+     stop
   endif
 
 end subroutine nu_scatter_elastic_n_total
@@ -435,6 +458,12 @@ subroutine nu_scatter_elastic_heavy_total(neutrino_energy,transport,lepton,eos_v
   !   stop "crossection assumes transport (i.e. (1.0d0-cosine) term)"
   !endif
 
+  ! check output
+  if(delta<0.0d0 .or. delta>1.0d0) then
+     write(*,*) "Invalid value of delta: ",delta
+     stop
+  endif
+
 end subroutine nu_scatter_elastic_heavy_total
   
 
@@ -542,7 +571,7 @@ function nu_scatter_elastic_heavy_differential(neutrino_energy, &
   
 end function nu_scatter_elastic_heavy_differential
 
-subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_opacity,eos_variables)
+subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_opacity,average_delta,eos_variables)
 
   use nulib
   implicit none
@@ -554,15 +583,16 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
   
   !outputs
   real*8, intent(out) :: scattering_opacity !cm^-1
+  real*8, intent(out) :: average_delta !dimensionless
   
   !temporary variables
-  real*8 :: average_delta !dimensionless
   real*8 :: crosssection
   real*8 :: delta
   real*8 :: this_opacity
   
   scattering_opacity = 0.0d0
-
+  average_delta = 0.0d0
+  
   !electron neutrino
   if (neutrino_species.eq.1) then
      !scattering (transport cross section) on neutrons
@@ -850,10 +880,16 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
   endif
   average_delta = average_delta / scattering_opacity   
 
+  ! check output
+  if(average_delta<0.0d0 .or. average_delta>1.0d0) then
+     write(*,*) "Invalid value of average delta: ",average_delta
+     stop
+  endif
+
 end subroutine total_scattering_opacity
 
 
-subroutine return_scattering_opacity_spectra_given_neutrino_scheme(scattering_opacity_spectra,eos_variables)
+subroutine return_scattering_opacity_spectra_given_neutrino_scheme(scattering_opacity_spectra,delta_spectra,eos_variables)
   
   use nulib
   implicit none
@@ -861,10 +897,11 @@ subroutine return_scattering_opacity_spectra_given_neutrino_scheme(scattering_op
   !inputs & outputs
   real*8, intent(in) :: eos_variables(total_eos_variables)
   real*8, intent(out) :: scattering_opacity_spectra(number_species,number_groups)
+  real*8, intent(out) :: delta_spectra(number_species,number_groups)
   
   !locals
   integer :: ns,ng
-  real*8 :: opacity
+  real*8 :: opacity,delta
   
   if (size(scattering_opacity_spectra,1).ne.number_species) then
      stop "return_scatter_opacity_spectra_given_neutrino_scheme:provided array has wrong number of species"
@@ -872,11 +909,18 @@ subroutine return_scattering_opacity_spectra_given_neutrino_scheme(scattering_op
   if (size(scattering_opacity_spectra,2).ne.number_groups) then
      stop "return_scatter_opacity_spectra_given_neutrino_scheme:provided array has wrong number of groups"
   endif
+  if (size(delta_spectra,1).ne.number_species) then
+     stop "return_scatter_opacity_spectra_given_neutrino_scheme:provided array has wrong number of species"
+  endif
+  if (size(delta_spectra,2).ne.number_groups) then
+     stop "return_scatter_opacity_spectra_given_neutrino_scheme:provided array has wrong number of groups"
+  endif
   
   do ns=1,number_species
      do ng=1,number_groups
-        call total_scattering_opacity(ns,energies(ng),opacity,eos_variables)
+        call total_scattering_opacity(ns,energies(ng),opacity,delta,eos_variables)
         scattering_opacity_spectra(ns,ng) = opacity
+        delta_spectra(ns,ng)              = delta
      enddo
   enddo
   

@@ -312,7 +312,7 @@ module nulib
     end subroutine initialize_nulib
 
     subroutine single_point_return_all(eos_variables, &
-         emissivities,absorption_opacity,scattering_opacity,neutrino_local_scheme)
+         emissivities,absorption_opacity,scattering_opacity,delta,neutrino_local_scheme)
       
       implicit none
 
@@ -336,9 +336,11 @@ module nulib
       real*8, dimension(:,:), intent(out) :: emissivities
       real*8, dimension(:,:), intent(out) :: absorption_opacity
       real*8, dimension(:,:), intent(out) :: scattering_opacity
+      real*8, dimension(:,:), intent(out) :: delta
 
       !local
       real*8 :: temporary_spectra(number_species,number_groups)
+      real*8 :: temporary_delta(number_species,number_groups)
       real*8 :: blackbody_spectra(3,number_groups)
       integer :: number_local_species
 
@@ -380,9 +382,17 @@ module nulib
          stop "single_point_return_all:provided array has wrong number of groups"
       endif
 
+      if (size(delta,1).ne.number_local_species) then
+         stop "single_point_return_all:provided array has wrong number of species"
+      endif
+      if (size(delta,2).ne.number_groups) then
+         stop "single_point_return_all:provided array has wrong number of groups"
+      endif
+
       emissivities = 0.0d0
       absorption_opacity = 0.0d0
       scattering_opacity = 0.0d0
+      delta = 0.0d0
 
       !first get black body spectra, ergs/cm^2/s/MeV/srad
       call return_blackbody_spectra(blackbody_spectra,eos_variables)
@@ -456,7 +466,8 @@ module nulib
 
       !now get scattering opacites
       temporary_spectra = 0.0d0
-      call return_scattering_opacity_spectra_given_neutrino_scheme(temporary_spectra,eos_variables)
+      temporary_delta = 0.0
+      call return_scattering_opacity_spectra_given_neutrino_scheme(temporary_spectra,temporary_delta,eos_variables)
 
       !to fix minimum, 1.0e-30 in units of cm^-1 is effectivly zero
       temporary_spectra = max(temporary_spectra,1.0d-30)
@@ -465,17 +476,32 @@ module nulib
            temporary_spectra(1,1:number_groups)
       scattering_opacity(2,1:number_groups) = scattering_opacity(2,1:number_groups) + &
            temporary_spectra(2,1:number_groups)
+      delta(1,1:number_groups) = delta(1,1:number_groups) + &
+           temporary_spectra(1,1:number_groups) * temporary_delta(1,1:number_groups)
+      delta(2,1:number_groups) = delta(2,1:number_groups) + &
+           temporary_spectra(2,1:number_groups) * temporary_delta(2,1:number_groups)
 
       if (number_local_species.eq.3) then
          scattering_opacity(3,1:number_groups) = scattering_opacity(3,1:number_groups) + &
               (temporary_spectra(3,1:number_groups) + temporary_spectra(4,1:number_groups) + &
               temporary_spectra(5,1:number_groups) + temporary_spectra(6,1:number_groups))/4.0d0
+         delta(3,1:number_groups) = delta(3,1:number_groups) + ( &
+              temporary_spectra(3,1:number_groups)*temporary_delta(3,1:number_groups) + &
+              temporary_spectra(4,1:number_groups)*temporary_delta(4,1:number_groups) + &
+              temporary_spectra(5,1:number_groups)*temporary_delta(5,1:number_groups) + &
+              temporary_spectra(6,1:number_groups)*temporary_delta(6,1:number_groups))/4.0d0
 
       else if (number_local_species.eq.4) then
          scattering_opacity(3,1:number_groups) = scattering_opacity(3,1:number_groups) + &
               (temporary_spectra(3,1:number_groups)+temporary_spectra(5,1:number_groups))/2.0d0
          scattering_opacity(4,1:number_groups) = scattering_opacity(4,1:number_groups) + &
               (temporary_spectra(4,1:number_groups)+temporary_spectra(6,1:number_groups))/2.0d0
+         delta(3,1:number_groups) = delta(3,1:number_groups) + ( &
+              temporary_spectra(3,1:number_groups)*temporary_delta(3,1:number_groups) + &
+              temporary_spectra(5,1:number_groups)*temporary_delta(5,1:number_groups))/2.0d0
+         delta(4,1:number_groups) = delta(4,1:number_groups) + ( &
+              temporary_spectra(4,1:number_groups)*temporary_delta(4,1:number_groups) + &
+              temporary_spectra(6,1:number_groups)*temporary_delta(6,1:number_groups))/2.0d0
 
       else if (number_local_species.eq.6) then
          scattering_opacity(3,1:number_groups) = scattering_opacity(3,1:number_groups) + &
@@ -486,7 +512,16 @@ module nulib
               temporary_spectra(5,1:number_groups)
          scattering_opacity(6,1:number_groups) = scattering_opacity(6,1:number_groups) + &
               temporary_spectra(6,1:number_groups)
+         delta(3,1:number_groups) = delta(3,1:number_groups) + &
+              temporary_spectra(3,1:number_groups)*temporary_delta(3,1:number_groups)
+         delta(4,1:number_groups) = delta(4,1:number_groups) + &
+              temporary_spectra(4,1:number_groups)*temporary_delta(4,1:number_groups)
+         delta(5,1:number_groups) = delta(5,1:number_groups) + &
+              temporary_spectra(5,1:number_groups)*temporary_delta(5,1:number_groups)
+         delta(6,1:number_groups) = delta(6,1:number_groups) + &
+              temporary_spectra(6,1:number_groups)*temporary_delta(6,1:number_groups)
       endif
+      delta = delta / scattering_opacity !pull out the weights to get the opacity-weighted average
 
       temporary_spectra = 0.0d0
       call return_emissivity_spectra_given_neutrino_scheme(temporary_spectra,eos_variables)
@@ -584,6 +619,7 @@ module nulib
             if(emissivities(i,ng).ne.emissivities(i,ng)) stop "NaN in emissivities"
             if(absorption_opacity(i,ng).ne.absorption_opacity(i,ng)) stop "NaN in absorption_opacity"
             if(scattering_opacity(i,ng).ne.scattering_opacity(i,ng)) stop "NaN in scattering_opacity"
+            if(delta(i,ng).ne.delta(i,ng)) stop "NaN in scattering delta"
          enddo      
       enddo
 
