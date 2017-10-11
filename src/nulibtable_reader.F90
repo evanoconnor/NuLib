@@ -3,6 +3,7 @@ subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernel
   
   use nulibtable
   use hdf5
+  use h5lt
   implicit none
 
   !inputs
@@ -208,7 +209,23 @@ subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernel
      nulibtable_scatopacity(:,:,:,startindex:endindex) = log10(nulibtable_temp(:,:,:,i,:))
   enddo
 
-  nulibtable_number_easvariables = 3
+  call h5dopen_f(file_id, "scattering_delta", dset_id, error)
+  if(error==0) then
+     nulibtable_number_easvariables = 4
+     call h5dread_f(dset_id, H5T_NATIVE_DOUBLE,nulibtable_temp, dims5, error)
+     call h5dclose_f(dset_id, error)
+     cerror = cerror + error
+
+     allocate(nulibtable_delta(nulibtable_nrho,nulibtable_ntemp, &
+          nulibtable_nye,nulibtable_number_species*nulibtable_number_groups))
+     do i=1,nulibtable_number_species
+        startindex = (i-1)*nulibtable_number_groups+1
+        endindex = startindex + nulibtable_number_groups - 1
+        nulibtable_delta(:,:,:,startindex:endindex) = nulibtable_temp(:,:,:,i,:)
+     enddo
+  else
+     nulibtable_number_easvariables = 3
+  endif
 
   deallocate(nulibtable_temp)
 
