@@ -1,7 +1,7 @@
 !-*-f90-*-
 !always keep term dimensionless unless it is the units of the final answer...
 !total and transport scattering crosssections
-function nu_scatter_elastic_e_total(neutrino_energy,type,lepton,eos_variables) result(crosssection)
+subroutine nu_scatter_elastic_e_total(neutrino_energy,type,lepton,eos_variables,crosssection)
 
   use nulib
   implicit none
@@ -18,7 +18,7 @@ function nu_scatter_elastic_e_total(neutrino_energy,type,lepton,eos_variables) r
   integer, intent(in) :: lepton !lepton number, 1 for neutrino,  -1 for antineutrino
 
   !output
-  real*8 :: crosssection !in cm^2
+  real*8, intent(out) :: crosssection !in cm^2
 
   !locals
   real*8 :: c_v_prime
@@ -49,9 +49,9 @@ function nu_scatter_elastic_e_total(neutrino_energy,type,lepton,eos_variables) r
   endif
 
 
-end function nu_scatter_elastic_e_total
+end subroutine nu_scatter_elastic_e_total
 
-function nu_scatter_elastic_alpha_total(neutrino_energy,type,lepton) result(crosssection)
+subroutine nu_scatter_elastic_alpha_total(neutrino_energy,type,lepton,crosssection)
 
   use nulib
   implicit none
@@ -62,7 +62,7 @@ function nu_scatter_elastic_alpha_total(neutrino_energy,type,lepton) result(cros
   integer, intent(in) :: lepton !lepton number, >0 for neutrino,  <0 for antineutrino
 
   !output
-  real*8 :: crosssection !in cm^2
+  real*8,intent(out) :: crosssection !in cm^2
 
   crosssection = 4.0d0*sigma0*(neutrino_energy/m_e)**2*sin2thetaW**2
 
@@ -71,9 +71,9 @@ function nu_scatter_elastic_alpha_total(neutrino_energy,type,lepton) result(cros
      crosssection = 2.0d0/3.0d0*crosssection
   end if
 
-end function nu_scatter_elastic_alpha_total
+end subroutine nu_scatter_elastic_alpha_total
 
-function nu_scatter_elastic_p_total(neutrino_energy,type,lepton,eos_variables) result(crosssection)
+subroutine nu_scatter_elastic_p_total(neutrino_energy,type,lepton,eos_variables,crosssection)
 
   use nulib
   implicit none
@@ -163,9 +163,9 @@ function nu_scatter_elastic_p_total(neutrino_energy,type,lepton,eos_variables) r
      crosssection = crosssection*weak_mag !implicit integration over \Omega
   endif
   
-end function nu_scatter_elastic_p_total
+end subroutine nu_scatter_elastic_p_total
 
-function nu_scatter_elastic_n_total(neutrino_energy,type,lepton,eos_variables) result(crosssection)
+subroutine nu_scatter_elastic_n_total(neutrino_energy,type,lepton,eos_variables,crosssection)
 
   use nulib
   implicit none
@@ -177,7 +177,7 @@ function nu_scatter_elastic_n_total(neutrino_energy,type,lepton,eos_variables) r
   integer, intent(in) :: lepton !lepton number, >0 for neutrino,  <0 for antineutrino
 
   !output
-  real*8 :: crosssection !in cm^2
+  real*8,intent(out) :: crosssection !in cm^2
 
   !local
   real*8 :: delta_n,weak_mag
@@ -249,7 +249,7 @@ function nu_scatter_elastic_n_total(neutrino_energy,type,lepton,eos_variables) r
      crosssection = crosssection*weak_mag !implicit integration over \Omega
   endif
 
-end function nu_scatter_elastic_n_total
+end subroutine nu_scatter_elastic_n_total
 
 !differential scattering crosssections
 function nu_scatter_elastic_p_differential(neutrino_energy,cosine_angle,lepton,eos_variables) result(dcrosssection)
@@ -279,7 +279,6 @@ function nu_scatter_elastic_p_differential(neutrino_energy,cosine_angle,lepton,e
   real*8 :: weak_mag !correction factor
 
   !function declaration
-  real*8 :: nu_scatter_elastic_p_total
   real*8 :: weak_mag_correction_scattering_differential
 
   !for scattering on p, only need sign of lepton number
@@ -309,7 +308,8 @@ function nu_scatter_elastic_p_differential(neutrino_energy,cosine_angle,lepton,e
           ((c_v_prime-1.0d0)**2+3.0d0*gA**2*(c_a_prime-1.0d0)**2)
      !BRT06 Eq.21
      !note that the integral of this dcrosssection over {\phi,0,2pi} and {\theta,0,pi} gives nu_scatter_elastic_p_total
-     dcrosssection = nu_scatter_elastic_p_total(neutrino_energy,type,lepton_local,eos_variables)/(4.0d0*pi) * & !total crosssection cm^2/sterad
+     call nu_scatter_elastic_p_total(neutrino_energy,type,lepton_local,eos_variables,dcrosssection)
+     dcrosssection = dcrosssection/(4.0d0*pi) * & !total crosssection cm^2/sterad
           (1.0d0+cosine_angle*delta_p) !angular part, dimensionless
   endif
        
@@ -338,7 +338,6 @@ function nu_scatter_elastic_n_differential(neutrino_energy,cosine_angle,lepton,e
   real*8 :: weak_mag !correction factor
 
   !function declaration
-  real*8 :: nu_scatter_elastic_n_total
   real*8 :: weak_mag_correction_scattering_differential
 
   !for scattering on n, only need sign of lepton number
@@ -367,7 +366,8 @@ function nu_scatter_elastic_n_differential(neutrino_energy,cosine_angle,lepton,e
      delta_n = (1.0d0-gA**2)/(1.0d0+3.0d0*gA**2)
      !BRT06 Eq.21
      !note that the integral of this dcrosssection over {\phi,0,2pi} and {\theta,0,pi} gives nu_scatter_elastic_n_total
-     dcrosssection = nu_scatter_elastic_n_total(neutrino_energy,type,lepton_local,eos_variables)/(4.0d0*pi) * & !total crosssection cm^2/sterad
+     call nu_scatter_elastic_n_total(neutrino_energy,type,lepton_local,eos_variables,dcrosssection)
+     dcrosssection = dcrosssection/(4.0d0*pi) * & !total crosssection cm^2/sterad
           (1.0d0+cosine_angle*delta_n) !angular part, dimensionless
   endif
 
@@ -375,7 +375,7 @@ function nu_scatter_elastic_n_differential(neutrino_energy,cosine_angle,lepton,e
 end function nu_scatter_elastic_n_differential
 
 !total crossection for neutrino nucleo scattering (integral of differential)
-function nu_scatter_elastic_heavy_total(neutrino_energy,transport,lepton,eos_variables) result(crosssection)
+subroutine nu_scatter_elastic_heavy_total(neutrino_energy,transport,lepton,eos_variables,crosssection)
 
   use nulib
   implicit none
@@ -387,7 +387,7 @@ function nu_scatter_elastic_heavy_total(neutrino_energy,transport,lepton,eos_var
   integer, intent(in) :: lepton !-1 for antineutrino, 1 for neutrino
 
   !outputs
-  real*8 :: crosssection !total crosssection for neutrino nuclei scattering
+  real*8, intent(out) :: crosssection !total crosssection for neutrino nuclei scattering
 
   !local
   integer :: i !index for integral
@@ -420,7 +420,7 @@ function nu_scatter_elastic_heavy_total(neutrino_energy,transport,lepton,eos_var
   !integrate over phi
   crosssection = 2.0d0*pi*crosssection
 
-end function nu_scatter_elastic_heavy_total
+end subroutine nu_scatter_elastic_heavy_total
   
 
 !differential crosssection for neutrino nuclei scatters
@@ -540,13 +540,9 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
   !outputs
   real*8 :: scattering_opacity !cm^-1
   
-  !function declarations
-  real*8 :: nu_scatter_elastic_n_total
-  real*8 :: nu_scatter_elastic_p_total
-  real*8 :: nu_scatter_elastic_heavy_total
-  real*8 :: nu_scatter_elastic_e_total
-  real*8 :: nu_scatter_elastic_alpha_total
-
+  !temporary variables
+  real*8 :: crosssection
+  
   scattering_opacity = 0.0d0
 
   !electron neutrino
@@ -554,41 +550,41 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      !scattering (transport cross section) on neutrons
      if (add_nue_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = 1
+        call nu_scatter_elastic_n_total(neutrino_energy,1,1,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_n_total(neutrino_energy,1,1,eos_variables)* &
-             eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
 
      !scattering (transport cross section) on protons
      if (add_nue_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = 1
+        call nu_scatter_elastic_p_total(neutrino_energy,1,1,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_p_total(neutrino_energy,1,1,eos_variables)* &
-             eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
 
      !scattering (transport cross section) on heavies
      if (add_nue_scattering_heavies.and.eos_variables(xhindex).ne.0.0d0) then
-        !function call takes neutrino energy, transport=1, lepton = 1 
+        !function call takes neutrino energy, transport=1, lepton = 1
+        call nu_scatter_elastic_heavy_total(neutrino_energy,1,1,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_heavy_total(neutrino_energy,1,1,eos_variables)* &
-             eos_variables(xhindex)/eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xhindex)/eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
      !scattering (transport cross section??) on electrons
      if (add_nue_scattering_electrons) then
-        ! matter temperature, density, transport=1, lepton = 1 
+        ! matter temperature, density, transport=1, lepton = 1
+        call nu_scatter_elastic_e_total(neutrino_energy,1,1,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_e_total(neutrino_energy,1,1,eos_variables)* &
-             eos_variables(yeindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(yeindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
      !scattering on alpha
      if (add_nue_scattering_alphas) then
-        ! matter temperature, density, transport=1, lepton = 1 
+        ! matter temperature, density, transport=1, lepton = 1
+        call nu_scatter_elastic_alpha_total(neutrino_energy,1,1,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_alpha_total(neutrino_energy,1,1)* &
-             (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
   !electron antineutrino
@@ -596,41 +592,41 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      !scattering (transport cross section) on neutrons
      if (add_anue_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = -1
+        call nu_scatter_elastic_n_total(neutrino_energy,1,-1,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_n_total(neutrino_energy,1,-1,eos_variables)* &
-             eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
 
      !scattering (transport cross section) on protons
      if (add_anue_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = -1
+        call nu_scatter_elastic_p_total(neutrino_energy,1,-1,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_p_total(neutrino_energy,1,-1,eos_variables)* &
-             eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
      
      !scattering (transport cross section) on heavies
      if (add_anue_scattering_heavies.and.eos_variables(xhindex).ne.0.0d0) then
         !function call takes neutrino energy, transport=1, lepton = -1
+        call nu_scatter_elastic_heavy_total(neutrino_energy,1,-1,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_heavy_total(neutrino_energy,1,-1,eos_variables)* &
-             eos_variables(xhindex)/eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xhindex)/eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
 
      !scattering (transport cross section??) on electrons
      if (add_anue_scattering_electrons) then
         ! matter temperature, density, transport=1, lepton = -1
+        call nu_scatter_elastic_e_total(neutrino_energy,1,-1,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_e_total(neutrino_energy,1,-1,eos_variables)* &
-             eos_variables(yeindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(yeindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
      !scattering on alpha
      if (add_anue_scattering_alphas) then
-        ! matter temperature, density, transport=1, lepton = -1 
+        ! matter temperature, density, transport=1, lepton = -1
+        call nu_scatter_elastic_alpha_total(neutrino_energy,1,-1,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_alpha_total(neutrino_energy,1,-1)* &
-             (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
      
   !mu neutrino
@@ -638,41 +634,41 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      !scattering (transport cross section) on neutrons
      if (add_numu_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = 2
+        call nu_scatter_elastic_n_total(neutrino_energy,1,2,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_n_total(neutrino_energy,1,2,eos_variables)* &
-             eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
 
      !scattering (transport cross section) on protons
      if (add_numu_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = 2
+        call nu_scatter_elastic_p_total(neutrino_energy,1,2,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_p_total(neutrino_energy,1,2,eos_variables)* &
-             eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
 
      !scattering (transport cross section) on heavies
      if (add_numu_scattering_heavies.and.eos_variables(xhindex).ne.0.0d0) then
         !function call takes neutrino energy, transport=1, lepton = 2
+        call nu_scatter_elastic_heavy_total(neutrino_energy,1,2,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_heavy_total(neutrino_energy,1,2,eos_variables)* &
-             eos_variables(xhindex)/eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xhindex)/eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
 
      !scattering (transport cross section??) on electrons
      if (add_numu_scattering_electrons) then
         ! matter temperature, density, transport=1, lepton = 2
+        call nu_scatter_elastic_e_total(neutrino_energy,1,2,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_e_total(neutrino_energy,1,2,eos_variables)* &
-             eos_variables(yeindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(yeindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
      !scattering on alpha
      if (add_numu_scattering_alphas) then
-        ! matter temperature, density, transport=1, lepton = 2 
+        ! matter temperature, density, transport=1, lepton = 2
+        call nu_scatter_elastic_alpha_total(neutrino_energy,1,2,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_alpha_total(neutrino_energy,1,2)* &
-             (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
   !mu antineutrino
@@ -680,41 +676,41 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      !scattering (transport cross section) on neutrons
      if (add_anumu_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = -2
+        call nu_scatter_elastic_n_total(neutrino_energy,1,-2,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_n_total(neutrino_energy,1,-2,eos_variables)* &
-             eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
 
      !scattering (transport cross section) on protons
      if (add_anumu_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = -2
+        call nu_scatter_elastic_p_total(neutrino_energy,1,-2,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_p_total(neutrino_energy,1,-2,eos_variables)* &
-             eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
      
      !scattering (transport cross section) on heavies
      if (add_anumu_scattering_heavies.and.eos_variables(xhindex).ne.0.0d0) then
         !function call takes neutrino energy, transport=1, lepton = -2
+        call nu_scatter_elastic_heavy_total(neutrino_energy,1,-2,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_heavy_total(neutrino_energy,1,-2,eos_variables)* &
-             eos_variables(xhindex)/eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xhindex)/eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
 
      !scattering (transport cross section??) on electrons
      if (add_anumu_scattering_electrons) then
         ! matter temperature, density, transport=1, lepton = -2
+        call nu_scatter_elastic_e_total(neutrino_energy,1,-2,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_e_total(neutrino_energy,1,-2,eos_variables)* &
-             eos_variables(yeindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(yeindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
      !scattering on alpha
      if (add_anumu_scattering_alphas) then
-        ! matter temperature, density, transport=1, lepton = -2 
+        ! matter temperature, density, transport=1, lepton = -2
+        call nu_scatter_elastic_alpha_total(neutrino_energy,1,-2,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_alpha_total(neutrino_energy,1,-2)* &
-             (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
   !tau neutrino
@@ -722,41 +718,41 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      !scattering (transport cross section) on neutrons
      if (add_nutau_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = 3
+        call nu_scatter_elastic_n_total(neutrino_energy,1,3,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_n_total(neutrino_energy,1,3,eos_variables)* &
-             eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
 
      !scattering (transport cross section) on protons
      if (add_nutau_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = 3
+        call nu_scatter_elastic_p_total(neutrino_energy,1,3,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_p_total(neutrino_energy,1,3,eos_variables)* &
-             eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
      
      !scattering (transport cross section) on heavies
      if (add_nutau_scattering_heavies.and.eos_variables(xhindex).ne.0.0d0) then
         !function call takes neutrino energy, transport=1, lepton = 3
+        call nu_scatter_elastic_heavy_total(neutrino_energy,1,3,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_heavy_total(neutrino_energy,1,3,eos_variables)* &
-             eos_variables(xhindex)/eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xhindex)/eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
 
      !scattering (transport cross section??) on electrons
      if (add_nutau_scattering_electrons) then
         ! matter temperature, density, transport=1, lepton = 3
+        call nu_scatter_elastic_e_total(neutrino_energy,1,3,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_e_total(neutrino_energy,1,3,eos_variables)* &
-             eos_variables(yeindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(yeindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
      !scattering on alpha
      if (add_nutau_scattering_alphas) then
-        ! matter temperature, density, transport=1, lepton = 3 
+        ! matter temperature, density, transport=1, lepton = 3
+        call nu_scatter_elastic_alpha_total(neutrino_energy,1,3,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_alpha_total(neutrino_energy,1,3)* &
-             (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
   !tau antineutrino
@@ -764,41 +760,41 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      !scattering (transport cross section) on neutrons
      if (add_anutau_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = -3
+        call nu_scatter_elastic_n_total(neutrino_energy,1,-3,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_n_total(neutrino_energy,1,-3,eos_variables)* &
-             eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
 
      !scattering (transport cross section) on protons
      if (add_anutau_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = -3
+        call nu_scatter_elastic_p_total(neutrino_energy,1,-3,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_p_total(neutrino_energy,1,-3,eos_variables)* &
-             eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
      
      !scattering (transport cross section) on heavies
      if (add_anutau_scattering_heavies.and.eos_variables(xhindex).ne.0.0d0) then
-        !function call takes neutrino energy, transport=1, lepton = -3 
+        !function call takes neutrino energy, transport=1, lepton = -3
+        call nu_scatter_elastic_heavy_total(neutrino_energy,1,-3,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_heavy_total(neutrino_energy,1,-3,eos_variables)* &
-             eos_variables(xhindex)/eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(xhindex)/eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif
 
      !scattering (transport cross section??) on electrons
      if (add_anutau_scattering_electrons) then
-        ! matter temperature, density, transport=1, lepton = -3 
+        ! matter temperature, density, transport=1, lepton = -3
+        call nu_scatter_elastic_e_total(neutrino_energy,1,-3,eos_variables,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_e_total(neutrino_energy,1,-3,eos_variables)* &
-             eos_variables(yeindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * eos_variables(yeindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
      !scattering on alpha
      if (add_anutau_scattering_alphas) then
-        ! matter temperature, density, transport=1, lepton = -3 
+        ! matter temperature, density, transport=1, lepton = -3
+        call nu_scatter_elastic_alpha_total(neutrino_energy,1,-3,crosssection)
         scattering_opacity = scattering_opacity + &
-             nu_scatter_elastic_alpha_total(neutrino_energy,1,-3)* &
-             (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+             crosssection * (eos_variables(xaindex)/4.0d0)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
      endif 
 
   else
