@@ -77,11 +77,12 @@ subroutine nu_scatter_elastic_alpha_total(neutrino_energy,transport,lepton,cross
   
   crosssection = 4.0d0*sigma0*(neutrino_energy/m_e)**2*sin2thetaW**2
 
-  !ONLY TRANSPORT OPACITY IMPLEMENTED
-  !if (transport.eq.1) then
-  crosssection = 2.0d0/3.0d0*crosssection
-  delta = 0
-  !end if
+  if (transport.eq.1) then
+     crosssection = 2.0d0/3.0d0*crosssection
+     delta = 0.0d0
+  else if (transport.eq.0) then
+     delta = 1.0d0
+  end if
 
 #ifdef DEBUG
   ! check output
@@ -459,12 +460,14 @@ subroutine nu_scatter_elastic_heavy_total(neutrino_energy,transport,lepton,eos_v
   !integrate over phi
   crosssection = 2.0d0*pi*crosssection
   
-  !ONLY TRANSPORT OPACITY IMPLEMENTED
-  !if (transport.eq.1) then
-  delta = 0
-  !else if (transport.eq.0) then
-  !   stop "crossection assumes transport (i.e. (1.0d0-cosine) term)"
-  !endif
+  if (transport.eq.1) then
+     delta = 0.0
+  else if (transport.eq.0) then
+     !NOTE - ion-ion correlation corrections were determined for transport opacity.
+     !       converting to a regular opacity this way is not quite correct, but probably fine
+     crosssection = 1.5d0 * crosssection
+     delta = 1.0
+  endif
 
 #ifdef DEBUG
   ! check output
