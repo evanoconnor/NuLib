@@ -51,11 +51,13 @@ subroutine nu_scatter_elastic_e_total(neutrino_energy,transport,lepton,eos_varia
   !   stop "no transport crosssection?"
   !endif
 
+#ifdef DEBUG
   ! check output
   if(delta<-1.0d0 .or. delta>1.0d0) then
      write(*,*) "Invalid value of delta: ",delta
      stop
   endif
+#endif
      
 end subroutine nu_scatter_elastic_e_total
 
@@ -81,11 +83,13 @@ subroutine nu_scatter_elastic_alpha_total(neutrino_energy,transport,lepton,cross
   delta = 0
   !end if
 
+#ifdef DEBUG
   ! check output
   if(delta<-1.0d0 .or. delta>1.0d0) then
      write(*,*) "Invalid value of delta: ",delta
      stop
   endif
+#endif
   
 end subroutine nu_scatter_elastic_alpha_total
 
@@ -181,12 +185,14 @@ subroutine nu_scatter_elastic_p_total(neutrino_energy,transport,lepton,eos_varia
      crosssection = crosssection*weak_mag !implicit integration over \Omega
      delta = delta_p
   endif
-  
+
+#ifdef DEBUG
   ! check output
   if(delta<-1.0d0 .or. delta>1.0d0) then
      write(*,*) "Invalid value of delta: ",delta
      stop
   endif
+#endif
 
 end subroutine nu_scatter_elastic_p_total
 
@@ -277,11 +283,13 @@ subroutine nu_scatter_elastic_n_total(neutrino_energy,transport,lepton,eos_varia
      delta = delta_n
   endif
 
+#ifdef DEBUG
   ! check output
   if(delta<-1.0d0 .or. delta>1.0d0) then
      write(*,*) "Invalid value of delta: ",delta
      stop
   endif
+#endif
 
 end subroutine nu_scatter_elastic_n_total
 
@@ -458,11 +466,13 @@ subroutine nu_scatter_elastic_heavy_total(neutrino_energy,transport,lepton,eos_v
   !   stop "crossection assumes transport (i.e. (1.0d0-cosine) term)"
   !endif
 
+#ifdef DEBUG
   ! check output
   if(delta<-1.0d0 .or. delta>1.0d0) then
      write(*,*) "Invalid value of delta: ",delta
      stop
   endif
+#endif
 
 end subroutine nu_scatter_elastic_heavy_total
   
@@ -887,11 +897,13 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
   endif
   average_delta = average_delta / scattering_opacity   
 
+#ifdef DEBUG
   ! check output
   if(average_delta<-1.0d0 .or. average_delta>1.0d0) then
      write(*,*) "Invalid value of average delta: ",average_delta
      stop
   endif
+#endif
 
 end subroutine total_scattering_opacity
 

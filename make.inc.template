@@ -23,3 +23,4 @@ HDF5LIBS=-L$(HDF5DIR)/lib -lhdf5 -lhdf5_fortran -lhdf5 -lz
 NUCLEI_HEMPEL = 0
 HELMHOLTZ_EOS = 0
 WEAK_RATES = 0
+DEBUG = 0
