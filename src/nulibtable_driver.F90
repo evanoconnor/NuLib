@@ -18,7 +18,7 @@ program driver
   integer i,j,k,ns,ng,ngprime
   real*8 rho,temp,ye,mue,eta
 
-  call nulibtable_reader(filename,include_Ielectron=.true.,include_epannihil_kernels=.true.)
+  call nulibtable_reader(filename,include_Ielectron=.false.,include_epannihil_kernels=.false.,include_scattering_delta=.false.)
 
   allocate(eas(nulibtable_number_easvariables))
   allocate(eas_energy(nulibtable_number_groups,nulibtable_number_easvariables))

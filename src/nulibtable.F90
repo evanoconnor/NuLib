@@ -57,12 +57,13 @@ end module nulibtable
 module nulibtable_interface
 
   interface
-     subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernels)
+     subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernels,include_scattering_delta)
        implicit none
 
        character(*) :: filename
        logical,optional :: include_Ielectron
        logical,optional :: include_epannihil_kernels
+       logical,optional :: include_scattering_delta
      end subroutine nulibtable_reader
   end interface
 
