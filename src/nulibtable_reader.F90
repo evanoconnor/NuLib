@@ -3,7 +3,6 @@ subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernel
   
   use nulibtable
   use hdf5
-  use h5lt
   implicit none
 
   !inputs
