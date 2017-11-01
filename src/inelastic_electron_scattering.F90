@@ -295,7 +295,7 @@ function NES_H1_ThompsonBruenn(nu_energy_in,nu_energy_out,electron_energy,neutri
 
      H1II = 1.0d0/(Ea*Eb)*((Ea**2+Eb**2)/2.0d0*L0II(Ea,Eb,Ec) - 16.0d0/35.0d0*Ec**7 + &
           4.0d0/5.0d0*(3.0d0*Eb-Ea)*Ec**6 - 2.0d0/15.0d0*Ec**5*(37.0d0*Eb**2-26.0d0*Ea*Eb+Ea**2) - &
-          2.0d0/3.0d0*Ec**4*Eb*(Eb-Ea)*(7.0d0*Eb-Ea) - 4.0d0/3.0d0*Ec**3*Eb**2*(Eb-Ea)**2 + &
+          2.0d0/3.0d0*Ec**4*Eb*(Ea-Eb)*(7.0d0*Eb-Ea) - 4.0d0/3.0d0*Ec**3*Eb**2*(Eb-Ea)**2 + &
           Gamma1(-Eb,-Ea,Ec)*HeavySide(Eb-Ea)) !error in YU77? did they forget to switch a w-w' to w'-w??
 
   else
@@ -402,7 +402,8 @@ contains
     real*8 :: answer !answer
 
     answer = 4.0d0/15.0d0*E3**2*(E1-E2)**3*(4.0d0*E1**2+7.0d0*E1*E2+4.0d0*E2**2) + &
-         2.0d0/15.0d0*E3*(E1-E2)**4*(7.0d0*E1**2+14.0d0*E1*E2+9.0d0*E2**2)
+         2.0d0/15.0d0*E3*(E1-E2)**4*(7.0d0*E1**2+14.0d0*E1*E2+9.0d0*E2**2) + &
+         2.0d0/105.0d0*(E1-E2)**5*(11.0d0*E1**2+27.0d0*E1*E2+18.0d0*E2**2)
 
   end function Gamma1
 
