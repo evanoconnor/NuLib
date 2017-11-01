@@ -898,7 +898,11 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
   else
      stop "total_scattering_opacity: How did you get in here??"
   endif
-  average_delta = average_delta / scattering_opacity   
+  if(scattering_opacity.gt.0) then
+     average_delta = average_delta / scattering_opacity
+  else
+     average_delta = 0.0d0
+  endif
 
 #ifdef DEBUG
   ! check output
