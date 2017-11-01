@@ -1,7 +1,7 @@
 !-*-f90-*-
 function NES_Phi0_ThompsonBruenn(nu_energy_in,nu_energy_out,matter_eta,matter_temperature,neutrino_species) result(Phi0)
 
-  use nulib, only : GLQ_n64_roots, GLQ_n64_weights,Gfermi,clight,hbarc_mevcm,pi
+  use nulib, only : Gfermi,clight,hbarc_mevcm,pi
   implicit none
 
   !inputs
@@ -25,25 +25,27 @@ function NES_Phi0_ThompsonBruenn(nu_energy_in,nu_energy_out,matter_eta,matter_te
   real*8 :: NES_H0_ThompsonBruenn !function declaration
   real*8 :: fermidirac_dimensionless !function declaration
 
-  real*8 old
+  real*8 :: bound,width
+  integer :: npoints=128
 
   Phi0 = 0.0d0
+  bound = max(0.0d0,matter_eta)+10.0d0 ! go 10 past the location of the FD exponential cutoff
+  width = bound/float(npoints)
   nu_energy_in_x = nu_energy_in/matter_temperature
   nu_energy_out_x = nu_energy_out/matter_temperature 
 
-  do i=1,64
+  do i=1,npoints
      !must take interval change into account
-     electron_x = GLQ_n64_roots(i) !MeV/Temp
+     electron_x = width * (float(i)-0.5d0) !MeV/Temp
      fem = fermidirac_dimensionless(electron_x,matter_eta)
      feother = 1.0d0-fermidirac_dimensionless(electron_x+nu_energy_in_x - &
           nu_energy_out_x,matter_eta)
-     old = Phi0
      Phi0 = Phi0 + &
           fem*feother*NES_H0_ThompsonBruenn(nu_energy_in_x,nu_energy_out_x, &
-          electron_x,neutrino_species)* &
-          GLQ_n64_weights(i)
+          electron_x,neutrino_species)
   enddo
-  
+  Phi0 = Phi0*width
+
   !constants that do not have to do with the integral over electron energy
   !need to restore temperatures, two factors, back to cgs units then
   !needs multiplying these appropriate constants
@@ -56,7 +58,7 @@ end function NES_Phi0_ThompsonBruenn
 function NES_Phi1_ThompsonBruenn(nu_energy_in,nu_energy_out,matter_eta, &
      matter_temperature,neutrino_species) result(Phi1)
 
-  use nulib, only : GLQ_n32_roots, GLQ_n32_weights,Gfermi,clight,hbarc_mevcm,pi
+  use nulib, only : Gfermi,clight,hbarc_mevcm,pi
   implicit none
 
   !inputs
@@ -79,20 +81,24 @@ function NES_Phi1_ThompsonBruenn(nu_energy_in,nu_energy_out,matter_eta, &
   real*8 :: NES_H1_ThompsonBruenn !function declaration
   real*8 :: fermidirac_dimensionless !function declaration
 
-  Phi1 = 0.0d0
+  real*8 :: bound,width
+  integer :: npoints=128
 
+  Phi1 = 0.0d0
+  bound = max(0.0d0,matter_eta)+10.0d0 ! go 10 past the location of the FD exponential cutoff
+  width = bound/float(npoints)
   nu_energy_in_x = nu_energy_in/matter_temperature
   nu_energy_out_x = nu_energy_out/matter_temperature 
 
-  do i=1,32
+  do i=1,npoints
      !must take interval change into account
-     electron_x = GLQ_n32_roots(i) !MeV/Temp
+     electron_x = bound/float(npoints) * (float(i)-0.5) !MeV/Temp
      fem = fermidirac_dimensionless(electron_x,matter_eta)
      feother = 1.0d0-fermidirac_dimensionless(electron_x+nu_energy_in_x-nu_energy_out_x,matter_eta)
      Phi1 = Phi1 + &
-          fem*feother*NES_H1_ThompsonBruenn(nu_energy_in_x,nu_energy_out_x,electron_x,neutrino_species)* &
-          GLQ_n32_weights(i)
+          fem*feother*NES_H1_ThompsonBruenn(nu_energy_in_x,nu_energy_out_x,electron_x,neutrino_species)
   enddo
+  Phi1 = Phi1*width
   
   !constants that do not have to do with the integral over electron energy
   !need to restore temperatures, two factors, back to cgs units then
