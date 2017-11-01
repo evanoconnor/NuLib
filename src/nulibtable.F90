@@ -21,6 +21,7 @@ module nulibtable
   real*8, allocatable,save :: nulibtable_emissivities(:,:,:,:)
   real*8, allocatable,save :: nulibtable_absopacity(:,:,:,:)
   real*8, allocatable,save :: nulibtable_scatopacity(:,:,:,:)
+  real*8, allocatable,save :: nulibtable_delta(:,:,:,:)
 
   real*8, allocatable,save :: nulibtable_Itable_Phi0(:,:,:)
   real*8, allocatable,save :: nulibtable_Itable_Phi1(:,:,:)
@@ -56,12 +57,13 @@ end module nulibtable
 module nulibtable_interface
 
   interface
-     subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernels)
+     subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernels,include_scattering_delta)
        implicit none
 
        character(*) :: filename
        logical,optional :: include_Ielectron
        logical,optional :: include_epannihil_kernels
+       logical,optional :: include_scattering_delta
      end subroutine nulibtable_reader
   end interface
 
@@ -111,6 +113,14 @@ subroutine nulibtable_single_species_single_energy(xrho,xtemp,xye,lns,lng,eas,ea
        nulibtable_logtemp,nulibtable_ye)
 
   eas(:) = 10.0d0**eas(:)
+
+  if(eas_n1 == 4) then
+     call intp3d_many_mod(xlrho,xltemp,xye,eas(4), &
+          nulibtable_delta(:,:,:,startindex:endindex),nulibtable_nrho, &
+          nulibtable_ntemp,nulibtable_nye,1,nulibtable_logrho, &
+          nulibtable_logtemp,nulibtable_ye)
+  endif
+
 
 end subroutine nulibtable_single_species_single_energy
 
@@ -171,6 +181,15 @@ subroutine nulibtable_single_species_range_energy(xrho,xtemp,xye,lns,eas,eas_n1,
        nulibtable_logtemp,nulibtable_ye)
   
   eas(:,3) = 10.0d0**xeas(:)
+
+  if(eas_n2 == 4) then
+     xeas = 0.0d0
+     call intp3d_many_mod(xlrho,xltemp,xye,xeas, &
+          nulibtable_delta(:,:,:,startindex:endindex),nulibtable_nrho, &
+          nulibtable_ntemp,nulibtable_nye,eas_n1,nulibtable_logrho, &
+          nulibtable_logtemp,nulibtable_ye)
+     eas(:,4) = xeas(:)
+  endif
 
 end subroutine nulibtable_single_species_range_energy
 
@@ -243,6 +262,21 @@ subroutine nulibtable_range_species_range_energy(xrho,xtemp,xye,eas,eas_n1,eas_n
         eas(ins,ing,3) = 10.0d0**xeas(index)
      enddo
   enddo
+
+  if(eas_n3 == 4) then
+     xeas = 0.0d0
+     call intp3d_many_mod(xlrho,xltemp,xye,xeas,nulibtable_delta,nulibtable_nrho, &
+          nulibtable_ntemp,nulibtable_nye,eas_n1*eas_n2,nulibtable_logrho, &
+          nulibtable_logtemp,nulibtable_ye)
+
+     do ins=1,nulibtable_number_species
+        do ing=1,nulibtable_number_groups
+           index = (ins-1)*nulibtable_number_groups + (ing-1) + 1
+           eas(ins,ing,4) = xeas(index)
+        enddo
+     enddo
+
+  endif
 
 end subroutine nulibtable_range_species_range_energy
 

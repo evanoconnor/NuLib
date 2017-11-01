@@ -61,6 +61,10 @@ else
 endif	
 endif
 
+ifeq ($(DEBUG),1)
+	F90FLAGS += -DDEBUG
+endif
+
 ifeq ($(MPI),1)
 	F90 = mpif90
 	DEFS += -D__MPI__
