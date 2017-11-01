@@ -67,7 +67,11 @@ module nulib
   integer :: muhatindex = 14
   integer :: entropyindex = 15
 
+#ifdef DEBUG
+  logical :: debug = .true.
+#else
   logical :: debug = .false.
+#endif
   logical :: do_integrated_BB_and_emissivity
 
   !tabulated weak rate table bounds
@@ -619,7 +623,9 @@ module nulib
             if(emissivities(i,ng).ne.emissivities(i,ng)) stop "NaN in emissivities"
             if(absorption_opacity(i,ng).ne.absorption_opacity(i,ng)) stop "NaN in absorption_opacity"
             if(scattering_opacity(i,ng).ne.scattering_opacity(i,ng)) stop "NaN in scattering_opacity"
-            if(delta(i,ng).ne.delta(i,ng)) stop "NaN in scattering delta"
+            if(.not. do_transport_opacities) then
+               if(delta(i,ng).ne.delta(i,ng)) stop "NaN in scattering delta"
+            endif
          enddo      
       enddo
 
@@ -788,6 +794,17 @@ module nulib
          endif
 
       enddo
+
+      if(debug) then
+         ! check that phis are consistent
+         do ns=1,number_local_species
+            do ng=1,iin
+               if(abs(Phi1s(ns,ng)/Phi0s(ns,ng)) > 1.0d0) then
+                  write(*,*) ns, ng, Phi1s(ns,ng), Phi0s(ns,ng), Phi1s(ns,ng)/Phi0s(ns,ng)
+               end if
+            enddo
+         enddo
+      endif
 
     end subroutine single_Ipoint_return_all
 
