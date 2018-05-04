@@ -27,6 +27,9 @@ program make_table_example
   !be six currently, average is done via above parameter
   integer :: mytable_number_species = 6
 
+  !number of species to output, must match comments above
+  integer :: number_output_species = 3
+
   !number of energy groups
   integer :: mytable_number_groups = 18
 
@@ -39,7 +42,7 @@ program make_table_example
   real*8  :: min_logrho,max_logrho
   real*8  :: min_logtemp,max_logtemp
   real*8  :: min_ye,max_ye
-  integer :: number_output_species
+
   character*512 :: finaltable_filename
   real*8, allocatable,dimension(:) :: table_rho
   real*8, allocatable,dimension(:) :: table_temp
@@ -147,7 +150,6 @@ program make_table_example
   Imax_logtemp = log10(150.0d0)
   Imin_logeta = log10(0.1d0)
   Imax_logeta = log10(100.0d0)
-  number_output_species = 3
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.

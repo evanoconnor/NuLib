@@ -29,6 +29,10 @@ program make_table_example
   !number of energy groups
   integer :: mytable_number_groups = 18
 
+  !number of species for nulib to output interactions for, must
+  !be commensurate with neutrino_scheme above
+  integer :: number_output_species = 3
+
   !NuLib parameters file (weak rates and EOS)
   character*200 :: parameters_filename = "./parameters"
 
@@ -38,7 +42,6 @@ program make_table_example
   real*8  :: min_logrho,max_logrho
   real*8  :: min_logtemp,max_logtemp
   real*8  :: min_ye,max_ye
-  integer :: number_output_species
   character*512 :: finaltable_filename
   real*8, allocatable,dimension(:) :: table_rho
   real*8, allocatable,dimension(:) :: table_temp
@@ -149,7 +152,6 @@ program make_table_example
   Imax_logtemp = log10(150.0d0)
   Imin_logeta = log10(0.1d0)
   Imax_logeta = log10(100.0d0)
-  number_output_species = 3
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
