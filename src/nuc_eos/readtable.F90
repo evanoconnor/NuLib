@@ -24,13 +24,13 @@ subroutine readtable(eos_filename)
 
   eos_filename_stored = eos_filename
 
-  write(*,*) "Reading Ott EOS Table"
+  !write(*,*) "Reading Ott EOS Table"
 
   call h5open_f(error)
 
   call h5fopen_f (trim(adjustl(eos_filename)), H5F_ACC_RDONLY_F, file_id, error)
 
-  write(6,*) trim(adjustl(eos_filename))
+  !write(6,*) trim(adjustl(eos_filename))
 
 ! read scalars
   dims1(1)=1
@@ -60,8 +60,8 @@ subroutine readtable(eos_filename)
      stop "Could not read EOS table file"
   endif
 
-  write(message,"(a25,i5,i5,i5)") "We have nrho ntemp nye: ", nrho,ntemp,nye
-  write(*,*) message
+  !write(message,"(a25,i5,i5,i5)") "We have nrho ntemp nye: ", nrho,ntemp,nye
+  !write(*,*) message
 
   allocate(alltables(nrho,ntemp,nye,nvars))
 
@@ -229,7 +229,7 @@ subroutine readtable(eos_filename)
   eos_tempmin = 10.0d0**logtemp(1)
   eos_tempmax = 10.0d0**logtemp(ntemp)
 
-  write(6,*) "Done reading eos tables"
+  ! write(6,*) "Done reading eos tables"
 
 
 end subroutine readtable
