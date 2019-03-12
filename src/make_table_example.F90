@@ -273,7 +273,7 @@ program make_table_example
      write(*,*) "Rho:", 100.0*dble(irho-1)/dble(final_table_size_rho),"%"
 #endif
      do itemp=1,final_table_size_temp
-        write(*,*) "Temp:", 100.0*dble(itemp-1)/dble(final_table_size_temp),"%"
+        !write(*,*) "Temp:", 100.0*dble(itemp-1)/dble(final_table_size_temp),"%"
         do iye=1,final_table_size_ye
 
            eos_variables = 0.0d0
@@ -530,7 +530,7 @@ program make_table_example
 #endif
 
         do ieta=1,final_Itable_size_eta
-           write(*,*) "Eta:", 100.0*dble(ieta-1)/dble(final_Itable_size_eta),"%"
+           !write(*,*) "Eta:", 100.0*dble(ieta-1)/dble(final_Itable_size_eta),"%"
            do iinE=final_Itable_size_inE,1,-1
 
 #ifdef __MPI__
