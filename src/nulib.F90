@@ -940,13 +940,13 @@ module nulib
 
             !already ensure that amu and atau the same
             if (add_anumu_kernel_epannihil) then
-               Phi0s(3,ng,1) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,1,0) + &
+               Phi0s(4,ng,1) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,1,0) + &
                     epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,1,0))/2.0d0 !production of Phi_0
-               Phi0s(3,ng,2) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,2,0) + &
+               Phi0s(4,ng,2) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,2,0) + &
                     epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,2,0))/2.0d0 !annihilation of Phi_0
-               Phi1s(3,ng,1) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,1,1) + &
+               Phi1s(4,ng,1) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,1,1) + &
                     epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,1,1))/2.0d0 !production of Phi_1
-               Phi1s(3,ng,2) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,2,1) + &
+               Phi1s(4,ng,2) = (epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,4,2,1) + &
                     epannihil_Phi_Bruenn(nu_energy_x,nuother_energy_x,eta,6,2,1))/2.0d0 !annihilation of Phi_1
 
             endif
