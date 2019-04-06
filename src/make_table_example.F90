@@ -273,7 +273,6 @@ program make_table_example
      write(*,*) "Rho:", 100.0*dble(irho-1)/dble(final_table_size_rho),"%"
 #endif
      do itemp=1,final_table_size_temp
-        !write(*,*) "Temp:", 100.0*dble(itemp-1)/dble(final_table_size_temp),"%"
         do iye=1,final_table_size_ye
 
            eos_variables = 0.0d0
@@ -312,11 +311,11 @@ program make_table_example
                     stop
                  endif
                  if (.not. do_transport_opacities) then
-                 if (local_delta(ns,ng).ne.local_delta(ns,ng)) then
-                    write(*,"(a,1P3E18.9,i6,i6)") "We have a NaN in scat delta", &
-                         eos_variables(rhoindex),eos_variables(tempindex),eos_variables(yeindex),ns,ng
-                    stop
-                 endif
+                    if (local_delta(ns,ng).ne.local_delta(ns,ng)) then
+                        write(*,"(a,1P3E18.9,i6,i6)") "We have a NaN in scat delta", &
+                            eos_variables(rhoindex),eos_variables(tempindex),eos_variables(yeindex),ns,ng
+                        stop
+                    endif
                  endif
                  
                  if (log10(local_emissivity(ns,ng)).ge.300.0d0) then
@@ -338,18 +337,18 @@ program make_table_example
                     stop
                  endif
                  if (.not. do_transport_opacities) then
-                 if (local_delta(ns,ng).gt.1.0d0) then
-                    write(*,"(a,1P4E18.9,i6,i6)") "delta > 1", &
-                         local_delta(ns,ng),eos_variables(rhoindex), &
-                         eos_variables(tempindex),eos_variables(yeindex),ns,ng
-                    stop
-                 endif
-                 if (local_delta(ns,ng).lt.-1.0d0) then
-                    write(*,"(a,1P4E18.9,i6,i6)") "delta < -1", &
-                         local_delta(ns,ng),eos_variables(rhoindex), &
-                         eos_variables(tempindex),eos_variables(yeindex),ns,ng
-                    stop
-                 endif
+                    if (local_delta(ns,ng).gt.1.0d0) then
+                        write(*,"(a,1P4E18.9,i6,i6)") "delta > 1", &
+                            local_delta(ns,ng),eos_variables(rhoindex), &
+                            eos_variables(tempindex),eos_variables(yeindex),ns,ng
+                        stop
+                    endif
+                    if (local_delta(ns,ng).lt.-1.0d0) then
+                        write(*,"(a,1P4E18.9,i6,i6)") "delta < -1", &
+                            local_delta(ns,ng),eos_variables(rhoindex), &
+                            eos_variables(tempindex),eos_variables(yeindex),ns,ng
+                        stop
+                    endif
                  endif
               enddo !do ng=1,mytable_number_groups
            enddo !do ns=1,number_output_species
@@ -530,7 +529,6 @@ program make_table_example
 #endif
 
         do ieta=1,final_Itable_size_eta
-           !write(*,*) "Eta:", 100.0*dble(ieta-1)/dble(final_Itable_size_eta),"%"
            do iinE=final_Itable_size_inE,1,-1
 
 #ifdef __MPI__
