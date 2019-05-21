@@ -55,19 +55,15 @@ program make_table_example
 
   !final Itable parameters
   integer :: final_Itable_size_temp, final_Itable_size_eta, final_Itable_size_inE
-  integer :: final_Itable_size_n_N
   real*8  :: Imin_logtemp,Imax_logtemp
   real*8  :: Imin_logeta,Imax_logeta
-  real*8  :: Imin_logn_N,Imax_logn_N
   real*8, allocatable,dimension(:) :: Itable_temp
   real*8, allocatable,dimension(:) :: Itable_eta
   real*8, allocatable,dimension(:) :: Itable_inE
-  real*8, allocatable,dimension(:) :: Itable_n_N
   real*8, allocatable,dimension(:,:,:,:,:) :: Itable_Phi0
   real*8, allocatable,dimension(:,:,:,:,:) :: Itable_Phi1   
   real*8, allocatable,dimension(:,:,:,:,:,:) :: epannihiltable_Phi0 !for ep-annihilation kernels, need both production and destruction kernels
   real*8, allocatable,dimension(:,:,:,:,:,:) :: epannihiltable_Phi1 !for ep-annihilation kernels, need both production and destruction kernels
-  real*8, allocatable,dimension(:,:,:,:,:,:) :: bremsstrahlungtable_Phi0 !for ep-annihilation kernels, need both production and destruction kernels
 
 
   !versioning
@@ -78,7 +74,7 @@ program make_table_example
 
   !local variables to help in making tables
   integer :: irho,itemp,iye,ns,ng
-  integer :: ieta,iinE,in_N
+  integer :: ieta,iinE
   real*8, allocatable,dimension(:,:) :: local_emissivity
   real*8, allocatable,dimension(:,:) :: local_absopacity
   real*8, allocatable,dimension(:,:) :: local_scatopacity
@@ -87,15 +83,13 @@ program make_table_example
   real*8, allocatable,dimension(:,:) :: local_Phi1
   real*8, allocatable,dimension(:,:,:) :: local_Phi0_epannihil 
   real*8, allocatable,dimension(:,:,:) :: local_Phi1_epannihil 
-  real*8, allocatable,dimension(:,:,:) :: local_Phi0_bremsstrahlung 
   real*8, allocatable,dimension(:) :: eos_variables
   real*8 :: matter_prs,matter_ent,matter_cs2,matter_dedt,matter_dpderho,matter_dpdrhoe
   integer :: keytemp,keyerr
   real*8 :: precision = 1.0d-10
   integer :: i
   real*8 dxfac,mindx
-  logical :: doing_inelastic, doing_epannihil,doing_bremsstrahlung
-  logical :: skip_emission
+  logical :: doing_inelastic, doing_epannihil
 
 #ifdef __MPI__  
   !MPI variables
@@ -113,7 +107,6 @@ program make_table_example
   real*8, allocatable,dimension(:,:,:,:,:) :: Itable_Phi0_node
   real*8, allocatable,dimension(:,:,:,:,:) :: Itable_Phi1_node
   integer :: mpi_final_Itable_size_temp
-  
 
   
   !MPI initialization
@@ -136,8 +129,6 @@ program make_table_example
   base="NuLib"
   vnum="1.0"
   
-  skip_emission = .false.
-  
   adhoc_nux_factor = 0.0d0 !increase for adhoc nux heating (also set
                            !add_nux_absorption_on_n_and_p to true)
   !set up table
@@ -145,12 +136,11 @@ program make_table_example
   final_table_size_rho = 82
   final_table_size_temp = 65
   
-  final_Itable_size_temp = 25
+  final_Itable_size_temp = 65
   final_Itable_size_eta = 61
-  final_Itable_size_n_N = 80
   final_Itable_size_inE = mytable_number_groups
 
-  min_ye = 0.015d0
+  min_ye = 0.035d0
   max_ye = 0.55d0
   min_logrho = 6.0d0
   max_logrho = 15.5d0
@@ -160,8 +150,6 @@ program make_table_example
   Imax_logtemp = log10(150.0d0)
   Imin_logeta = log10(0.1d0)
   Imax_logeta = log10(100.0d0)
-  Imin_logn_N = 35.0d0 
-  Imax_logn_N = 37.0d0
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
@@ -214,9 +202,6 @@ program make_table_example
   bin_widths(number_groups) = 2.0*(energies(number_groups)-bin_bottom(number_groups))
   bin_top(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups)
 
-if ( skip_emission) then 
-	go to 395
-endif
 
   allocate(table_ye(final_table_size_ye))
   allocate(table_rho(final_table_size_rho))
@@ -288,7 +273,7 @@ endif
      write(*,*) "Rho:", 100.0*dble(irho-1)/dble(final_table_size_rho),"%"
 #endif
      do itemp=1,final_table_size_temp
-!~         write(*,*) "Temp:", 100.0*dble(itemp-1)/dble(final_table_size_temp),"%"
+        write(*,*) "Temp:", 100.0*dble(itemp-1)/dble(final_table_size_temp),"%"
         do iye=1,final_table_size_ye
 
            eos_variables = 0.0d0
@@ -392,7 +377,7 @@ endif
      deallocate(eos_variables)
   enddo!do irho=1,final_table_size_rho
   !$OMP END PARALLEL DO! end do
-395 CONTINUE
+
 #ifdef __MPI__
   call mpi_barrier(mpi_comm_world, ierror)
   if(mpirank.eq.0)write(*,*) "Finished Opacity Table" 
@@ -443,17 +428,8 @@ endif
   else
      doing_epannihil = .false.
   endif
-  
-  if (add_nue_kernel_bremsstrahlung.or.add_anue_kernel_bremsstrahlung.or. &
-       add_numu_kernel_bremsstrahlung.or.add_anumu_kernel_bremsstrahlung.or. &
-       add_nutau_kernel_bremsstrahlung.or.add_anutau_kernel_bremsstrahlung) then
 
-     doing_bremsstrahlung = .true.
-  else
-     doing_bremsstrahlung = .false.
-  endif
-
-  if (doing_inelastic.or.doing_epannihil.or.doing_bremsstrahlung) then
+  if (doing_inelastic.or.doing_epannihil) then
 
      write(*,*) "Making Inelastic Table Opacity Table" 
 
@@ -496,7 +472,6 @@ endif
      allocate(Itable_temp(final_Itable_size_temp))
      allocate(Itable_eta(final_Itable_size_eta))
      allocate(Itable_inE(final_Itable_size_inE))
-     allocate(Itable_n_N(final_Itable_size_n_N))
 
      allocate(Itable_Phi0(final_Itable_size_temp,final_Itable_size_eta, &
           final_Itable_size_inE,number_output_species,mytable_number_groups))
@@ -505,8 +480,6 @@ endif
      allocate(epannihiltable_Phi0(final_Itable_size_temp,final_Itable_size_eta, &
           final_Itable_size_inE,number_output_species,mytable_number_groups,2))
      allocate(epannihiltable_Phi1(final_Itable_size_temp,final_Itable_size_eta, &
-          final_Itable_size_inE,number_output_species,mytable_number_groups,2))
-     allocate(bremsstrahlungtable_Phi0(final_Itable_size_temp,final_Itable_size_n_N, &
           final_Itable_size_inE,number_output_species,mytable_number_groups,2))
 
 #ifdef __MPI__
@@ -526,24 +499,14 @@ endif
         Itable_eta(ieta) = &
              10.0d0**(Imin_logeta+dble(ieta-1)/dble(final_Itable_size_eta-1)*(Imax_logeta-Imin_logeta))
      enddo
-     
-     do in_N=1,final_Itable_size_n_N
-        Itable_n_N(in_N) = &
-             10.0d0**(Imin_logn_N+dble(in_N-1)/dble(final_Itable_size_n_N-1)*(Imax_logn_N-Imin_logn_N))
-     enddo
-	 
-!~ 	 write(*,*) "T", Itable_temp, size(Itable_temp)
-!~ 	 write(*,*)
-!~ 	 write(*,*) "n", Itable_n_N,size(Itable_n_N)
-!~ 	 stop 
+
 #ifdef __MPI__
      !mpi_scatterv sends portions of Itable_temp to different nodes
      call mpi_scatterv(Itable_temp,sendcounts,displs,mpi_double,Itable_temp_subset,&
           recvcount,mpi_double,0,mpi_comm_world,ierror)
      mpi_final_Itable_size_temp = recvcount
 #endif
-     !$OMP PARALLEL DO PRIVATE(local_Phi0,local_Phi1,local_Phi0_epannihil,local_Phi1_epannihil &
-     !$OMP ,local_Phi0_bremsstrahlung,in_N,ieta,iinE,ns,ng)
+     !$OMP PARALLEL DO PRIVATE(local_Phi0,local_Phi1,local_Phi0_epannihil,local_Phi1_epannihil,ieta,iinE,ns,ng)
      !loop over temp,eta,inE of table, do each point
 #ifdef __MPI__
      do itemp=1,mpi_final_Itable_size_temp
@@ -555,7 +518,6 @@ endif
         allocate(local_Phi1(number_output_species,mytable_number_groups))
         allocate(local_Phi0_epannihil(number_output_species,mytable_number_groups,2))
         allocate(local_Phi1_epannihil(number_output_species,mytable_number_groups,2))
-        allocate(local_Phi0_bremsstrahlung(number_output_species,mytable_number_groups,2))
 
 #ifdef __MPI__
         write(*,*) "Temp:", 100.0*dble(displs(mpirank)+itemp-1)/dble(final_Itable_size_temp),"%"
@@ -563,9 +525,9 @@ endif
         write(*,*) "Temp:", 100.0*dble(itemp-1)/dble(final_Itable_size_temp),"%"
 #endif
 
-        do iinE=final_Itable_size_inE,1,-1
-!~            write(*,*) "Eta:", 100.0*dble(ieta-1)/dble(final_Itable_size_eta),"%"
-           do ieta=1,final_Itable_size_eta
+        do ieta=1,final_Itable_size_eta
+           write(*,*) "Eta:", 100.0*dble(ieta-1)/dble(final_Itable_size_eta),"%"
+           do iinE=final_Itable_size_inE,1,-1
 
 #ifdef __MPI__
               call single_Ipoint_return_all(iinE,Itable_eta(ieta), &
@@ -727,67 +689,18 @@ endif
                     epannihiltable_Phi1(itemp,ieta,iinE,ns,ng,1) = local_Phi1_epannihil(ns,ng,1) !cm^3/s
                     epannihiltable_Phi1(itemp,ieta,iinE,ns,ng,2) = local_Phi1_epannihil(ns,ng,2) !cm^3/s
                 enddo !do ns=1,number_output_species
-              enddo !do ng=1,mytable_number_groups    
-		   enddo!do ieta=1,final_Itable_size_eta  
-		        
-           if (doing_bremsstrahlung) then 
-           do in_N=1,final_Itable_size_n_N
-              call single_bremsstrahlung_kernel_point_return_all_Hannestad(iinE,Itable_n_N(in_N), &
-                   Itable_temp(itemp),local_Phi0_bremsstrahlung,mytable_neutrino_scheme)               
+              enddo !do ng=1,mytable_number_groups              
 
-              !calculate and check that the number is not NaN or Inf
-              !(.gt.1.0d300)
-              do ns=1,number_output_species
-                 do ng=1,mytable_number_groups
-
-                    if (local_Phi0_bremsstrahlung(ns,ng,1).ne.local_Phi0_bremsstrahlung(ns,ng,1)) then
-                       write(*,"(a,1P2E18.9,i6,i6,i6)") "We have a NaN in Phi0_bremsstrahlung production", &
-                            Itable_temp(itemp),Itable_n_N(in_N),iinE,ns,ng
-                       stop
-                    endif
-                    if (local_Phi0_bremsstrahlung(ns,ng,2).ne.local_Phi0_bremsstrahlung(ns,ng,2)) then
-                       write(*,"(a,1P2E18.9,i6,i6,i6)") "We have a NaN in Phi0_bremsstrahlung annihilation", &
-                            Itable_temp(itemp),Itable_n_N(in_N),iinE,ns,ng
-                       stop
-                    endif
-                    
-                    if (log10(local_Phi0_bremsstrahlung(ns,ng,1)).ge.300.0d0) then
-                       write(*,"(a,1P3E18.9,i6,i6,i6)") "We have a Inf in Phi0_bremsstrahlung production", &
-                            local_Phi0_bremsstrahlung(ns,ng,1),Itable_temp(itemp),Itable_n_N(in_N),iinE,ns,ng
-                       stop
-                    endif
-                    if (log10(local_Phi0_bremsstrahlung(ns,ng,2)).ge.300.0d0) then
-                       write(*,"(a,1P3E18.9,i6,i6,i6)") "We have a Inf in Phi0_bremsstrahlung annihilation", &
-                            local_Phi0_bremsstrahlung(ns,ng,2),Itable_temp(itemp),Itable_n_N(in_N),iinE,ns,ng
-                       stop
-                    endif
-
-                 enddo !do ng=1,mytable_number_groups
-              enddo !do ns=1,number_output_species
-
-              !set global table
-              do ns=1,number_output_species
-                 do ng=1,mytable_number_groups
-                    bremsstrahlungtable_Phi0(itemp,in_N,iinE,ns,ng,1) = local_Phi0_bremsstrahlung(ns,ng,1) !cm^3/s
-                    bremsstrahlungtable_Phi0(itemp,in_N,iinE,ns,ng,2) = local_Phi0_bremsstrahlung(ns,ng,2) !cm^3/s
-                enddo !do ns=1,number_output_species
-              enddo !do ng=1,mytable_number_groups  
-                   
-              enddo!do in_N=1,final_Itable_size_n_N   
-           endif
-
-        enddo!do iinE=1,final_Itable_size_inE
+           enddo!do iinE=1,final_Itable_size_inE
+        enddo!do ieta=1,final_Itable_size_eta
 
         deallocate(local_Phi0)
         deallocate(local_Phi1)
         deallocate(local_Phi0_epannihil)
         deallocate(local_Phi1_epannihil)
-        deallocate(local_Phi0_bremsstrahlung)
      enddo!do itemp=1,final_Itable_size_temp
      !$OMP END PARALLEL DO! end do
-write(*,*) bremsstrahlungtable_Phi0(51,41,11,3,11,1)
-write(*,*) epannihiltable_Phi0(51,41,11,3,11,1)
-write(*,*) "T",Itable_temp(51),"n_N",Itable_n_N(41),"eta",Itable_eta(41),"En",energies(11)
+
 #ifdef __MPI__
      call mpi_barrier(mpi_comm_world, ierror)
      if(mpirank.eq.0)write(*,*) "Finished Inelastic Table" 
@@ -820,7 +733,7 @@ write(*,*) "T",Itable_temp(51),"n_N",Itable_n_N(41),"eta",Itable_eta(41),"En",en
      timestamp = dble(values(1))*10000.0d0+dble(values(2))*100.0+dble(values(3)) + &
           (dble(values(5))+dble(values(6))/60.0d0 + dble(values(7))/3600.0d0 )/24.0
 
-     if (doing_inelastic.or.doing_epannihil.or.doing_bremsstrahlung) then
+     if (doing_inelastic.or.doing_epannihil) then
         finaltable_filename = trim(adjustl(outdir))//trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
              "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &
              "_ng"//trim(adjustl(sng))//"_ns"//trim(adjustl(sns))// &
@@ -1035,7 +948,7 @@ contains
        cerror = cerror + error
     endif
     
-    if (doing_inelastic.or.doing_epannihil.or.doing_bremsstrahlung) then
+    if (doing_inelastic.or.doing_epannihil) then
 
        rank = 1
        dims1(1) = 1
@@ -1056,16 +969,6 @@ contains
        call h5dclose_f(dset_id, error)
        call h5sclose_f(dspace_id, error)  
        cerror = cerror + error
-       
-       rank = 1
-       dims1(1) = 1
-       call h5screate_simple_f(rank, dims1, dspace_id, error)
-       call h5dcreate_f(file_id, "In_N", H5T_NATIVE_INTEGER, &
-            dspace_id,dset_id, error)
-       call h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, final_Itable_size_n_N, dims1, error)
-       call h5dclose_f(dset_id, error)
-       call h5sclose_f(dspace_id, error)  
-       cerror = cerror + error
 
        rank = 1
        dims1(1) = final_Itable_size_temp
@@ -1083,16 +986,6 @@ contains
        call h5dcreate_f(file_id, "eta_Ipoints", H5T_NATIVE_DOUBLE, &
             dspace_id, dset_id, error)
        call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,Itable_eta, dims1, error)
-       call h5dclose_f(dset_id, error)
-       call h5sclose_f(dspace_id, error)  
-       cerror = cerror + error 
-         
-       rank = 1
-       dims1(1) = final_Itable_size_n_N
-       call h5screate_simple_f(rank, dims1, dspace_id, error)
-       call h5dcreate_f(file_id, "n_N_Ipoints", H5T_NATIVE_DOUBLE, &
-            dspace_id, dset_id, error)
-       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,Itable_n_N, dims1, error)
        call h5dclose_f(dset_id, error)
        call h5sclose_f(dspace_id, error)  
        cerror = cerror + error   
@@ -1151,28 +1044,7 @@ contains
        cerror = cerror + error
 
     endif
-    if (doing_bremsstrahlung) then
-       rank = 6
-       dims6(1) = final_Itable_size_temp
-       dims6(2) = final_Itable_size_n_N
-       dims6(3) = final_Itable_size_inE
-       dims6(4) = number_output_species  
-       dims6(5) = number_groups
-       dims6(6) = 2
-       
-       call h5screate_simple_f(rank, dims6, dspace_id, error)
-       call h5dcreate_f(file_id, "bremsstrahlung_phi0", H5T_NATIVE_DOUBLE, &
-            dspace_id, dset_id, error)
-       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,bremsstrahlungtable_Phi0, dims6, error)
-       call h5dclose_f(dset_id, error)
-       call h5sclose_f(dspace_id, error)  
-       cerror = cerror + error   
-		write(*,*) MAXVAL(bremsstrahlungtable_Phi0)
-		write(*,*) MINVAL(bremsstrahlungtable_Phi0)
 
-    endif
-	
-	
 
     !must close h5 files, check for error
     if (cerror.ne.0) then
@@ -1187,3 +1059,4 @@ contains
 
         
 end program make_table_example
+

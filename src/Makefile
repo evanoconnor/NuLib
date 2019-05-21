@@ -13,7 +13,8 @@ SOURCES = fermi.F90 \
 	  scattering.F90 \
 	  weak_magnetism_correction.F90 \
 	  inelastic_electron_scattering.F90 \
-	  eos_interface.F90
+	  eos_interface.F90\
+	  bremsstrahlung.F90
 
 NT_SOURCES=nulibtable.F90 \
 	   nulibtable_reader.F90 \
