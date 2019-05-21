@@ -143,7 +143,7 @@ program make_table_example
   final_table_size_rho = 82
   final_table_size_temp = 65
   
-  final_Itable_size_temp = 25
+  final_Itable_size_temp = 65
   final_Itable_size_eta = 61
   final_Itable_size_n_N = 80
   final_Itable_size_inE = mytable_number_groups
