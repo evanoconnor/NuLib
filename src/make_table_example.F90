@@ -779,9 +779,6 @@ endif
         deallocate(local_Phi0_bremsstrahlung)
      enddo!do itemp=1,final_Itable_size_temp
      !$OMP END PARALLEL DO! end do
-write(*,*) bremsstrahlungtable_Phi0(51,41,11,3,11,1)
-write(*,*) epannihiltable_Phi0(51,41,11,3,11,1)
-write(*,*) "T",Itable_temp(51),"n_N",Itable_n_N(41),"eta",Itable_eta(41),"En",energies(11)
 #ifdef __MPI__
      call mpi_barrier(mpi_comm_world, ierror)
      if(mpirank.eq.0)write(*,*) "Finished Inelastic Table" 
@@ -1161,8 +1158,6 @@ contains
        call h5dclose_f(dset_id, error)
        call h5sclose_f(dspace_id, error)  
        cerror = cerror + error   
-		write(*,*) MAXVAL(bremsstrahlungtable_Phi0)
-		write(*,*) MINVAL(bremsstrahlungtable_Phi0)
 
     endif
 	
