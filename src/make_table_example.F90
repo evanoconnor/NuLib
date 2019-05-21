@@ -530,10 +530,7 @@ endif
              10.0d0**(Imin_logn_N+dble(in_N-1)/dble(final_Itable_size_n_N-1)*(Imax_logn_N-Imin_logn_N))
      enddo
 	 
-!~ 	 write(*,*) "T", Itable_temp, size(Itable_temp)
-!~ 	 write(*,*)
-!~ 	 write(*,*) "n", Itable_n_N,size(Itable_n_N)
-!~ 	 stop 
+
 #ifdef __MPI__
      !mpi_scatterv sends portions of Itable_temp to different nodes
      call mpi_scatterv(Itable_temp,sendcounts,displs,mpi_double,Itable_temp_subset,&
@@ -562,7 +559,6 @@ endif
 #endif
 
         do iinE=final_Itable_size_inE,1,-1
-!~            write(*,*) "Eta:", 100.0*dble(ieta-1)/dble(final_Itable_size_eta),"%"
            do ieta=1,final_Itable_size_eta
 
 #ifdef __MPI__
