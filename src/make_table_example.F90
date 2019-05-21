@@ -1048,15 +1048,17 @@ contains
        call h5sclose_f(dspace_id, error)  
        cerror = cerror + error
        
+       if ( doing_bremsstrahlung) then 
        rank = 1
        dims1(1) = 1
-       call h5screate_simple_f(rank, dims1, dspace_id, error)
-       call h5dcreate_f(file_id, "In_N", H5T_NATIVE_INTEGER, &
-            dspace_id,dset_id, error)
-       call h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, final_Itable_size_n_N, dims1, error)
-       call h5dclose_f(dset_id, error)
-       call h5sclose_f(dspace_id, error)  
-       cerror = cerror + error
+          call h5screate_simple_f(rank, dims1, dspace_id, error)
+          call h5dcreate_f(file_id, "In_N", H5T_NATIVE_INTEGER, &
+               dspace_id,dset_id, error)
+          call h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, final_Itable_size_n_N, dims1, error)
+          call h5dclose_f(dset_id, error)
+          call h5sclose_f(dspace_id, error)  
+          cerror = cerror + error
+       endif
 
        rank = 1
        dims1(1) = final_Itable_size_temp
@@ -1078,16 +1080,17 @@ contains
        call h5sclose_f(dspace_id, error)  
        cerror = cerror + error 
          
-       rank = 1
-       dims1(1) = final_Itable_size_n_N
-       call h5screate_simple_f(rank, dims1, dspace_id, error)
-       call h5dcreate_f(file_id, "n_N_Ipoints", H5T_NATIVE_DOUBLE, &
-            dspace_id, dset_id, error)
-       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,Itable_n_N, dims1, error)
-       call h5dclose_f(dset_id, error)
-       call h5sclose_f(dspace_id, error)  
-       cerror = cerror + error   
-       
+       if (doing_bremsstrahlung) then 
+          rank = 1
+          dims1(1) = final_Itable_size_n_N
+          call h5screate_simple_f(rank, dims1, dspace_id, error)
+          call h5dcreate_f(file_id, "n_N_Ipoints", H5T_NATIVE_DOUBLE, &
+               dspace_id, dset_id, error)
+          call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,Itable_n_N, dims1, error)
+          call h5dclose_f(dset_id, error)
+          call h5sclose_f(dspace_id, error)  
+          cerror = cerror + error   
+       endif
     endif
 
     if(doing_inelastic) then
