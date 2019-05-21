@@ -113,7 +113,6 @@ program make_table_example
   real*8, allocatable,dimension(:,:,:,:,:) :: Itable_Phi0_node
   real*8, allocatable,dimension(:,:,:,:,:) :: Itable_Phi1_node
   integer :: mpi_final_Itable_size_temp
-  
 
   
   !MPI initialization
@@ -136,7 +135,6 @@ program make_table_example
   base="NuLib"
   vnum="1.0"
   
-  skip_emission = .false.
   
   adhoc_nux_factor = 0.0d0 !increase for adhoc nux heating (also set
                            !add_nux_absorption_on_n_and_p to true)
@@ -392,7 +390,7 @@ endif
      deallocate(eos_variables)
   enddo!do irho=1,final_table_size_rho
   !$OMP END PARALLEL DO! end do
-395 CONTINUE
+
 #ifdef __MPI__
   call mpi_barrier(mpi_comm_world, ierror)
   if(mpirank.eq.0)write(*,*) "Finished Opacity Table" 
