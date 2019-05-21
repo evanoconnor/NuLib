@@ -73,7 +73,6 @@ function single_neutrino_emissivity_from_epannihil_given_energypoint( &
        Gfermi**2*hbarc_mevcm**2*clight/pi !units (MeV*cm)^-6 * MeV^9 * erg*MeV^-1 * MeV^-4 (MeV*cm)^2 * cm*s^-1 = erg/cm^3/s
   
   eta = eos_variables(mueindex)/eos_variables(tempindex)
-!~   eta = 0.0d0
   nu_energy_x = nu_energy/eos_variables(tempindex)
 
   emissivity = epannihil_dQdenu_BRT06(nu_energy_x,eta,neutrino_species)*nu_energy_x**3
