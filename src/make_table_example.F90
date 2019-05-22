@@ -95,7 +95,6 @@ program make_table_example
   integer :: i
   real*8 dxfac,mindx
   logical :: doing_inelastic, doing_epannihil,doing_bremsstrahlung
-  logical :: skip_emission
 
 #ifdef __MPI__  
   !MPI variables
@@ -324,12 +323,14 @@ endif
                          eos_variables(rhoindex),eos_variables(tempindex),eos_variables(yeindex),ns,ng
                     stop
                  endif
-                 if (local_delta(ns,ng).ne.local_delta(ns,ng)) then
-                    write(*,"(a,1P3E18.9,i6,i6)") "We have a NaN in scat delta", &
-                         eos_variables(rhoindex),eos_variables(tempindex),eos_variables(yeindex),ns,ng
-                    stop
-                 endif
-                 
+		 if (.not. do_transport_opacities) then
+                    if (local_delta(ns,ng).ne.local_delta(ns,ng)) then
+                       write(*,"(a,1P3E18.9,i6,i6)") "We have a NaN in scat delta", &
+                             eos_variables(rhoindex),eos_variables(tempindex),eos_variables(yeindex),ns,ng
+                       stop
+                    endif
+                 endif 
+		 
                  if (log10(local_emissivity(ns,ng)).ge.300.0d0) then
                     write(*,"(a,1P4E18.9,i6,i6)") "We have a Inf in emissivity", &
                          local_emissivity(ns,ng),eos_variables(rhoindex), &
@@ -348,18 +349,21 @@ endif
                          eos_variables(tempindex),eos_variables(yeindex),ns,ng
                     stop
                  endif
-                 if (local_delta(ns,ng).gt.1.0d0) then
-                    write(*,"(a,1P4E18.9,i6,i6)") "delta > 1", &
-                         local_delta(ns,ng),eos_variables(rhoindex), &
-                         eos_variables(tempindex),eos_variables(yeindex),ns,ng
-                    stop
-                 endif
-                 if (local_delta(ns,ng).lt.-1.0d0) then
-                    write(*,"(a,1P4E18.9,i6,i6)") "delta < -1", &
-                         local_delta(ns,ng),eos_variables(rhoindex), &
-                         eos_variables(tempindex),eos_variables(yeindex),ns,ng
-                    stop
-                 endif
+		 if (.not. do_transport_opacities) then
+                    if (local_delta(ns,ng).gt.1.0d0) then
+                       write(*,"(a,1P4E18.9,i6,i6)") "delta > 1", &
+                           local_delta(ns,ng),eos_variables(rhoindex), &
+                            eos_variables(tempindex),eos_variables(yeindex),ns,ng
+                       stop
+                    endif
+                    if (local_delta(ns,ng).lt.-1.0d0) then
+                        write(*,"(a,1P4E18.9,i6,i6)") "delta < -1", &
+                            local_delta(ns,ng),eos_variables(rhoindex), &
+                            eos_variables(tempindex),eos_variables(yeindex),ns,ng
+                        stop
+                    endif
+		 endif 
+		 
               enddo !do ng=1,mytable_number_groups
            enddo !do ns=1,number_output_species
 
@@ -808,6 +812,7 @@ endif
      write(sns,*) number_output_species
      write(sItemp,*) final_Itable_size_temp
      write(sIeta,*) final_Itable_size_eta
+     write(sIn_N,*) final_Itable_size_n_N
      timestamp = dble(values(1))*10000.0d0+dble(values(2))*100.0+dble(values(3)) + &
           (dble(values(5))+dble(values(6))/60.0d0 + dble(values(7))/3600.0d0 )/24.0
 
@@ -816,6 +821,7 @@ endif
              "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &
              "_ng"//trim(adjustl(sng))//"_ns"//trim(adjustl(sns))// &
              "_Itemp"//trim(adjustl(sItemp))//"_Ieta"//trim(adjustl(sIeta))// &
+	     "_In_N"//trim(adjustl(sIn_N))//&
              "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//".h5"
      else
         finaltable_filename = trim(adjustl(outdir))//trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
@@ -1049,8 +1055,8 @@ contains
        cerror = cerror + error
        
        if ( doing_bremsstrahlung) then 
-       rank = 1
-       dims1(1) = 1
+           rank = 1
+          dims1(1) = 1
           call h5screate_simple_f(rank, dims1, dspace_id, error)
           call h5dcreate_f(file_id, "In_N", H5T_NATIVE_INTEGER, &
                dspace_id,dset_id, error)
