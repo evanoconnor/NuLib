@@ -107,13 +107,10 @@ program point_example
 
   !example point
   
-  xrho =  4.0d14!366150704625021.44d0! 4.435d13 !g/cm^3
-  xtemp =2.19d11*kelvin_to_mev!14.511804010728726d0! !MeV
-  xye = 0.1d0!0.28092030837767307d0 !dimensionless
-!~   xrho =  366150704625021.44d0! 4.435d13 !g/cm^3
-!~   xtemp =14.511804010728726d0! !MeV
-!~   xye = 0.28092030837767307d0 !dimensionless
-	
+  xrho =  4.0d14 !g/cm^3
+  xtemp = 12.0d0 !MeV
+  xye = 0.1d0! !dimensionless
+  
   !set up energies bins
   do_integrated_BB_and_emissivity = .true.
   mindx = 2.0d0
@@ -133,6 +130,7 @@ program point_example
      bin_widths(i) = bin_bottom(i+1)-bin_bottom(i)
      bin_top(i) = bin_bottom(i+1)
   enddo
+  
   energies(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups-1)*dxfac/2.0d0
   bin_widths(number_groups) = 2.0*(energies(number_groups)-bin_bottom(number_groups))
   bin_top(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups)
@@ -155,11 +153,13 @@ program point_example
   write(*,*) "eos", "xp",eos_variables(xpindex),"xn",eos_variables(xnindex), &
 				"mue",eos_variables(mueindex),"xa",eos_variables(xaindex), "xh",&
 				eos_variables(xhindex)
+
   write(*,*) eos_variables(xpindex)+eos_variables(xnindex)+eos_variables(xaindex)&
 			+eos_variables(xhindex)
-!~   write(*,*) nue_absorption_on_n(energies(10),eos_variables)
+
   write(*,*) "emi pair 10 bin nue",single_neutrino_emissivity_from_epannihil_given_energypoint( &
      1,energies(10),eos_variables)
+
   !calculate the full emissivities and opacities, this averages the
   !values based on the mypoint_neutrino_scheme this assumes detailed
   !balance and uses the opacities to fullying calculate the
@@ -167,6 +167,7 @@ program point_example
   call single_point_return_all(eos_variables, &
        local_emissivity,local_absopacity,local_scatopacity,local_delta, &
        mypoint_neutrino_scheme)
+       
 write(*,*) local_emissivity(1,6), energies(6)
 write(*,*) local_absopacity(1,6), energies(6)
 write(*,*) nue_absorption_on_n(energies(6),eos_variables), energies(6)
@@ -213,12 +214,12 @@ stop
   write(*,*) 
   call return_scattering_opacity_spectra_given_neutrino_scheme(local_scatopacity,local_delta,eos_variables)
 
-!~   do i=1,mypoint_number_output_species
-!~      do j=1,mypoint_number_groups
-!~         write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j), &
-!~              local_scatopacity(i,j),local_delta(i,j)
-!~      enddo
-!~   enddo
+  do i=1,mypoint_number_output_species
+     do j=1,mypoint_number_groups
+        write(*,"(i4,i4,1P10E18.9)") i,j,energies(j),local_emissivity(i,j),local_absopacity(i,j), &
+             local_scatopacity(i,j),local_delta(i,j)
+     enddo
+  enddo
 
   write(*,*)
   write(*,*)
@@ -268,414 +269,35 @@ stop
      call single_epannihil_kernel_point_return_all(mypoint_number_groups, &
           eos_variables(mueindex)/eos_variables(tempindex), &
           eos_variables(tempindex),local_Phi0_epannihil,local_Phi1_epannihil,mypoint_neutrino_scheme)              
+   
+	 write(*,*) "epan absorption for nu_x",local_Phi0_epannihil(3,:,1)
 
 
-!~      write(*,*) "sample epan kernel for energy",energies(mypoint_number_groups)
-!~      do i=1,mypoint_number_output_species
-!~         do j=1,mypoint_number_groups
-!~            write(*,*) energies(mypoint_number_groups),energies(j), &
-!~                     local_Phi0_epannihil(i,j,1),local_Phi1_epannihil(i,j,1)
-!~         enddo
-!~      enddo
      deallocate(local_Phi0_epannihil)
      deallocate(local_Phi1_epannihil)
+     
   endif
-  
-  
-  
   
   if (add_nue_kernel_bremsstrahlung.or.add_anue_kernel_bremsstrahlung.or. &
        add_numu_kernel_bremsstrahlung.or.add_anumu_kernel_bremsstrahlung.or. &
        add_nutau_kernel_bremsstrahlung.or.add_anutau_kernel_bremsstrahlung) then
-	 
+
      write(*,*)
      write(*,*)
-     write(*,*) "brem call"
+     write(*,*) "epan call"
      
-     
-     allocate(local_Phi0_bremsstrahlung(mypoint_number_output_species,mypoint_number_groups,2))
-     allocate(local_Phi0_bremsstrahlung2(mypoint_number_output_species,mypoint_number_groups,2))
-     allocate(local_Phi0_epannihil(mypoint_number_output_species,mypoint_number_groups,2))
-     allocate(local_Phi1_epannihil(mypoint_number_output_species,mypoint_number_groups,2))
-     allocate(Phi0_brem(mypoint_number_groups))
-     allocate(Phi0_brem2(mypoint_number_groups))
-     allocate(Phi0_brem_ann(mypoint_number_groups))
-     allocate(Phi0_brem2_ann(mypoint_number_groups))
-     
-     
-     write(*,*) "brem emi", single_neutrino_emissivity_from_NNBrem_given_energypoint( &
-     3,energies(mypoint_number_groups),eos_variables)
-     
-     
-
-!~     write(*,*) M1_mom_inv
-!~ !!!!!!!!!!!!!!!!!!!!!!! Black body emission
-
-  open( unit = 23, file='arg.txt')
-		integral =0.0d0
-!~ 	do j =1,mypoint_number_groups
-	do j=1,8
-!~ 	j=13
-	energy = real(j)
-		do i = 1, 8
-			
-			energy_2 = real(i)
-!~ 		     M1_mom = (clight *(energy_2)**3) / &
-!~ 					       (2.0d0*pi*hbarc_mevcm)**3
-		    
-!~ 		    M1_mom_inv = 1.0d0/M1_mom
-			
-			J_1 = 1.0d0 /&
-				( exp( (energy) &
-					/ ( eos_variables(tempindex))) +1.0d0)
-
-			J_1_bar = 1.0d0/&
-				( exp( (energy_2) &
-				 / ( eos_variables(tempindex))) +1.0d0)
-				
-			
-			
-!~ 				write(*,*) "j1"				
-			phi_p = Bremsstrahlung_Phi0_Kuroda(energy_2/eos_variables(tempindex) &
-					,energy/eos_variables(tempindex)&
-			         ,eos_variables(tempindex),eos_variables(rhoindex)&
-							*eos_variables(xnindex)/(m_n*mev_to_gram),3,0)
-							
-!~ 			phi_p = epannihil_Phi_Bruenn(&
-!~ 					energy/eos_variables(tempindex) &
-!~ 					,energy_2/eos_variables(tempindex) &
-!~ 					,0.0d0,3,1,0) &
-!~ 					*2.0d0*Gfermi**2/(2.0d0*pi)*hbarc_mevcm**2*eos_variables(tempindex)**2*clight
-					
-					
-!~ 			phi_a = epannihil_Phi_Bruenn(&
-!~ 					energy/eos_variables(tempindex) &
-!~ 					,energy_2/eos_variables(tempindex) &
-!~ 					,0.0d0,3,2,0) &
-!~ 					*2.0d0*Gfermi**2/(2.0d0*pi)*hbarc_mevcm**2*eos_variables(tempindex)**2*clight
-
-
-							
-			phi_a = Bremsstrahlung_Phi0_Kuroda(energy_2/eos_variables(tempindex) &
-					,energy/eos_variables(tempindex)&
-			         ,eos_variables(tempindex),eos_variables(rhoindex)&
-							*eos_variables(xnindex)/(m_n*mev_to_gram),3,1)
-							
-!~ 			integral = integral + ( -( J_1 - 4.0d0*pi*energy_2)* &
-!~ 										(4.0d0*pi*energy - J_1_bar)*phi_p &
-!~ 										- J_1*J_1_bar*phi_a &
-!~ 										)/energy
-			integral = integral + energy_2**2 * ((1.0d0-J_1)*(1.0d0 - J_1_bar)* phi_p &
-												- J_1*J_1_bar*phi_a)
-
-!~ 			integral = integral +M1_mom_inv(i) * ( -( J_1 - 4.0d0*pi*energies(j))* &
-!~ 										(4.0d0*pi*energies(i) - J_1_bar)*   & 	
-!~ 										local_Phi0_epannihil(3,i,1)/2.0d0 &
-!~ 										- J_1*J_1_bar*local_Phi0_epannihil(3,i,2)/2.0d0)
-
-
-
-
-			write(23,*) J_1_bar
-		enddo
-		write(*,*) phi_p,phi_a,energy_2**2
-	enddo
-	close(23)
-		write(*,*) "BB integral", integral,phi_a,phi_p
-
-
-     !! care of the change in nulib after gen of kernels !!!
-     write(*,*) "sample brem kernel for energy",energies(mypoint_number_groups)
-
-     open (unit = 2, file = "brem.txt")      
-     ratio_2 = 0.0d0   
-	write(*,*) "echem",eos_variables(mueindex),energies(11)
-	write(*,*) "echem fermi",fermidirac_dimensionless( &
-				energies(11),-eos_variables(mueindex))&
-				,exp(-energies(11)-eos_variables(mueindex))
-!~ 	write(*,*) "frcations", eos_variables(xnindex)+eos_variables(xpindex)
-     do i=1,mypoint_number_groups !neutrino energ
-		
-!~ 		dE_dEdt = 0.0d0
-!~ 		dE_dEdt2 = 0.0d0
-!~ 		dE_dEdt3 = 0.0d0
-!~ 		dn_dEdt = 0.0d0
-!~ 		dn_dEdt2 = 0.0d0
-!~ 		dn_dEdt3 = 0.0d0
-		Phi0_brem = 0.0d0
-		Phi0_brem2 = 0.0d0
-		Phi0_brem_ann = 0.0d0
-		Phi0_brem2_ann = 0.0d0
-		  call single_epannihil_kernel_point_return_all(i, &
-				eos_variables(mueindex)/eos_variables(tempindex),&
-!~ 				0.0d0/eos_variables(tempindex),&
-	          eos_variables(tempindex),local_Phi0_epannihil &
-	          ,local_Phi1_epannihil,mypoint_neutrino_scheme)  		
-
-	    
-	    
-		do inde =1,1
-			 local_Phi0_bremsstrahlung = 0.0d0
-			 local_Phi0_bremsstrahlung2 = 0.0d0
-			 n_N =0.0d0
-			 
-			 
-			  ! neutron-neutron  n_n
-		      if (inde .EQ. 1) then   
-		      
-				  n_N = eos_variables(rhoindex)&
-						*eos_variables(xnindex)&
-						/(m_n*mev_to_gram)
-			  
-			  
-			  ! proton-proton n_n
-			  else if (inde .EQ. 2 ) then 
-			  
-  				  n_N = eos_variables(rhoindex)&
-						*eos_variables(xpindex)&
-						/(m_p*mev_to_gram)
-			  
-			  ! neutron-proton  n_n
-			  else if (inde .EQ. 3 ) then
-  				  n_N = eos_variables(rhoindex)	&
-						*sqrt(eos_variables(xnindex)*eos_variables(xpindex))&
-  				       /(sqrt(m_p*m_n)*mev_to_gram)
-			  else 
-				write(*,*) "Wrong number of species for brem test"
-			  endif
-
-
-!~ 			write(*,*) "test",n_N
-
-			  ! Hannestad version
-	          call single_bremsstrahlung_kernel_point_return_all_Hannestad(i, &
-	          n_N, &
-	          eos_variables(tempindex) &
-!~     		(hbarc_mevcm *(3.0d0*pi**2*n_N)**(1.0d0/3.0d0))**2/(2.0d0*m_amu*10.0d0) &
-	          ,local_Phi0_bremsstrahlung,mypoint_neutrino_scheme) 
+     allocate(local_Phi0_bremsstrahlung(mypoint_number_output_species,mypoint_number_groups,2))     
+          
+	 call single_bremsstrahlung_kernel_point_return_all_Hannestad(i, &
+	          n_N,eos_variables(tempindex),local_Phi0_bremsstrahlung,mypoint_neutrino_scheme) 
 	          
-	          ! Kuroda version
-	          call single_bremsstrahlung_kernel_point_return_all_Kuroda(i, &
-	          n_N, &
-	          eos_variables(tempindex)&
-!~     		(hbarc_mevcm *(3.0d0*pi**2*n_N)**(1.0d0/3.0d0))**2/(2.0d0*m_amu*10.0d0) &
-	 	      ,local_Phi0_bremsstrahlung2,mypoint_neutrino_scheme) 
+	          
+	write(*,*) "bremsstrahlung kernel absorption for nu_x", local_Phi0_bremsstrahlung 
 
-			 write(*,*)  (hbarc_mevcm&
-						 *(3.0d0*pi**2*n_N)**(1.0d0/3.0d0))**2&
-						 /(2.0d0*m_amu*0.31) 
-
-
-			  ! Hannestad production kernels
-	          if (inde .LT. 3) then 
-		          Phi0_brem = Phi0_brem + local_Phi0_bremsstrahlung(3,:,1)
-		          
-		          
-		      else if ( inde .EQ. 3)  then      ! factor for neutron-proton process
-				  Phi0_brem = Phi0_brem + &
-							  28.0d0/3.0d0*local_Phi0_bremsstrahlung(3,:,1) 
-		      endif
-		      
-		      ! Hannestad annihilation kernels
-	          if (inde .LT. 3) then 
-		          Phi0_brem_ann = Phi0_brem_ann + local_Phi0_bremsstrahlung(3,:,2)
-		          
-		        
-		      else if ( inde .EQ. 3)  then 		! factor for neutron-proton process
-				  Phi0_brem_ann = Phi0_brem_ann + &
-							  28.0d0/3.0d0*local_Phi0_bremsstrahlung(3,:,2) 
-		      endif
-		      
-		      
-		      
-		      ! Kuroda production kernels
-	          if (inde .LT. 3) then 
-		          Phi0_brem2 = Phi0_brem2 + local_Phi0_bremsstrahlung2(3,:,1)
-		           
-		      else if ( inde .EQ. 3)  then 		! factor for neutron-proton process
-				  Phi0_brem2 = Phi0_brem2 + &
-							  28.0d0/3.0d0*local_Phi0_bremsstrahlung2(3,:,1) 
-		      endif
-		      
-		      ! Kuroda annihilation kernels
-	          if (inde .LT. 3) then 
-		          Phi0_brem2_ann = Phi0_brem2_ann + local_Phi0_bremsstrahlung2(3,:,2) 
-		          
-		      else if ( inde .EQ. 3)  then 		! factor for neutron-proton process
-				  Phi0_brem2_ann = Phi0_brem2_ann + &
-							  28.0d0/3.0d0*local_Phi0_bremsstrahlung2(3,:,2) 
-		      endif
-	     enddo 
-
-		    
-		    
-			Q = 0.0d0
-			Q_ann = 0.0d0
-			Q2 = 0.0d0
-			Q2_ann = 0.0d0
-			M = 0.0d0
-			ratio = 0.0d0
-			ratio_2 = 0.0d0
-			
-			
-			! Loop over antineutrino energies
-	        do j=1,mypoint_number_groups 
-	        
-				! Kotake pair production rates
-				
-				! 		Hannestad 
-				Q = Q + energies(j)**2	 /(2.0d0* pi * hbarc_mevcm)**3&
-					 *2.0d0*pi * bin_widths(j) &
-					 * Phi0_brem(j) 
-!~ 					 * local_Phi0_bremsstrahlung(3,j,1)
-						    
-				Q_ann = Q_ann + energies(j)**2	 /(2.0d0* pi * hbarc_mevcm)**3&
-					 *2.0d0*pi * bin_widths(j) &
-					  * Phi0_brem_ann(j) 
-						    
-				!		Kuroda
-				Q2 = Q2 + energies(j)**2  /(2.0d0* pi * hbarc_mevcm)**3 &
-					 *2.0d0*pi* Phi0_brem2(j)* bin_widths(j) 
-					 
-	
-				Q2_ann = Q2_ann + energies(j)**2  /(2.0d0* pi * hbarc_mevcm)**3 &
-					 *2.0d0*pi* Phi0_brem2_ann(j)* bin_widths(j)
-	
-				! 		electron-positron 
-				M = M + energies(j)**2  /(2.0d0* pi * hbarc_mevcm)**3&
-					*2.0d0*pi* local_Phi0_epannihil(3,j,1) * bin_widths(j) 
-					
-	
-	        enddo
-			
-			
-			!!!number production spectra 
-			
-			!		Hannestad
-	        dn_dEdt =1.0d0/(2.0d0 * pi *hbarc_mevcm)**3 * energies(i)**2 &
-						* (4.0d0 * pi) * Q 
-			!    	Kuroda
-	        dn_dEdt2 =1.0d0/(2.0d0 * pi * hbarc_mevcm)**3 * energies(i)**2 &
-						* 4.0d0 * pi * Q2 
-			!		positron-electron pair
-	        dn_dEdt3 =1.0d0/(2.0d0 * pi * hbarc_mevcm)**3 * energies(i)**2 &
-						 * (4.0d0 * pi) * M
-			!		Burrows
-	        dn_dEdt_burrows =single_neutrino_emissivity_from_NNBrem_given_energypoint(3,&
-							     energies(i),eos_variables)/mev_to_erg*(4.0d0*pi)/energies(i)
-						 
-						 
-			!!!energy production spectra
-			
-			!		Hannestad
-	        dE_dEdt =1.0d0/(2.0d0 * pi * hbarc_mevcm)**3 * energies(i)**3 &
-						* (4.0d0 * pi) * (Q )
-			
-			!		Kuroda
-	        dE_dEdt2 =1.0d0/(2.0d0 * pi * hbarc_mevcm)**3 * energies(i)**3 &
-						 * 4.0d0 * pi * Q2
-			
-			!		positron-electron pair
-	        dE_dEdt3 =1.0d0/(2.0d0 * pi *hbarc_mevcm)**3 * energies(i)**3 &
-						 * (4.0d0 * pi) * M
-
-			!		Energy production spectra Burrows
-			dE_dEdt_burrows = single_neutrino_emissivity_from_NNBrem_given_energypoint(1,&
-							     energies(i),eos_variables)/mev_to_erg*(4.0d0*pi)
-							     
-			!!! inverse mean free path for comparaison with Bruenn 2018
-			
-							     
-			ratio = (dE_dEdt-dE_dEdt2) /dE_dEdt *100.0d0  ! Hannestad/Kuroda energy production spectra ratio 
-!~ 			ratio = Q/Q2    ! Hannestad/Kuroda energy production spectra ratio 
-			
-			
-			
-			! Difference in emissivities from Burrows formula
-			ratio_2 =  ratio_2 + dE_dEdt2/&
-							single_neutrino_emissivity_from_NNBrem_given_energypoint(3,&
-							     energies(i),eos_variables)*mev_to_erg/(4.0d0*pi)
-							     
-							 
-!~ 			write(*,*) "ratio_2 steps",ratio_2, dE_dEdt3/&
-!~ 			single_neutrino_emissivity_from_epannihil_given_energypoint(3,energies(i),&
-!~ 			eos_variables)*mev_to_erg/(4.0d0*pi),&
-!~ 			 dn_dEdt3/&
-!~ 			single_neutrino_emissivity_from_epannihil_given_energypoint(3,energies(i),&
-!~ 			eos_variables)*mev_to_erg/(4.0d0*pi)*energies(i)
-						    
-!~ 		n_N = (eos_variables(rhoindex)*0.2d0&
-!~ 						/(m_n*mev_to_gram))  
-						
-							
-        write(2,*) energies(i) &
-					,dn_dEdt*1e-37,dn_dEdt2*1e-37,dn_dEdt3*1e-36 &
-					,dn_dEdt_burrows*1e-37 &
-					,dE_dEdt*1e-37 &!/n_N & !
-					,dE_dEdt2*1e-37 &!/n_N & !
-					,dE_dEdt3*1e-36 &!/n_N & !
-					,dE_dEdt_burrows*1e-37 &!/n_N & !
-					,dE_dEdt-dE_dEdt2,dE_dEdt-dE_dEdt_burrows &
-					,ratio,dE_dEdt2-dE_dEdt_burrows
-!~ 		write(*,*) ratio
-     enddo 
-!~         write(*,*) "ratio2",ratio_2
-	 write(*,*) "feed s ",n_N
-     close(2)
-     write(*,*) "eta_*", (hbarc_mevcm/clight* (3.0d0 * pi **2 * n_N)**(1.0d0/3.0d0))**2& ! Mev s cm-1
-						/(2.0d0 *m_amu/clight**2 * eos_variables(tempindex))
-
-     
-     write(*,*) find_s(0.31d0,0.0d0,0.1d0),find_s(0.31d0,0.0d0,0.1d0)-find_s2(0.31d0,0.0d0,0.1d0)
-!~      write(*,*) find_s(0.31d0,0.0d0,0.1d0)!find_s(0.31d0,4.0d0,0.1d0)-find_s2(0.31d0,0.0d0,0.0d0)
-
-
-	 
-
-     write(*,*) "find_s"
-     
-
-	 open(unit=5,file="find_s.txt")
-	 do  j = 10,200,10
-	 write(*,*) real(j)/10.0d0
-	 	eta_star = (hbarc_mevcm/clight  * (3.0d0 * pi **2 * n_N)**(1.0d0/3.0d0))**2 &
-				/(2.0d0 *m_amu/clight**2 * (real(j)/10.0d0)) !adimensional
-	 do inde = 1,mypoint_number_groups
-		Q = 0.0d0
-		Q2 = 0.0d0
-			do i = 1,mypoint_number_groups
-				Q = Q + find_s(eta_star,0.0d0,&
-							(energies(i)+energies(inde))/(real(j)/10.0d0))&
-							* bin_widths(i)
-				Q2 = Q2 + find_s2(eta_star,0.0d0,&
-							(energies(i)+energies(inde))/(real(j)/10.0d0))&
-							* bin_widths(i)
-			enddo
-		write(5,*) (energies(inde)+energies(i))/(real(j)/10.0d0),&
-			eta_star,find_s(eta_star,0.0d0,energies(inde)/(real(j)/10.0d0)),&
-			ABS(find_s(eta_star,0.0d0,energies(inde)/(real(j)/10.0d0))&
-			-find_s2(eta_star,0.0d0,energies(inde)/(real(j)/10.0d0)))&
-			/find_s(eta_star,0.0d0,energies(inde)/(real(j)/10.0d0)),&
-			real(j)/10.0d0,&
-			(energies(inde)+energies(i))/(real(j)/10.0d0)*5.0d0/8.0d0&
-			*exp(-(energies(inde)+energies(i))/(real(j)/10.0d0)) &
-			*find_s(eta_star,0.0d0,(energies(inde)+energies(i))/(real(j)/10.0d0)),&
-			(energies(inde)+energies(i))/(real(j)/10.0d0)*5.0d0/8.0d0&
-			*exp(-(energies(inde)+energies(i))/(real(j)/10.0d0)) &
-			*find_s2(eta_star,0.0d0,(energies(inde)+energies(i))/(real(j)/10.0d0))
-	 enddo
-	enddo
-	 close(5)
-	 
-	 
-	 
-	 
-	 
-     deallocate(Phi0_brem)
      deallocate(local_Phi0_bremsstrahlung)
-     deallocate(local_Phi0_epannihil)
-     deallocate(local_Phi1_epannihil)
   endif
+  
+	
 
 
 end program point_example

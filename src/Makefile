@@ -93,9 +93,9 @@ EXTRAINCS += $(HDF5INCS)
 EXTRAOBJECTS += $(HDF5LIBS)
 
 ifeq ($(WEAK_RATES),1)
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates
+all: nulib.a ../nulibtable_driver ../point_example ../bremsstrahlung_point_example ../make_table_weakrates
 else
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
+all: nulib.a ../nulibtable_driver ../point_example ../bremsstrahlung_point_example ../make_table_example
 endif
 
 ../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) $(f90_OBJECTS)
@@ -103,6 +103,9 @@ endif
 
 ../point_example:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS)  $(f90_OBJECTS)point_example.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ point_example.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
+
+../bremsstrahlung_point_example:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS)  $(f90_OBJECTS)bremsstrahlung_point_example.F90
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ bremsstrahlung_point_example.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
 
 ../make_table_example:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS)  $(f90_OBJECTS)make_table_example.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_example.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
@@ -139,6 +142,7 @@ clean:
 	rm -rf ../make_table_example
 	rm -rf ../make_table_weakrates
 	rm -rf ../point_example
+	rm -rf ../bremsstrahlung_point_example
 	rm -rf ../nulibtable_driver
 	rm -rf test
 	rm -rf *.o
