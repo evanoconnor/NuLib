@@ -74,7 +74,7 @@ program make_table_example
   real*8 :: timestamp
   character(8) :: date
   integer :: values(8)
-  character(100) :: outdir,base,vnum,srho,stemp,sye,sng,sns,sItemp,sIeta
+  character(100) :: outdir,base,vnum,srho,stemp,sye,sng,sns,sItemp,sIeta,sIn_N 
 
   !local variables to help in making tables
   integer :: irho,itemp,iye,ns,ng
@@ -147,7 +147,7 @@ program make_table_example
   final_Itable_size_n_N = 80
   final_Itable_size_inE = mytable_number_groups
 
-  min_ye = 0.015d0
+  min_ye = 0.035d0
   max_ye = 0.55d0
   min_logrho = 6.0d0
   max_logrho = 15.5d0
@@ -157,8 +157,8 @@ program make_table_example
   Imax_logtemp = log10(150.0d0)
   Imin_logeta = log10(0.1d0)
   Imax_logeta = log10(100.0d0)
-  Imin_logn_N = 35.0d0 
-  Imax_logn_N = 37.0d0
+  Imin_logn_N = 20.0d0 
+  Imax_logn_N = 40.0d0
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
@@ -211,9 +211,6 @@ program make_table_example
   bin_widths(number_groups) = 2.0*(energies(number_groups)-bin_bottom(number_groups))
   bin_top(number_groups) = bin_bottom(number_groups)+bin_widths(number_groups)
 
-if ( skip_emission) then 
-	go to 395
-endif
 
   allocate(table_ye(final_table_size_ye))
   allocate(table_rho(final_table_size_rho))
