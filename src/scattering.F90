@@ -272,6 +272,7 @@ subroutine nu_scatter_elastic_n_total(neutrino_energy,transport,lepton,eos_varia
      else
         weak_mag = 1.0d0
      endif
+
      crosssection = crosssection*(1.0d0-delta_n/3.0d0)*weak_mag !implicit integration over \Omega
      delta = 0
   else if (transport.eq.0) then
@@ -603,6 +604,8 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
   real*8 :: delta
   real*8 :: this_opacity
   integer :: transport
+  real*8 :: tmp,othermu
+
   
   scattering_opacity = 0.0d0
   average_delta = 0.0d0
@@ -619,7 +622,21 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_nue_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = 1
         call nu_scatter_elastic_n_total(neutrino_energy,transport,1,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        !include final state nucleon blocking for high densities, use
+        !analytic (degenerate) chemical potential, based on Bruenn 85
+        !C37-C39
+        if (eos_variables(rhoindex).gt.1.0e12) then
+           othermu = 0.5*hbarc_mevcm**2/m_amu* &
+                (3.0*pi**2*eos_variables(xnindex)*eos_variables(rhoindex)/ &
+                (m_amu*mev_to_gram))**(2.0/3.0)
+           tmp = 1.5*eos_variables(tempindex)/othermu
+           this_opacity = crosssection * eos_variables(xnindex)* &
+                eos_variables(rhoindex)/(m_ref*mev_to_gram) * tmp/sqrt(1.0+tmp**2)
+
+        else
+           this_opacity = crosssection * &
+                eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        endif
         scattering_opacity = scattering_opacity + this_opacity             
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -628,7 +645,20 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_nue_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = 1
         call nu_scatter_elastic_p_total(neutrino_energy,transport,1,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        !include final state nucleon blocking for high densities, use
+        !analytic (degenerate) chemical potential, based on Bruenn 85
+        !C37-C39
+        if (eos_variables(rhoindex).gt.1.0e12) then
+           othermu = 0.5*hbarc_mevcm**2/m_amu* &
+                (3.0*pi**2*eos_variables(xpindex)*eos_variables(rhoindex)/ &
+                (m_amu*mev_to_gram))**(2.0/3.0)
+           tmp = 1.5*eos_variables(tempindex)/othermu
+           this_opacity = crosssection * eos_variables(xpindex)* &
+                eos_variables(rhoindex)/(m_ref*mev_to_gram) * tmp/sqrt(1.0+tmp**2)
+        else
+           this_opacity = crosssection * &
+                eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        endif
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -637,7 +667,8 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_nue_scattering_heavies.and.eos_variables(xhindex).ne.0.0d0) then
         !function call takes neutrino energy, transport=1, lepton = 1
         call nu_scatter_elastic_heavy_total(neutrino_energy,transport,1,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xhindex)/eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        this_opacity = crosssection * eos_variables(xhindex)/ &
+             eos_variables(abarindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif 
@@ -666,7 +697,20 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_anue_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = -1
         call nu_scatter_elastic_n_total(neutrino_energy,transport,-1,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        !include final state nucleon blocking for high densities, use
+        !analytic (degenerate) chemical potential, based on Bruenn 85
+        !C37-C39
+        if (eos_variables(rhoindex).gt.1.0e12) then
+           othermu = 0.5*hbarc_mevcm**2/m_amu* &
+                (3.0*pi**2*eos_variables(xnindex)*eos_variables(rhoindex)/ &
+                (m_amu*mev_to_gram))**(2.0/3.0)
+           tmp = 1.5*eos_variables(tempindex)/othermu
+           this_opacity = crosssection * eos_variables(xnindex)* &
+                eos_variables(rhoindex)/(m_ref*mev_to_gram) * tmp/sqrt(1.0+tmp**2)
+        else
+           this_opacity = crosssection * &
+                eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        endif
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -675,7 +719,19 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_anue_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = -1
         call nu_scatter_elastic_p_total(neutrino_energy,transport,-1,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        !include final state nucleon blocking for high densities, use
+        !analytic (degenerate) chemical potential, based on Bruenn 85
+        !C37-C39
+        if (eos_variables(rhoindex).gt.1.0e12) then
+           othermu = 0.5*hbarc_mevcm**2/m_amu* &
+                (3.0*pi**2*eos_variables(xpindex)*eos_variables(rhoindex)/ &
+                (m_amu*mev_to_gram))**(2.0/3.0)
+           tmp = 1.5*eos_variables(tempindex)/othermu
+           this_opacity = crosssection * eos_variables(xpindex)* &
+                eos_variables(rhoindex)/(m_ref*mev_to_gram) * tmp/sqrt(1.0+tmp**2)
+        else
+           this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        endif
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -713,7 +769,19 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_numu_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = 2
         call nu_scatter_elastic_n_total(neutrino_energy,transport,2,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        !include final state nucleon blocking for high densities, use
+        !analytic (degenerate) chemical potential, based on Bruenn 85
+        !C37-C39
+        if (eos_variables(rhoindex).gt.1.0e12) then
+           othermu = 0.5*hbarc_mevcm**2/m_amu* &
+                (3.0*pi**2*eos_variables(xnindex)*eos_variables(rhoindex)/ &
+                (m_amu*mev_to_gram))**(2.0/3.0)
+           tmp = 1.5*eos_variables(tempindex)/othermu
+           this_opacity = crosssection * eos_variables(xnindex)* &
+                eos_variables(rhoindex)/(m_ref*mev_to_gram) * tmp/sqrt(1.0+tmp**2)
+        else
+           this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        endif
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -722,7 +790,19 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_numu_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = 2
         call nu_scatter_elastic_p_total(neutrino_energy,transport,2,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        !include final state nucleon blocking for high densities, use
+        !analytic (degenerate) chemical potential, based on Bruenn 85
+        !C37-C39
+        if (eos_variables(rhoindex).gt.1.0e12) then
+           othermu = 0.5*hbarc_mevcm**2/m_amu* &
+                (3.0*pi**2*eos_variables(xpindex)*eos_variables(rhoindex)/ &
+                (m_amu*mev_to_gram))**(2.0/3.0)
+           tmp = 1.5*eos_variables(tempindex)/othermu
+           this_opacity = crosssection * eos_variables(xpindex)* &
+                eos_variables(rhoindex)/(m_ref*mev_to_gram) * tmp/sqrt(1.0+tmp**2)
+        else
+           this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        endif
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -760,7 +840,19 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_anumu_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = -2
         call nu_scatter_elastic_n_total(neutrino_energy,transport,-2,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        !include final state nucleon blocking for high densities, use
+        !analytic (degenerate) chemical potential, based on Bruenn 85
+        !C37-C39
+        if (eos_variables(rhoindex).gt.1.0e12) then
+           othermu = 0.5*hbarc_mevcm**2/m_amu* &
+                (3.0*pi**2*eos_variables(xnindex)*eos_variables(rhoindex)/ &
+                (m_amu*mev_to_gram))**(2.0/3.0)
+           tmp = 1.5*eos_variables(tempindex)/othermu
+           this_opacity = crosssection * eos_variables(xnindex)* &
+                eos_variables(rhoindex)/(m_ref*mev_to_gram) * tmp/sqrt(1.0+tmp**2)
+        else
+           this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        endif
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -769,7 +861,19 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_anumu_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = -2
         call nu_scatter_elastic_p_total(neutrino_energy,transport,-2,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        !include final state nucleon blocking for high densities, use
+        !analytic (degenerate) chemical potential, based on Bruenn 85
+        !C37-C39
+        if (eos_variables(rhoindex).gt.1.0e12) then
+           othermu = 0.5*hbarc_mevcm**2/m_amu* &
+                (3.0*pi**2*eos_variables(xpindex)*eos_variables(rhoindex)/ &
+                (m_amu*mev_to_gram))**(2.0/3.0)
+           tmp = 1.5*eos_variables(tempindex)/othermu
+           this_opacity = crosssection * eos_variables(xpindex)* &
+                eos_variables(rhoindex)/(m_ref*mev_to_gram) * tmp/sqrt(1.0+tmp**2)
+        else
+           this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        endif
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -807,7 +911,19 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_nutau_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = 3
         call nu_scatter_elastic_n_total(neutrino_energy,transport,3,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        !include final state nucleon blocking for high densities, use
+        !analytic (degenerate) chemical potential, based on Bruenn 85
+        !C37-C39
+        if (eos_variables(rhoindex).gt.1.0e12) then
+           othermu = 0.5*hbarc_mevcm**2/m_amu* &
+                (3.0*pi**2*eos_variables(xnindex)*eos_variables(rhoindex)/ &
+                (m_amu*mev_to_gram))**(2.0/3.0)
+           tmp = 1.5*eos_variables(tempindex)/othermu
+           this_opacity = crosssection * eos_variables(xnindex)* &
+                eos_variables(rhoindex)/(m_ref*mev_to_gram) * tmp/sqrt(1.0+tmp**2)
+        else
+           this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        endif
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -816,7 +932,19 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_nutau_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = 3
         call nu_scatter_elastic_p_total(neutrino_energy,transport,3,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        !include final state nucleon blocking for high densities, use
+        !analytic (degenerate) chemical potential, based on Bruenn 85
+        !C37-C39
+        if (eos_variables(rhoindex).gt.1.0e12) then
+           othermu = 0.5*hbarc_mevcm**2/m_amu* &
+                (3.0*pi**2*eos_variables(xpindex)*eos_variables(rhoindex)/ &
+                (m_amu*mev_to_gram))**(2.0/3.0)
+           tmp = 1.5*eos_variables(tempindex)/othermu
+           this_opacity = crosssection * eos_variables(xpindex)* &
+                eos_variables(rhoindex)/(m_ref*mev_to_gram) * tmp/sqrt(1.0+tmp**2)
+        else
+           this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        endif
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -854,7 +982,19 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_anutau_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = -3
         call nu_scatter_elastic_n_total(neutrino_energy,transport,-3,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        !include final state nucleon blocking for high densities, use
+        !analytic (degenerate) chemical potential, based on Bruenn 85
+        !C37-C39
+        if (eos_variables(rhoindex).gt.1.0e12) then
+           othermu = 0.5*hbarc_mevcm**2/m_amu* &
+                (3.0*pi**2*eos_variables(xnindex)*eos_variables(rhoindex)/ &
+                (m_amu*mev_to_gram))**(2.0/3.0)
+           tmp = 1.5*eos_variables(tempindex)/othermu
+           this_opacity = crosssection * eos_variables(xnindex)* &
+                eos_variables(rhoindex)/(m_ref*mev_to_gram) * tmp/sqrt(1.0+tmp**2)
+        else
+           this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        endif
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -863,7 +1003,19 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_anutau_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = -3
         call nu_scatter_elastic_p_total(neutrino_energy,transport,-3,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        !include final state nucleon blocking for high densities, use
+        !analytic (degenerate) chemical potential, based on Bruenn 85
+        !C37-C39
+        if (eos_variables(rhoindex).gt.1.0e12) then
+           othermu = 0.5*hbarc_mevcm**2/m_amu* &
+                (3.0*pi**2*eos_variables(xpindex)*eos_variables(rhoindex)/ &
+                (m_amu*mev_to_gram))**(2.0/3.0)
+           tmp = 1.5*eos_variables(tempindex)/othermu
+           this_opacity = crosssection * eos_variables(xpindex)* &
+                eos_variables(rhoindex)/(m_ref*mev_to_gram) * tmp/sqrt(1.0+tmp**2)
+        else
+           this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        endif
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
