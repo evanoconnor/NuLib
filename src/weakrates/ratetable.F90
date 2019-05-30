@@ -465,15 +465,15 @@ contains
        print *, "    | RELEVANT TO HIGH-DENSITY O–NE–MG CORES. The Astrophysical Journal, 817, 163            |"
        print *, "    | https://doi.org/10.3847/0004-637x/817/2/163                                            |"
        print *, "    ------------------------------------------------------------------------------------------"
-    case ("diamondrates.dat")
-       print *, "    Loading high-sensitivity region rate table. Make reference to: "
-       print *, "    ------------------------------------------------------------------------------------------"
-       print *, "    | idiamond | QRPA thingies                                                               |" 
-       print *, "    |          | For the N=50 region                                                         |"
-       print *, "    |          | And experiments                                                             |"
-       print *, "    |          |                                                                             |"  
-       print *, "    |          | Private communication                                                       |"
-       print *, "    ------------------------------------------------------------------------------------------"  
+    ! case ("diamondrates.dat")
+    !    print *, "    Loading high-sensitivity region rate table. Make reference to: "
+    !    print *, "    ------------------------------------------------------------------------------------------"
+    !    print *, "    | idiamond | QRPA thingies                                                               |" 
+    !    print *, "    |          | For the N=50 region                                                         |"
+    !    print *, "    |          | And experiments                                                             |"
+    !    print *, "    |          |                                                                             |"  
+    !    print *, "    |          | Private communication                                                       |"
+    !    print *, "    ------------------------------------------------------------------------------------------"  
     case default
        stop "No default"
     end select

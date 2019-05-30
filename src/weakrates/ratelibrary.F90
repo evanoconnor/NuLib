@@ -1,6 +1,6 @@
 !-*-f90-*-
-!#define NUM_TABLES 8
-#define NUM_TABLES 9
+#define NUM_TABLES 8
+!#define NUM_TABLES 9
 #define gScale 1.0d0
 #define scale_all .false.
 #define scale_diamond .false.
@@ -287,7 +287,7 @@ contains
     call get_string_parameter(fn,'pruet_rates2',library%files_to_load(6))
     call get_string_parameter(fn,'pruet_rates3',library%files_to_load(7))
     call get_string_parameter(fn,'suzuki_honma_gxpf1j',library%files_to_load(8))
-    call get_string_parameter(fn,'diamond_rates',library%files_to_load(9))
+!    call get_string_parameter(fn,'diamond_rates',library%files_to_load(9))
     
     call get_integer_parameter(fn,'ilmp',library%priority(1))
     call get_integer_parameter(fn,'ilmsh',library%priority(2))
@@ -297,8 +297,8 @@ contains
     call get_integer_parameter(fn,'ipruet2',library%priority(6))
     call get_integer_parameter(fn,'ipruet3',library%priority(7))
     call get_integer_parameter(fn,'isuzuki_honma_gxpf1j',library%priority(8))
-    call get_integer_parameter(fn,'idiamond',library%priority(9))
-    call get_integer_parameter(fn,'iapprox',library%priority(10))
+!    call get_integer_parameter(fn,'idiamond',library%priority(9))
+    call get_integer_parameter(fn,'iapprox',library%priority(9))
     call get_integer_parameter(fn,'raduta_model',library%approximation_model)
     call get_string_parameter(fn,'eos_table_name',library%eos_path)
 
