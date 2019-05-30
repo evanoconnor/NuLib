@@ -1,9 +1,9 @@
 !-*-f90-*-
 module weakrates_interface
   !""" Main interface between weakratelib and nulib """
-    
+
   use class_ratelibrary
-  
+
   implicit none
   private
   public :: initialize_weakratelib, microphysical_electron_capture
@@ -17,8 +17,8 @@ module weakrates_interface
   ! methods
 contains
 
-!------------------------------------------------------------------------------------!
-  
+  !------------------------------------------------------------------------------------!
+
   subroutine initialize_weakratelib(parameters_filename)
     character*(*) parameters_filename
     !$OMP PARALLEL COPYIN(weakratelib)
@@ -26,7 +26,7 @@ contains
     !$OMP END PARALLEL
   end subroutine initialize_weakratelib
 
-!------------------------------------------------------------------------------------!
+  !------------------------------------------------------------------------------------!
 
   function emissivity_from_weak_interaction_rates(&
        A,&
@@ -44,7 +44,7 @@ contains
          yeindex,GPQ_n32_roots,GPQ_n32_weights
 
     implicit none
-    
+
     include 'constants.inc'
 
     integer A,Z
@@ -73,8 +73,8 @@ contains
     real*8 :: rbeta      !beta decay rate (plus or minus depending on neutrino species)
     real*8 :: rcap       !capture rate (electron or positron for nue or anue)
     real*8 :: rnu        !nue or anue energy loss rate
-    
-    
+
+
     approx_rate_flag = .false.
     GPQ_interval = 0.0d0
     GPQ_coef(:) = 0.0d0
@@ -87,42 +87,42 @@ contains
        approx_rate_flag = .true.
     endif
 
-    
+
     if(approx_rate_flag) then
        qec_eff = return_hempel_qec(A,Z,Z-1)
     else
-       !interpolating rates for given eos_variables and calculating 
+       !interpolating rates for given eos_variables and calculating
        !average neutrino energy from rates for nue, emissivities are
        !from the betaplus direction; for anue, emissivities in the betaminus direction
        if (neutrino_species.eq.1) then
 
           rbeta = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,1)
-          rnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,3)
           rcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,2)
+          rnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,3)
 
           !using Qgs from table as seed for qec_solver
           qec_eff = weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z),1)
-          avgenergy(1) = rnu/(rcap + rbeta) 
+          avgenergy(1) = rnu/(rcap + rbeta)
           avgenergy(2) = qec_eff !necessary to fulfill the first comparison in qec_solver
        else if (neutrino_species.eq.2) then
           stop "Positron capture effective q is bugged and not currently working,&
                please turn it off in requested_interactions.inc."
           rbeta = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,4)
           rcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,5)
-          rnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,6)         
-          qec_eff = -weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z),1) 
-          avgenergy(1) = rnu/(rcap + rbeta)   
+          rnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,6)
+          qec_eff = -weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z),1)
+          avgenergy(1) = rnu/(rcap + rbeta)
           avgenergy(2) = qec_eff
        else
           stop "This module only implements electron-neutrino type weak interactions. &
                Please restrict neutrino_species to nue/anue."
        endif
 
-       !solve for the eff Qec that constrains the effective 
+       !solve for the eff Qec that constrains the effective
        !neutrino spectra to produce the correct avg. energy
        qec_eff = qec_solver(avgenergy,qec_eff,eos_variables)
     end if
-    
+
     !calculate normalization constant using effective neutrino spectra
     spectra = 0.0d0
     GPQ_interval = GPQ_intervals(qec_eff,eos_variables)   ! dynamic range finder for matching
@@ -135,12 +135,12 @@ contains
             GPQ_coef(1)*GPQ_n32_roots(i)+GPQ_coef(2),&
             qec_eff,eos_variables(mueindex)-m_e,eos_variables(tempindex))
     end do
-    spectra = (eos_variables(tempindex)**5)*spectra          
+    spectra = (eos_variables(tempindex)**5)*spectra
     if (neutrino_species.eq.1) then
        if (approx_rate_flag) then
-          normalization_constant = ((return_weakrate(&
+          normalization_constant = (return_weakrate(&
                0,eos_variables(tempindex),qec_eff,&
-               eos_variables(mueindex)-m_e,A,Z))/spectra)
+               eos_variables(mueindex)-m_e,lrhoYe,A,Z,weakratelib%approximation_model))/spectra
        else
           normalization_constant = (rbeta+rcap)/spectra
        end if
@@ -151,10 +151,10 @@ contains
           normalization_constant = (rbeta+rcap)/spectra
        end if
     end if
-    
+
     !integrate over energy bin or take central value of bin and multiply by the bin width
     if (do_integrated_BB_and_emissivity) then
-       stop "Integration is not yet supported for electron-capture emissivities" 
+       stop "Integration is not yet supported for electron-capture emissivities"
     else
        do ng=1,number_groups
           nu_spectrum_eval =&
@@ -162,14 +162,14 @@ contains
                ec_neutrino_spectra(energies(ng)/eos_variables(tempindex),&
                qec_eff,eos_variables(mueindex)-m_e,eos_variables(tempindex))
           emissivity(ng) = &  !erg/cm^3/s/MeV/srad
-               (energies(ng)*mev_to_erg)*(1.0d39*number_density)*nu_spectrum_eval/(4.0d0*pi) 
+               (energies(ng)*mev_to_erg)*(1.0d39*number_density)*nu_spectrum_eval/(4.0d0*pi)
        end do
     endif
     return
 
   end function emissivity_from_weak_interaction_rates
 
-!------------------------------------------------------------------------------------!
+  !------------------------------------------------------------------------------------!
 
   function ec_neutrino_spectra(nu_energy_per_T,q,uf,T) result(nu_spectra)
     !definition: n(E) = (T^4)*N*ec_neutrino_spectra, where N is the normalization constant
@@ -187,7 +187,7 @@ contains
 
     !redefining q and the chemical potential to be dimensionless, T must be in MeV
     q_T = q/T
-    uf_T = uf/T  
+    uf_T = uf/T
 
     !ec neutrino spectra (dimensionless)
     if ((nu_energy_per_T-q_T).le.0.0d0) then
@@ -201,8 +201,8 @@ contains
 
   end function ec_neutrino_spectra
 
-!------------------------------------------------------------------------------------!
-  
+  !------------------------------------------------------------------------------------!
+
   function qec_solver(avgenergy,qin,eos_variables) result(qec_eff)
 
     use nulib, only : GLQ_n32_roots, GLQ_n32_weights, &
@@ -257,7 +257,7 @@ contains
     GPQ_coef = 0.0d0
     GPQ_coef_deriv = 0.0d0
 
-    do while (abs((avge_rates - avge_spectra)/avge_rates) > 1.0d-8) 
+    do while (abs((avge_rates - avge_spectra)/avge_rates) > 1.0d-8)
        lower_bound = -100.0d0
        upper_bound = 100.0d0
        avge_spectra_boundary = average_energy(lower_bound,eos_variables)
@@ -268,26 +268,26 @@ contains
        !low resolution in the shell-model rates can cause the interpolation to produce an
        !average nu energy below the asymptotic limit of <E>_spectra. In this case, the
        !effective q is set to the lower bound -100MeV
-       if(avge_spectra_boundary.gt.avge_rates) then          
+       if(avge_spectra_boundary.gt.avge_rates) then
           qec_eff = lower_bound
           return
        end if
        do !bisection loop
-          if(N.ge.900)then                   
+          if(N.ge.900)then
              stop "Over 900 bisections, failed to converge."
           endif
           !if the bisection parameter q exceeds double precision
           if(q.eq.(lower_bound + upper_bound)/2.0d0)then
-             if(abs(avge_rates - avge_spectra)/avge_rates.lt.1.0d0)then  
+             if(abs(avge_rates - avge_spectra)/avge_rates.lt.1.0d0)then
                 qec_eff = q
                 return
              end if
           end if
           q = (lower_bound + upper_bound)/2.0d0
-          avge_spectra = average_energy(q,eos_variables)                   
+          avge_spectra = average_energy(q,eos_variables)
           if (abs(avge_rates - avge_spectra)/avge_rates.le.tolerance) then
              qec_eff = q
-             return 
+             return
           end if
           if (sign(1.0d0,(avge_rates-avge_spectra)).eq.&
                sign(1.0d0,(avge_rates-avge_spectra_boundary))) then
@@ -295,7 +295,7 @@ contains
           else
              upper_bound = q
           end if
-          N = N + 1   
+          N = N + 1
        end do
     end do
     qec_eff = q
@@ -303,8 +303,8 @@ contains
 
   end function qec_solver
 
-!------------------------------------------------------------------------------------!
-  
+  !------------------------------------------------------------------------------------!
+
   function average_energy(qec_eff,eos_variables) result(avgenergy)
 
     use nulib, only : GPQ_n32_roots,GPQ_n32_weights,&
@@ -345,7 +345,7 @@ contains
        number_density_integral = number_density_integral + GPQ_n32_weights(i)*spectra
     end do
 
-    if (number_density_integral.eq.0.0d0.and.energy_density_integral.eq.0.0d0) then             
+    if (number_density_integral.eq.0.0d0.and.energy_density_integral.eq.0.0d0) then
        avgenergy = (eos_variables(tempindex))*1.0d0
     else
        avgenergy = (eos_variables(tempindex))*&
@@ -354,7 +354,7 @@ contains
 
   end function average_energy
 
-!------------------------------------------------------------------------------------!
+  !------------------------------------------------------------------------------------!
 
   function GPQ_intervals(q,eos_variables) result (interval)
     use nulib, only : total_eos_variables,tempindex,mueindex,m_e
@@ -379,29 +379,29 @@ contains
     centroid = (q+eos_variables(mueindex)-m_e)/eos_variables(tempindex)
     spectra_centroid = &
          ec_neutrino_spectra(centroid,q,eos_variables(mueindex)-m_e,eos_variables(tempindex))
-    spectra_shift = spectra_centroid/1.0d2          
+    spectra_shift = spectra_centroid/1.0d2
     spectra_shift = sqrt(spectra_shift)
     !integration range-finder:
     !If (q+mu)/T is less than 3MeV, the spectra will hug the origin,
     !so an interval from 0 to 25 should be sufficient. For greater values
-    !of (q+mu)/T the interval should be determined with the quartic part 
-    !of the spectra for the lower bound and an auxillary gaussian that is 
+    !of (q+mu)/T the interval should be determined with the quartic part
+    !of the spectra for the lower bound and an auxillary gaussian that is
     !used to track the high energy bound. The below represents this method.
     if(centroid.gt.3.0d0)then
        interval(1) = (q/eos_variables(tempindex)+sqrt((q/eos_variables(tempindex))**2.0d0 + &
-            4.0d0*spectra_shift))/2.0d0         
+            4.0d0*spectra_shift))/2.0d0
        interval(2) = (q+eos_variables(mueindex)-m_e)/eos_variables(tempindex) + 27.314d0
     else
        interval(1) = 0.0d0
        interval(2) = 25.0d0
     end if
-    ! fail safe in case the above doesn't work 
+    ! fail safe in case the above doesn't work
     if(interval(1).lt.1.0d-5.and.interval(2).lt.0.0d0)then
        interval(2) = max(interval(2),50.0d0)
     end if
     if(interval(2).lt.0.0d0)then
        write(*,*)  "lower bound = ",interval(1), "upper bound = ", interval(2)
-       write(*,*) 
+       write(*,*)
        stop
     end if
 
@@ -409,8 +409,8 @@ contains
 
   end function GPQ_intervals
 
-!------------------------------------------------------------------------------------!
-  
+  !------------------------------------------------------------------------------------!
+
   subroutine microphysical_electron_capture(&
        neutrino_species,&
        eos_variables,&
@@ -440,9 +440,9 @@ contains
     emissivity = 0.0d0
     logrhoYe = log10(eos_variables(rhoindex)*eos_variables(yeindex))
     t9 = (eos_variables(tempindex)/kelvin_to_mev)*1.0d-9
-    
 
-    do i=1,weakratelib%approx%nspecies 
+
+    do i=1,weakratelib%approx%nspecies
 
 
        if(weakratelib%approx%number_densities(i).eq.0.0d0)cycle
@@ -470,9 +470,9 @@ contains
              ! check to make sure masses exist for both parent and daughter nucleus
              if(hempel_lookup_table(A,Z).eq.0.or.hempel_lookup_table(A,Z-1).eq.0) then
                 cycle
-             end if             
-             
-             
+             end if
+
+
           else
              cycle
           end if
@@ -492,5 +492,5 @@ contains
     return
 
   end subroutine microphysical_electron_capture
-!------------------------------------------------------------------------------------!
+  !------------------------------------------------------------------------------------!
 end module weakrates_interface
