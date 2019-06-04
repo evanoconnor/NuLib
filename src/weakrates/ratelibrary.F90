@@ -1,6 +1,6 @@
 !-*-f90-*-
 #define NUM_TABLES 8
-!#define NUM_TABLES 9
+
 #define gScale 1.0d0
 #define scale_all .false.
 #define scale_diamond .false.
@@ -119,42 +119,8 @@ contains
     integer hsA(nNuclei), hsZ(nNuclei)
     real*8 :: scale
 
-    !specific rate scaling happens here
-    if (scale_all) then
-       ! scale everything
-       scale = gScale
-       return
-    else if (scale_diamond) then
-       !nucleus is in the diamond, scale the rate
-       hsZ = (/ 26,26,27,27,27,27,28,28,28,28,28,28,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,31,31,31,31,31,31,31,31,31,31,31,32,32,32,32,32,32,32,32,32,32,33,33,33,33,33,33,33,33,33,33,33,34,34,34,34,34,34,35,35,35,35,36,36 /)
-       hsA = (/ 75,76,75,76,77,78,75,76,77,78,79,80,75,76,77,78,79,80,81,82,75,76,77,78,79,80,81,82,83,84,75,76,77,78,79,80,81,82,83,84,85,76,77,78,79,80,81,82,83,84,85,75,76,77,78,79,80,81,82,83,84,85,80,81,82,83,84,85,82,83,84,85,84,85 /)
-
-       myIndex = 0
-       do j=1,nNuclei
-          if(hsA(j).eq.A.and.hsZ(j).eq.Z) then
-             !got a match, rate needs to be scaled
-             !print *, "flag worked"
-             myIndex = -1
-             exit !exit the do loop and continue with the next lines
-          else
-             !no match, carry on with the j loop searching for a match
-          end if
-       end do
-
-       if (myIndex.lt.0) then
-          scale = gScale
-          return
-       else
-          scale = 1.0d0
-          return
-       end if
-
-    else
-       ! not scaling anything
-       scale = 1.0d0
-       return
-    endif
-
+    scale = 1.0d0
+    return
 
   end function scaling_factor
   !------------------------------------------------------------------------------------!
@@ -287,7 +253,6 @@ contains
     call get_string_parameter(fn,'pruet_rates2',library%files_to_load(6))
     call get_string_parameter(fn,'pruet_rates3',library%files_to_load(7))
     call get_string_parameter(fn,'suzuki_honma_gxpf1j',library%files_to_load(8))
-!    call get_string_parameter(fn,'diamond_rates',library%files_to_load(9))
     
     call get_integer_parameter(fn,'ilmp',library%priority(1))
     call get_integer_parameter(fn,'ilmsh',library%priority(2))
@@ -297,7 +262,6 @@ contains
     call get_integer_parameter(fn,'ipruet2',library%priority(6))
     call get_integer_parameter(fn,'ipruet3',library%priority(7))
     call get_integer_parameter(fn,'isuzuki_honma_gxpf1j',library%priority(8))
-!    call get_integer_parameter(fn,'idiamond',library%priority(9))
     call get_integer_parameter(fn,'iapprox',library%priority(9))
     call get_integer_parameter(fn,'raduta_model',library%approximation_model)
     call get_string_parameter(fn,'eos_table_name',library%eos_path)

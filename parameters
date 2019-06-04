@@ -11,11 +11,9 @@ pruet_rates1  =	"pruet_66_80.dat"
 pruet_rates2  =	"pruet_66_80_leftover.dat"
 pruet_rates3  =	"pruet_81_110.dat"
 suzuki_honma_gxpf1j	= "suzuki_honma_gxpf1j.dat"
-#diamond_rates 		= "diamondrates.dat"
 
 ## Rate table priority hierarchy ##
 isuzuki_honma_gxpf1j   = 1
-#idiamond	       = 0
 ilmp		       = 2
 ilmsh		       = 3
 ioda		       = 4
