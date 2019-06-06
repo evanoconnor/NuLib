@@ -21,7 +21,7 @@
    real*8 :: t_max_hack = 240.0d0
 
 ! basics
-   integer :: nvars = 19
+   integer :: nvars = 20
    real*8,allocatable :: alltables(:,:,:,:)
   ! index variable mapping:
   !  1 -> logpress
@@ -43,6 +43,7 @@
   ! 17 -> abar
   ! 18 -> zbar
   ! 19 -> gamma
+  ! 20 -> meff
 
    real*8,allocatable,save :: logrho(:)
    real*8,allocatable,save :: logtemp(:)

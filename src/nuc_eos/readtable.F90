@@ -182,6 +182,12 @@ subroutine readtable(eos_filename)
   call h5dclose_f(dset_id,error)
   accerr=accerr+error
 
+! Gamma
+  call h5dopen_f(file_id, "Meff", dset_id, error)
+  call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, alltables(:,:,:,20), dims3, error)
+  call h5dclose_f(dset_id,error)
+  accerr=accerr+error
+
   allocate(logrho(nrho))
   dims1(1)=nrho
   call h5dopen_f(file_id, "logrho", dset_id, error)

@@ -128,7 +128,7 @@ subroutine set_eos_variables(eos_variables)
        eos_variables(xaindex),eos_variables(xhindex),eos_variables(xnindex), &
        eos_variables(xpindex),eos_variables(abarindex),eos_variables(zbarindex), &
        eos_variables(mueindex),eos_variables(munindex),eos_variables(mupindex), &
-       eos_variables(muhatindex),keytemp,keyerr,precision)
+       eos_variables(muhatindex),eos_variables(meffindex),keytemp,keyerr,precision)
   if (keyerr.ne.0) then
      write(*,*) "rho: ", eos_variables(rhoindex)
      write(*,*) "temperature: ", eos_variables(tempindex)

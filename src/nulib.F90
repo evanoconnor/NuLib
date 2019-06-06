@@ -50,7 +50,7 @@ module nulib
 
   !EOS variables index holders, we carry this around with us to
   !instead of globally setting it for easy parallization
-  integer :: total_eos_variables = 15
+  integer :: total_eos_variables = 16
   integer :: rhoindex =1
   integer :: tempindex = 2
   integer :: yeindex = 3
@@ -66,6 +66,7 @@ module nulib
   integer :: mupindex = 13
   integer :: muhatindex = 14
   integer :: entropyindex = 15
+  integer :: meffindex = 16
 
 #ifdef DEBUG
   logical :: debug = .true.

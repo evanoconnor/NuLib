@@ -32,7 +32,7 @@ program point_example
   !number of energy groups
   integer :: mypoint_number_groups = 24
 
-  character*200 :: parameters = "/projects/ceclub/gr1dnulib/GitHub/NuLib/parameters"
+  character*200 :: parameters = "parameters"
 
   !local variables
   real*8, allocatable,dimension(:,:) :: local_emissivity
@@ -70,9 +70,9 @@ program point_example
   ! m_ref = m_n !for LS220
 
   !example point
-  xrho = 1.0d12 !g/cm^3
-  xtemp = 1.5d0 !MeV
-  xye = 0.35d0 !dimensionless
+  xrho = 4.0d14 !g/cm^3
+  xtemp = 10.0d0 !MeV
+  xye = 0.3d0 !dimensionless
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
@@ -111,6 +111,7 @@ program point_example
   write(*,*) "X_n: ",eos_variables(xnindex)
   write(*,*) "X_p: ",eos_variables(xpindex)
   write(*,*) "X_alpha: ",eos_variables(xaindex)
+  write(*,*) "Meff: ", eos_variables(meffindex)
   
   !calculate the full emissivities and opacities, this averages the
   !values based on the mypoint_neutrino_scheme this assumes detailed
