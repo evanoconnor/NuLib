@@ -8,6 +8,7 @@
   real*8, parameter :: m_n = 939.565346d0 !MeV
   real*8, parameter :: m_p = 938.272013d0 !MeV
   real*8, parameter :: m_amu =  931.494061d0 !MeV
+  real*8, parameter :: m_pi =  139.57018d0 !MeV
   real*8, parameter :: m_alpha = 3727.379240 !MeV
   real*8, parameter :: sin2thetaW = 0.23d0 !dimensionless
   real*8, parameter :: clight = 29979245800.0d0 !cm/s
@@ -23,5 +24,3 @@
   real*8, parameter :: mev_to_gram = 1.782661758d-27 !one MeV is # grams
   real*8, parameter :: mev_to_erg = 1.60217733d-6 !one MeV is # ergs
   real*8, parameter :: kelvin_to_mev = 8.6173423d-11 !one K is # MeV
-
-

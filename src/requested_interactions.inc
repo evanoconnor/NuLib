@@ -64,12 +64,12 @@
   logical :: add_nutau_emission_epannihil = .true.
   logical :: add_anutau_emission_epannihil = .true.
 
-  logical :: add_nue_emission_NNBrems = .false.
-  logical :: add_anue_emission_NNBrems = .false.
-  logical :: add_numu_emission_NNBrems = .true.
-  logical :: add_anumu_emission_NNBrems = .true.
-  logical :: add_nutau_emission_NNBrems = .true.
-  logical :: add_anutau_emission_NNBrems = .true.	
+  logical :: add_nue_emission_bremsstrahlung = .false.
+  logical :: add_anue_emission_bremsstrahlung = .false.
+  logical :: add_numu_emission_bremsstrahlung = .false.
+  logical :: add_anumu_emission_bremsstrahlung = .false.
+  logical :: add_nutau_emission_bremsstrahlung = .false.
+  logical :: add_anutau_emission_bremsstrahlung = .false.	
 
   logical :: add_nue_emission_weakinteraction_ecap = .true.
   logical :: add_anue_emission_weakinteraction_poscap = .false.
@@ -83,3 +83,11 @@
   logical :: add_anumu_kernel_epannihil = .false.
   logical :: add_nutau_kernel_epannihil = .false.
   logical :: add_anutau_kernel_epannihil = .false.
+  
+  !kernels for full calculation of thermal processes
+  logical :: add_nue_kernel_bremsstrahlung = .false.
+  logical :: add_anue_kernel_bremsstrahlung = .false.
+  logical :: add_numu_kernel_bremsstrahlung = .true.
+  logical :: add_anumu_kernel_bremsstrahlung = .true.
+  logical :: add_nutau_kernel_bremsstrahlung = .true.
+  logical :: add_anutau_kernel_bremsstrahlung = .true.

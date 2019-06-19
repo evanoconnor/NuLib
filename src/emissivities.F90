@@ -204,7 +204,7 @@ subroutine total_emissivities(neutrino_species,energy_point,energy_bottom,energy
      endif
 
      !add in the electron neutrino emission from Nucleon-Nucleon bremsstrahlung
-     if (add_nue_emission_NNBrems) then
+     if (add_nue_emission_bremsstrahlung) then
         if (do_integrated_BB_and_emissivity) then
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
                 single_neutrino_emissivity_from_NNBrem_given_energyrange( &
@@ -232,7 +232,7 @@ subroutine total_emissivities(neutrino_species,energy_point,energy_bottom,energy
      endif
 
      !add in the electron antineutrino emission from Nucleon-Nucleon bremsstrahlung
-     if (add_anue_emission_NNBrems) then
+     if (add_anue_emission_bremsstrahlung) then
         if (do_integrated_BB_and_emissivity) then
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
                 single_neutrino_emissivity_from_NNBrem_given_energyrange( &
@@ -260,7 +260,7 @@ subroutine total_emissivities(neutrino_species,energy_point,energy_bottom,energy
      endif
 
      !add in the mu neutrino emission from Nucleon-Nucleon bremsstrahlung
-     if (add_numu_emission_NNBrems) then
+     if (add_numu_emission_bremsstrahlung) then
         if (do_integrated_BB_and_emissivity) then
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
                 single_neutrino_emissivity_from_NNBrem_given_energyrange( &
@@ -288,7 +288,7 @@ subroutine total_emissivities(neutrino_species,energy_point,energy_bottom,energy
      endif
 
      !add in the mu antineutrino emission from Nucleon-Nucleon bremsstrahlung
-     if (add_anumu_emission_NNBrems) then
+     if (add_anumu_emission_bremsstrahlung) then
         if (do_integrated_BB_and_emissivity) then
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
                 single_neutrino_emissivity_from_NNBrem_given_energyrange( &
@@ -316,7 +316,7 @@ subroutine total_emissivities(neutrino_species,energy_point,energy_bottom,energy
      endif
 
      !add in the tau neutrino emission from Nucleon-Nucleon bremsstrahlung
-     if (add_nutau_emission_NNBrems) then
+     if (add_nutau_emission_bremsstrahlung) then
         if (do_integrated_BB_and_emissivity) then
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
                 single_neutrino_emissivity_from_NNBrem_given_energyrange( &
@@ -344,7 +344,7 @@ subroutine total_emissivities(neutrino_species,energy_point,energy_bottom,energy
      endif
 
      !add in the tau antineutrino emission from Nucleon-Nucleon bremsstrahlung
-     if (add_anutau_emission_NNBrems) then
+     if (add_anutau_emission_bremsstrahlung) then
         if (do_integrated_BB_and_emissivity) then
            total_emissivity = total_emissivity + & !total emmissivity, dimensions ergs/cm^3/s/MeV/srad
                 single_neutrino_emissivity_from_NNBrem_given_energyrange( &
