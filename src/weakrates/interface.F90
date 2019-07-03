@@ -100,8 +100,8 @@ contains
        else if (neutrino_species.eq.2) then
           rbeta = return_weakrate(weakratelib,A,Z+1,t9,lrhoYe,idxtable,4)
           rcap = return_weakrate(weakratelib,A,Z+1,t9,lrhoYe,idxtable,5)
-          rnu = return_weakrate(weakratelib,A,Z+1,t9,lrhoYe,idxtable,6)         
-          qec_eff = -weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z+1),1) 
+          rnu = return_weakrate(weakratelib,A,Z+1,t9,lrhoYe,idxtable,6)
+          qec_eff = -weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z+1),1)
           avgenergy(1) = rnu/(rcap + rbeta)   
           avgenergy(2) = qec_eff
        else
