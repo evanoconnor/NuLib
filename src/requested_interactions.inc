@@ -72,7 +72,7 @@
   logical :: add_anutau_emission_NNBrems = .true.	
 
   logical :: add_nue_emission_weakinteraction_ecap = .true.
-  logical :: add_anue_emission_weakinteraction_poscap = .false.
+  logical :: add_anue_emission_weakinteraction_poscap = .true.
 
   logical :: apply_kirchoff_to_pair_creation = .true.
 
