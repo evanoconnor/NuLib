@@ -98,12 +98,10 @@ contains
           avgenergy(1) = rnu/(rcap + rbeta) 
           avgenergy(2) = qec_eff !necessary to fulfill the first comparison in qec_solver
        else if (neutrino_species.eq.2) then
-          stop "Positron capture effective q is bugged and not currently working,&
-               please turn it off in requested_interactions.inc."
-          rbeta = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,4)
-          rcap = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,5)
-          rnu = return_weakrate(weakratelib,A,Z,t9,lrhoYe,idxtable,6)         
-          qec_eff = -weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z),1) 
+          rbeta = return_weakrate(weakratelib,A,Z+1,t9,lrhoYe,idxtable,4)
+          rcap = return_weakrate(weakratelib,A,Z+1,t9,lrhoYe,idxtable,5)
+          rnu = return_weakrate(weakratelib,A,Z+1,t9,lrhoYe,idxtable,6)
+          qec_eff = -weakratelib%tables(idxtable)%nuclear_species(weakratelib%tables(idxtable)%nucleus_index(A,Z+1),1)
           avgenergy(1) = rnu/(rcap + rbeta)   
           avgenergy(2) = qec_eff
        else
@@ -139,7 +137,8 @@ contains
        end if
     else if (neutrino_species.eq.2) then
        if (approx_rate_flag) then
-          stop "There is currently no approximate rate for positron capture"
+          !approximation doesn't work for antineutrinos
+          normalization_constant = 0.0
        else
           normalization_constant = (rbeta+rcap)/spectra
        end if
@@ -436,7 +435,7 @@ contains
     
     do i=1,weakratelib%approx%nspecies 
 
-       if(weakratelib%approx%number_densities(i).eq.0.0d0)cycle
+       if(weakratelib%approx%number_densities(i).eq.0.0d0) cycle
 
        A = weakratelib%approx%nuclei_A(i)
        Z = weakratelib%approx%nuclei_Z(i)
@@ -445,7 +444,8 @@ contains
        !use the parameterized rate function, else skip this nucleus
        ! check if rate exists in a table
        if (weakratelib%ntables.ne.0)then
-          idxtable = in_table(weakratelib,A,Z,logrhoYe,t9)
+          if (neutrino_species .eq. 1) idxtable = in_table(weakratelib,A,Z,logrhoYe,t9)
+          if (neutrino_species .eq. 2) idxtable = in_table(weakratelib,A,Z+1,logrhoYe,t9)
        endif
 
        ! if no table contains the requested rate
