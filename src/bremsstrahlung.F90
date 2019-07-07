@@ -12,7 +12,7 @@ real*8,intent(in) :: nu_energy_x,nubar_energy_x  ! dimensionless
 real*8, intent(in) :: matter_temperature ! MeV
 real*8, intent(in) :: n_N ! n/cm3
 integer, intent(in) :: neutrino_species ! 1 to 6
-integer,intent(in) :: pro_ann ! 0 or 1
+integer,intent(in) :: pro_ann ! 1 (production) or 2 (annihilation)
 
 real*8 :: eta_star
 real*8 :: Gamma_sigma
@@ -86,9 +86,9 @@ Phi0_nn_Raff = GC2_raffelt * n_N * S_sig &
 			*hbarc_mevcm**3 *clight/(2.0d0*pi) ! cm3   s-1
 
 
-if (pro_ann .EQ. 1) then
+if (pro_ann .EQ. 2) then
        Phi0_nn = Phi0_nn_old ! absorption 
-else if (pro_ann .EQ. 0) then 
+else if (pro_ann .EQ. 1) then 
        Phi0_nn = Phi0_nn_old * exp(-x) ! production
 else
       write(*,*) "brem : annihilation or production wrongly inserted"
@@ -114,7 +114,7 @@ real*8,intent(in) :: nu_energy_x,nubar_energy_x  ! dimensionless
 real*8, intent(in) :: matter_temperature ! MeV
 real*8, intent(in) :: n_N ! n/cm3
 integer, intent(in) :: neutrino_species 
-integer,intent(in) :: pro_ann ! 0 or 1
+integer,intent(in) :: pro_ann ! 1 (production) or 2 (annihilation)
 
 real*8 :: p_f
 real*8 :: x
@@ -149,9 +149,9 @@ Phi_ND_2 = hbarc_mevcm**6 * G/4.0d0 * 15.0d0**2 *(4.0d0*pi)**2/m_amu**4&
 		*3.0d0 * C_A**2.0d0 * n_N ** 2 * find_s2(0.0d0,0.0d0,x)! using the s_kl part as well 
 		
 
-if ( pro_ann .EQ. 0 ) then 
+if ( pro_ann .EQ. 1 ) then 
 	Phi0_nn = exp(-x)* MIN(Phi_D_2,Phi_ND_2) !cm3 s-1 
-else if (pro_ann .EQ. 1 ) then 
+else if (pro_ann .EQ. 2 ) then 
 	Phi0_nn =   MIN(Phi_D_2,Phi_ND_2)  ! cm3 s-1
 else 
 	stop " pro_ann not allowed"
