@@ -1084,70 +1084,70 @@ module nulib
          nuother_energy_x = energies(ng)/temperature  !adim
          !electron neutrinos
          if (add_nue_kernel_bremsstrahlung) then
-            Phi0s(1,ng,1) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,1,0)!production of Phi_0
-            Phi0s(1,ng,2) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,1,1)!annihilation of Phi_0
+            Phi0s(1,ng,1) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,1,1)!production of Phi_0
+            Phi0s(1,ng,2) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,1,2)!annihilation of Phi_0
 
          endif
 
          !electron antineutrinos
          if (add_anue_kernel_bremsstrahlung) then
-            Phi0s(2,ng,1) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,2,0)!production of Phi_0
-            Phi0s(2,ng,2) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,2,1)!annihilation of Phi_0
+            Phi0s(2,ng,1) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,2,1)!production of Phi_0
+            Phi0s(2,ng,2) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,2,2)!annihilation of Phi_0
 
          endif
 
          if (number_local_species.eq.3) then
             !already ensure that all 4 are the all included or not
             if (add_numu_kernel_bremsstrahlung) then
-               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,3,0) + &
-                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,4,0) + &
-                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,5,0) + & 
-                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,6,0))/4.0d0 !production of Phi_0
-               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,3,1) + &
+               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,3,1) + &
                     bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,4,1) + &
                     bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,5,1) + & 
-                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,6,1))/4.0d0 !annihilation of Phi_0
+                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,6,1))/4.0d0 !production of Phi_0
+               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,3,2) + &
+                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,4,2) + &
+                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,5,2) + & 
+                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,6,2))/4.0d0 !annihilation of Phi_0
             endif
 
          else if (number_local_species.eq.4) then
 
             !already ensure that mu and tau the same
             if (add_numu_kernel_bremsstrahlung) then
-               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,3,0) + &
-                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,5,0))/2.0d0 !production of Phi_0
-               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,3,1) + &
-                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,5,1))/2.0d0 !annihilation of Phi_0
+               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,3,1) + &
+                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,5,1))/2.0d0 !production of Phi_0
+               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,3,2) + &
+                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,5,2))/2.0d0 !annihilation of Phi_0
 
             endif
 
             !already ensure that amu and atau the same
             if (add_anumu_kernel_bremsstrahlung) then
-               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,4,0) + &
-                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,6,0))/2.0d0 !production of Phi_0
-               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,4,1) + &
-                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,6,1))/2.0d0 !annihilation of Phi_0
+               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,4,1) + &
+                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,6,1))/2.0d0 !production of Phi_0
+               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,4,2) + &
+                    bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,6,2))/2.0d0 !annihilation of Phi_0
             endif
 
          else if (number_local_species.eq.6) then
 
             if (add_numu_Iscattering_electrons) then
-               Phi0s(3,ng,1) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,3,0) !production of Phi_0
-               Phi0s(3,ng,2) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,3,1) !annihilation of Phi_0
+               Phi0s(3,ng,1) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,3,1) !production of Phi_0
+               Phi0s(3,ng,2) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,3,2) !annihilation of Phi_0
             endif
 
             if (add_anumu_Iscattering_electrons) then
-               Phi0s(4,ng,1) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,4,0) !production of Phi_0
-               Phi0s(4,ng,2) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,4,1) !annihilation of Phi_0
+               Phi0s(4,ng,1) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,4,1) !production of Phi_0
+               Phi0s(4,ng,2) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,4,2) !annihilation of Phi_0
             endif
 
             if (add_nutau_Iscattering_electrons) then
-               Phi0s(5,ng,1) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,5,0) !production of Phi_0
-               Phi0s(5,ng,2) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,5,1) !annihilation of Phi_0
+               Phi0s(5,ng,1) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,5,1) !production of Phi_0
+               Phi0s(5,ng,2) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,5,2) !annihilation of Phi_0
             endif
 
             if (add_anutau_Iscattering_electrons) then
-               Phi0s(6,ng,1) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,6,0) !production of Phi_0
-               Phi0s(6,ng,2) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,6,1) !annihilation of Phi_0
+               Phi0s(6,ng,1) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,6,1) !production of Phi_0
+               Phi0s(6,ng,2) = bremsstrahlung_Phi0_Hannestad(nu_energy_x,nuother_energy_x,temperature,n_N,6,2) !annihilation of Phi_0
             endif
 
          else
@@ -1227,70 +1227,70 @@ module nulib
          nuother_energy_x = energies(ng)/temperature  !adim
          !electron neutrinos
          if (add_nue_kernel_bremsstrahlung) then
-            Phi0s(1,ng,1) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,1,0)!production of Phi_0
-            Phi0s(1,ng,2) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,1,1)!annihilation of Phi_0
+            Phi0s(1,ng,1) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,1,1)!production of Phi_0
+            Phi0s(1,ng,2) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,1,2)!annihilation of Phi_0
 
          endif
 
          !electron antineutrinos
          if (add_anue_kernel_bremsstrahlung) then
-            Phi0s(2,ng,1) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,2,0)!production of Phi_0
-            Phi0s(2,ng,2) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,2,1)!annihilation of Phi_0
+            Phi0s(2,ng,1) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,2,1)!production of Phi_0
+            Phi0s(2,ng,2) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,2,2)!annihilation of Phi_0
 
          endif
 
          if (number_local_species.eq.3) then
             !already ensure that all 4 are the all included or not
             if (add_numu_kernel_bremsstrahlung) then
-               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,3,0) + &
-                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,4,0) + &
-                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,5,0) + & 
-                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,6,0))/4.0d0 !production of Phi_0
-               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,3,1) + &
+               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,3,1) + &
                     bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,4,1) + &
                     bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,5,1) + & 
-                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,6,1))/4.0d0 !annihilation of Phi_0
+                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,6,1))/4.0d0 !production of Phi_0
+               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,3,2) + &
+                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,4,2) + &
+                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,5,2) + & 
+                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,6,2))/4.0d0 !annihilation of Phi_0
             endif
 
          else if (number_local_species.eq.4) then
 
             !already ensure that mu and tau the same
             if (add_numu_kernel_bremsstrahlung) then
-               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,3,0) + &
-                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,5,0))/2.0d0 !production of Phi_0
-               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,3,1) + &
-                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,5,1))/2.0d0 !annihilation of Phi_0
+               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,3,1) + &
+                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,5,1))/2.0d0 !production of Phi_0
+               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,3,2) + &
+                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,5,2))/2.0d0 !annihilation of Phi_0
 
             endif
 
             !already ensure that amu and atau the same
             if (add_anumu_kernel_bremsstrahlung) then
-               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,4,0) + &
-                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,6,0))/2.0d0 !production of Phi_0
-               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,4,1) + &
-                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,6,1))/2.0d0 !annihilation of Phi_0
+               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,4,1) + &
+                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,6,1))/2.0d0 !production of Phi_0
+               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,4,2) + &
+                    bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,6,2))/2.0d0 !annihilation of Phi_0
             endif
 
          else if (number_local_species.eq.6) then
 
             if (add_numu_kernel_bremsstrahlung) then
-               Phi0s(3,ng,1) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,3,0) !production of Phi_0
-               Phi0s(3,ng,2) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,3,1) !annihilation of Phi_0
+               Phi0s(3,ng,1) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,3,1) !production of Phi_0
+               Phi0s(3,ng,2) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,3,2) !annihilation of Phi_0
             endif
 
             if (add_anumu_kernel_bremsstrahlung) then
-               Phi0s(4,ng,1) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,4,0) !production of Phi_0
-               Phi0s(4,ng,2) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,4,1) !annihilation of Phi_0
+               Phi0s(4,ng,1) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,4,1) !production of Phi_0
+               Phi0s(4,ng,2) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,4,2) !annihilation of Phi_0
             endif
 
             if (add_nutau_kernel_bremsstrahlung) then
-               Phi0s(5,ng,1) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,5,0) !production of Phi_0
-               Phi0s(5,ng,2) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,5,1) !annihilation of Phi_0
+               Phi0s(5,ng,1) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,5,1) !production of Phi_0
+               Phi0s(5,ng,2) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,5,2) !annihilation of Phi_0
             endif
 
             if (add_anutau_kernel_bremsstrahlung) then
-               Phi0s(6,ng,1) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,6,0) !production of Phi_0
-               Phi0s(6,ng,2) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,6,1) !annihilation of Phi_0
+               Phi0s(6,ng,1) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,6,1) !production of Phi_0
+               Phi0s(6,ng,2) = bremsstrahlung_Phi0_Kuroda(nu_energy_x,nuother_energy_x,temperature,n_N,6,2) !annihilation of Phi_0
             endif
 
          else
