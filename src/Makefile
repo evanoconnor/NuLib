@@ -13,7 +13,7 @@ SOURCES = fermi.F90 \
 	  scattering.F90 \
 	  weak_magnetism_correction.F90 \
 	  inelastic_electron_scattering.F90 \
-	  eos_interface.F90\
+	  eos_interface.F90 \
 	  bremsstrahlung.F90
 
 NT_SOURCES=nulibtable.F90 \
@@ -93,10 +93,12 @@ EXTRAINCS += $(HDF5INCS)
 EXTRAOBJECTS += $(HDF5LIBS)
 
 ifeq ($(WEAK_RATES),1)
-all: nulib.a ../nulibtable_driver ../point_example ../bremsstrahlung_point_example ../make_table_weakrates
+all: nulib.a ../point_example ../make_table_weakrates
 else
-all: nulib.a ../nulibtable_driver ../point_example ../bremsstrahlung_point_example ../make_table_example
+all: nulib.a ../point_example ../make_table_example
 endif
+
+extras: ../bremsstrahlung_point_example ../nulibtable_driver
 
 ../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) $(f90_OBJECTS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINC) -o $@ nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
