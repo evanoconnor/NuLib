@@ -210,7 +210,7 @@ program bremsstrahlung_point_example
 
 
 
-        do inde =1,1
+        do inde =1,3
            local_Phi0_bremsstrahlung = 0.0d0
            local_Phi0_bremsstrahlung2 = 0.0d0
            n_N =0.0d0
@@ -221,7 +221,7 @@ program bremsstrahlung_point_example
 
               n_N = eos_variables(rhoindex)&
                    *eos_variables(xnindex)&
-                   /(m_n*mev_to_gram)
+                   /(m_ref*mev_to_gram)
 
 
            ! proton-proton n_n
@@ -229,13 +229,13 @@ program bremsstrahlung_point_example
 
               n_N = eos_variables(rhoindex)&
                    *eos_variables(xpindex)&
-                   /(m_p*mev_to_gram)
+                   /(m_ref*mev_to_gram)
 
            ! neutron-proton  n_n
            else if (inde .EQ. 3 ) then
               n_N = eos_variables(rhoindex)	&
                    *sqrt(eos_variables(xnindex)*eos_variables(xpindex))&
-                   /(sqrt(m_p*m_n)*mev_to_gram)
+                   /(m_ref*mev_to_gram)
            else 
               write(*,*) "Wrong number of species for brem test"
            endif
