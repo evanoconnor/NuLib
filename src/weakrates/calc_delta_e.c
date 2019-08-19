@@ -93,6 +93,11 @@ static double get_inter_val_raduta(double rho,
 	double ispin;
 	int N;
 
+	temp_ij = 0.0;
+	temp_i1j = 0.0;
+	temp_ij1 = 0.0;
+	temp_i1j1 = 0.0;
+
 	if (mod == 1) {
 		temp_ij = a[index_T][index_rho];
 		temp_i1j = a[index_T+1][index_rho];
