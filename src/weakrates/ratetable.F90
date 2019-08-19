@@ -465,7 +465,16 @@ contains
        print *, "    | RELEVANT TO HIGH-DENSITY O–NE–MG CORES. The Astrophysical Journal, 817, 163            |"
        print *, "    | https://doi.org/10.3847/0004-637x/817/2/163                                            |"
        print *, "    ------------------------------------------------------------------------------------------"
+    case ("diamondrates.dat")
+       print *, "    Loading high-sensitivity region rate table. Make reference to: "
+       print *, "    ------------------------------------------------------------------------------------------"
+       print *, "    | idiamond | Titus, R., Ney, E.M., Zegers, R.G.T., et al.                                |"
+       print *, "    |          | Constraints for stellar electron-capture rates on 86Kr via the              |"
+       print *, "    |          | Kr(t,3He+gamma)86Br reaction and the implications for core-collapse         |"
+       print *, "    |          | supernovaeFor the N=50 region. submitted arXiv: 1908.03985                  |"
+       print *, "    ------------------------------------------------------------------------------------------"
     case default
+       print *, filename
        stop "No default"
     end select
     !$OMP END SINGLE

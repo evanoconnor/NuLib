@@ -1,9 +1,5 @@
 !-*-f90-*-
-#define NUM_TABLES 8
-
-#define gScale 1.0d0
-#define scale_all .false.
-#define scale_diamond .false.
+#define NUM_TABLES 9
 module class_ratelibrary
 
   use class_ratetable
@@ -19,7 +15,9 @@ module class_ratelibrary
   end interface new_RateLibrary
 
   interface return_weakrate
-     module procedure return_weakrate_dynamic_search, return_weakrate_from_table, return_weakrate_from_approx, return_weakrate_from_approx_raduta
+     module procedure return_weakrate_dynamic_search, &
+          return_weakrate_from_table, return_weakrate_from_approx, &
+          return_weakrate_from_approx_raduta
   end interface return_weakrate
 
   type RateLibrary
@@ -133,7 +131,8 @@ contains
     real*8 :: query_t9, query_lrhoye
     real*8 :: rate
 
-    rate = scaling_factor(A,Z) * 10.0d0**(weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),query_t9,query_lrhoye,idxrate))
+    rate = scaling_factor(A,Z) * 10.0d0**(weakrates_table(ratetables(idxtable), &
+         ratetables(idxtable)%nucleus_index(A,Z),query_t9,query_lrhoye,idxrate))
     return
 
   end function return_weakrate_from_table
@@ -187,14 +186,16 @@ contains
        ! use approx if no table contains a rate for (A,Z) at the req. point
        if (idxrate.eq.2.or.idxrate.eq.3)then
           q = return_hempel_qec(A,Z,Z-1)
-          rate = scaling_factor(A,Z) * weakrates_approx_raduta(idxrate, xtemp, q, xmue, lrhoye, A, Z, this%approximation_model) ! xmue should be mu_e-m_e
+          rate = scaling_factor(A,Z) * weakrates_approx_raduta(idxrate, &
+               xtemp, q, xmue, lrhoye, A, Z, this%approximation_model) ! xmue should be mu_e-m_e
           return
        else
           stop "RateLibrary Error: approximate rates only exist for electron capture and neutrino e-loss"
        endif
     endif
     ! interpolate correct rate table - defined by the priority hierarchy set in parameters
-    rate = scaling_factor(A,Z) * 10.0d0**(weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),t9,lrhoye,idxrate))
+    rate = scaling_factor(A,Z) * 10.0d0**(weakrates_table(ratetables(idxtable), &
+         ratetables(idxtable)%nucleus_index(A,Z),t9,lrhoye,idxrate))
     return
 
   end function return_weakrate_dynamic_search
@@ -253,6 +254,7 @@ contains
     call get_string_parameter(fn,'pruet_rates2',library%files_to_load(6))
     call get_string_parameter(fn,'pruet_rates3',library%files_to_load(7))
     call get_string_parameter(fn,'suzuki_honma_gxpf1j',library%files_to_load(8))
+    call get_string_parameter(fn,'diamond_rates',library%files_to_load(9))
     
     call get_integer_parameter(fn,'ilmp',library%priority(1))
     call get_integer_parameter(fn,'ilmsh',library%priority(2))
@@ -262,7 +264,8 @@ contains
     call get_integer_parameter(fn,'ipruet2',library%priority(6))
     call get_integer_parameter(fn,'ipruet3',library%priority(7))
     call get_integer_parameter(fn,'isuzuki_honma_gxpf1j',library%priority(8))
-    call get_integer_parameter(fn,'iapprox',library%priority(9))
+    call get_integer_parameter(fn,'idiamond',library%priority(9))
+    call get_integer_parameter(fn,'iapprox',library%priority(10))
     call get_integer_parameter(fn,'raduta_model',library%approximation_model)
     call get_string_parameter(fn,'eos_table_name',library%eos_path)
 
