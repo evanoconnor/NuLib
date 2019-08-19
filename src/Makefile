@@ -28,6 +28,16 @@ ifeq ($(NUCLEI_HEMPEL),1)
 	DEFS += -DNUCLEI_HEMPEL 
 endif
 
+F2PY := $(shell which f2py)
+F90WRAP := $(shell which f90wrap)
+ifeq ($(PYTHON_BINDINGS),1)
+ifeq ($(F2PY),)
+$(error "Build python bindings flag is set, but f2py is not available on this system.")
+endif
+ifeq ($(F90WRAP),)
+$(error "Build python bindings flag is set, but f90wrap is not available on this system.")
+endif
+endif
 
 #the weak_rates module requires M. Hempel's
 #EOS dependent NSE distributions
@@ -41,7 +51,8 @@ endif
 		   weakrates/ratelibrary.F90 \
 		   weakrates/interface.F90 \
 
-	DEFS += -DWEAK_RATES 
+	DEFS += -DWEAK_RATES
+	SOURCES += pyinterface.F90
 
 endif
 
@@ -70,14 +81,23 @@ ifeq ($(MPI),1)
 	DEFS += -D__MPI__
 endif
 
+CFLAGS=-Wall -O3 -fPIC
 MOD_OBJECTS=$(MODULES:.F90=.o )
 OBJECTS=$(SOURCES:.F90=.o )
 NT_OBJECTS=$(NT_SOURCES:.F90=.o )
+F90FLAGS += -fPIC
+LDFLAGS=-shared
 
 #take care of EOS dependences etc
 EXTRAINCS = -I./nuc_eos
 EXTRADEPS = nuc_eos/nuc_eos.a
 EXTRAOBJECTS = nuc_eos/nuc_eos.a
+
+#extra C library dependence
+EXTRACDEPS = ./weakrates/Clibs.a
+CLIB_SRC = ./weakrates/calc_delta_e.c
+CLIB_OBJECTS = $(CLIB_SRC:.c=.o)
+
 ifeq ($(HELMHOLTZ_EOS),1)
 	DEFS += -DHELMHOLTZ_EOS
 	f90_SOURCES = other_eos/helmholtz/helmholtz.f90
@@ -89,32 +109,49 @@ else
 endif
 EXTRADEPS += requested_interactions.inc constants.inc ../make.inc Makefile
 EXTRAINCS += $(HDF5INCS)
-EXTRAOBJECTS += $(HDF5LIBS)
+EXTRAOBJECTS += $(HDF5LIBS) -Wl,-rpath,$(HDF5DIR)/lib
 
 ifeq ($(WEAK_RATES),1)
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates ../libNuLib.so PyNuLib
 else
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_example ../libNuLib.so
 endif
 
 ../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) $(f90_OBJECTS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINC) -o $@ nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
 
-../point_example:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS)  $(f90_OBJECTS)point_example.F90
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ point_example.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
+../point_example:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS)  $(f90_OBJECTS) point_example.F90
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ point_example.F90 $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
 
-../make_table_example:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS)  $(f90_OBJECTS)make_table_example.F90
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_example.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
+../make_table_example:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS)  $(f90_OBJECTS) make_table_example.F90
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_example.F90 $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
 
-../make_table_weakrates:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS)  $(f90_OBJECTS)make_table_weakrates.F90
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_weakrates.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
+../make_table_weakrates:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS)  $(f90_OBJECTS) make_table_weakrates.F90
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_weakrates.F90 $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
 
-nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
+nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS) $(CLIB_OBJECTS)
 	ar -r nulib.a *.o nuc_eos/*.o
 
-test:	$(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS)  test.F90
-	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o test test.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
+../libNuLib.so: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS) $(NT_OBJECTS)
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) $(LDFLAGS) -o $@ $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS)
 
+./weakrates/Clibs.a: $(CLIB_OBJECTS)
+	ar -rvs ./weakrates/Clibs.a $(CLIB_OBJECTS)
+$(CLIB_OBJECTS): %.o: %.c
+	gcc $(CFLAGS) -c $< -o $@
+
+PyNuLib:
+ifeq ($(PYTHON_BINDINGS),1)
+	$(F90WRAP) --abort-func "abort; print *," -m $@ pyinterface.F90
+	$(F90) $(F90FLAGS) $(EXTRAINCS) $(MODINC) f90wrap_*.f90 -c
+	$(F2PY) -m _$@ -h $@.pyf f90wrap_*.f90
+	LDFLAGS="$(LDFLAGS) -Wl,-rpath,$(HDF5DIR)/lib -Wl,-rpath,\\\\\$$ORIGIN" $(F2PY)  --f90flags="-ffree-line-length-none" --f77flags="-ffree-line-length-none -ffixed-line-length-none" -c $@.pyf pyinterface.o f90wrap_pyinterface.o $(HDF5LIBS) -L.. -lNuLib
+	mv _$@.so ..
+	mv $@.py ..
+endif
+
+test:	../libNuLib.so  test.F90
+	$(F90) $(F90FLAGS) $(DEFS) -o test $^ -Wl,-rpath,src
 
 $(OBJECTS): %.o: %.F90 $(EXTRADEPS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -c $< -o $@
@@ -141,11 +178,20 @@ clean:
 	rm -rf ../nulibtable_driver
 	rm -rf test
 	rm -rf *.o
+	rm -rf *.so
 	rm -rf *~
 	rm -rf *.mod
 	rm -rf *.a
-	$(MAKE) -C nuc_eos clean	
+	rm -rf *.pyf
+	rm -rf *.pyc
+	rm -rf ../*.pyf
+	rm -rf ../*.pyc
+	rm -rf ../__pycache__
+	rm -rf ../PyNuLib.py
+	rm -rf ../*.so
+	rm -rf f90wrap*
+	$(MAKE) -C nuc_eos clean
 	rm -rf ./extra_code_and_tables/sfho_frdm_comp/sfho_frdm_composition_module.o
 	rm -rf ./other_eos/helmholtz/*.o
 	rm -rf ./weakrates/*.o
-
+	rm -rf ./weakrates/*.a

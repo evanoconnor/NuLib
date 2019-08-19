@@ -1,43 +1,38 @@
 # ####### EOS parameters #######
-eos_table_name 		= 	"./src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
+eos_table_name			=	"./src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
 
 ####### Weak interaction parameters #######
-directory     		= 	"./src/weakrates/tables/"
-lmp_rates     		= 	"lmprates.dat"
-lmsh_rates		= 	"lmshrates.dat"
-oda_rates		=	"odarates.dat"
-ffn_rates		=	"ffnrates.dat"
+directory     =	"./src/weakrates/tables/"
+lmp_rates     =	"lmprates.dat"
+lmsh_rates    =	"lmshrates.dat"
+oda_rates     =	"odarates.dat"
+ffn_rates     =	"ffnrates.dat"
+pruet_rates1  =	"pruet_66_80.dat"
+pruet_rates2  =	"pruet_66_80_leftover.dat"
+pruet_rates3  =	"pruet_81_110.dat"
+suzuki_honma_gxpf1j	= "suzuki_honma_gxpf1j.dat"
 
 ## Rate table priority hierarchy ##
-ilmp			=	1
-ilmsh			=	2
-ioda			=	3
-iffn			=	0
-iapprox			=	4
+isuzuki_honma_gxpf1j   = 1
+ilmp		       = 2
+ilmsh		       = 3
+ioda		       = 4
+iffn		       = 5
+ipruet1		       = 6
+ipruet2		       = 7
+ipruet3		       = 8
+iapprox		       = 9
+
+## Approximation model ##
+raduta_model	       =	3
+# Raduta et al. Phys. Rev. C 95, 025805 (2017) defines 4 different models
+# for the approximate method. Therefore, if iapprox above is non-zero,
+# choose below the desired approximation method [1-4] according to those
+# described in the publication.
+
+
 
 # 0 indicates the table will not be used
 # 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, they will be ignored.
-# CITATION NOTICE: By using the ilmp/ilmsh/iffn/ioda/iapprox flags you agree to cite the relevant publications in your work.
-------------------------------------------------------------------------------------------
-| iffn    | Fuller, G. M., Fowler, W. A., & Newman, M. J. (1982).                        |
-|         | Stellar weak interaction rates for intermediate-mass nuclei.                 |
-|         | II - A = 21 to A = 60. The Astrophysical Journal, 252, 715.                  |
-|         | http://doi.org/10.1086/159597                                                |
-------------------------------------------------------------------------------------------
-| ioda    | Oda, T., Hino, M., Muto, K., Takahara, M., & Sato, K. (1994).                |
-|         | Rate Tables for the Weak Processes of sd-Shell Nuclei in Stellar Matter.     |
-|         | Atomic Data and Nuclear Data Tables, 56(2), 231-403.                         |
-|         | http://doi.org/10.1006/adnd.1994.1007                                        |
-------------------------------------------------------------------------------------------
-| ilmp    | Langanke, K., & Mart\'{i}nez-Pinedo, G. (2000).                              |
-|         | Shell-model calculations of stellar weak interaction rates:                  |
-|         | II. Weak rates for nuclei in the mass range in supernovae environments.      |
-|         | Nuclear Physics A, 673(1-4), 481-508.                                        |
-|         | http://doi.org/10.1016/S0375-9474(00)00131-7                                 |
-------------------------------------------------------------------------------------------
-| ilmsh   | Langanke, K., & Mart\'{i}nez-Pinedo, G. (2003).                              |
-| iapprox | Electron capture rates on nuclei and implications for stellar core collapse. |
-|         | Physical Review Letters 90, 241102.                                          |
-|         | http://prl.aps.org/abstract/PRL/v90/i24/e241102                              |
-------------------------------------------------------------------------------------------
-
+# CITATION NOTICE: By setting the above rate table flags to anything non-zero you agree to cite the relevant publications
+# in your work.

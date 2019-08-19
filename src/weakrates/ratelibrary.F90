@@ -1,10 +1,14 @@
 !-*-f90-*-
-#define NUM_TABLES 4
+#define NUM_TABLES 8
+
+#define gScale 1.0d0
+#define scale_all .false.
+#define scale_diamond .false.
 module class_ratelibrary
 
   use class_ratetable
   use class_rateapproximation
-  
+
   implicit none
   private
   public :: RateLibrary, new_RateLibrary, in_table, return_weakrate
@@ -15,7 +19,7 @@ module class_ratelibrary
   end interface new_RateLibrary
 
   interface return_weakrate
-     module procedure return_weakrate_dynamic_search, return_weakrate_from_table, return_weakrate_from_approx
+     module procedure return_weakrate_dynamic_search, return_weakrate_from_table, return_weakrate_from_approx, return_weakrate_from_approx_raduta
   end interface return_weakrate
 
   type RateLibrary
@@ -33,8 +37,12 @@ module class_ratelibrary
      integer, dimension(NUM_TABLES+1) :: priority
      ! file ordering
      integer, dimension(NUM_TABLES) :: ifiles
+     ! path to eos file
+     character*200 :: eos_path
+     ! raduta approximation model to used
+     integer :: approximation_model
   end type RateLibrary
-  
+
   ! class instance (singleton)
   type(RateLibrary), save, target :: this
 
@@ -43,15 +51,15 @@ module class_ratelibrary
   !integer, dimension(500,500),save :: gindex
 
   !$OMP THREADPRIVATE(this,ratetables)
-  
+
   ! methods
 contains
 
-!------------------------------------------------------------------------------------!
-  
+  !------------------------------------------------------------------------------------!
+
   function new_RateLibraryDefault(parameters) result(library)
     !""" Default RateLibrary constructor """
-    
+
     implicit none
     type(RateLibrary), pointer :: library
     character*200 :: parameters
@@ -62,11 +70,11 @@ contains
     call weakrate_inputparser(parameters,this)
     !$OMP END CRITICAL
     call print_reference
-    
+
     ! construct rate table objects
     nfiles = 4
     idxfiles = 0
-    this%ntables = 0    
+    this%ntables = 0
     this%ifiles = 0
     do i=1,nfiles
        if(this%priority(i).gt.0)idxfiles = idxfiles + 1
@@ -83,7 +91,7 @@ contains
     if(Sum(this%ifiles).ne.0)then
        do i=1,size(this%ifiles)
           if(this%ifiles(i).eq.0) cycle
-          filename=this%files_to_load(this%ifiles(i))          
+          filename=this%files_to_load(this%ifiles(i))
           ratetables(i) = new_RateTable(this%directory,filename)
           this%ntables = this%ntables + 1
        enddo
@@ -93,79 +101,105 @@ contains
     call print_approx_reference
     this%approx = new_RateApprox()
 
-    
+
     library => this
-    this%tables => ratetables  
-    
+    this%tables => ratetables
+
     !$OMP PARALLEL COPYIN(this,ratetables)
     !$OMP END PARALLEL
 
     return
   end function new_RateLibraryDefault
-  
-!------------------------------------------------------------------------------------!
 
-  function return_weakrate_from_table(this,A,Z,query_t9,query_lrhoye,idxtable,idxrate) result(rate) 
-    
+  !------
+
+  function scaling_factor(A,Z) result(scale)
+    integer j, myIndex, A, Z
+    integer, parameter :: nNuclei = 74
+    integer hsA(nNuclei), hsZ(nNuclei)
+    real*8 :: scale
+
+    scale = 1.0d0
+    return
+
+  end function scaling_factor
+  !------------------------------------------------------------------------------------!
+
+  function return_weakrate_from_table(this,A,Z,query_t9,query_lrhoye,idxtable,idxrate) result(rate)
+
     implicit none
     type(RateLibrary) :: this
     integer :: A, Z, idxtable, idxrate
     real*8 :: query_t9, query_lrhoye
     real*8 :: rate
 
-    rate = 10.0d0**(weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),query_t9,query_lrhoye,idxrate))
+    rate = scaling_factor(A,Z) * 10.0d0**(weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),query_t9,query_lrhoye,idxrate))
     return
-    
-  end function return_weakrate_from_table
-  
-!------------------------------------------------------------------------------------!
 
-  function return_weakrate_from_approx(idxrate,xtemp,xq,xmue) result(rate) 
-    
+  end function return_weakrate_from_table
+
+  !------------------------------------------------------------------------------------!
+
+  function return_weakrate_from_approx_raduta(idxrate,xtemp,xq,xmue,xrho,A,Z,model) result(rate)
+
     implicit none
     type(RateLibrary) :: this
-    integer :: idxrate
+    integer :: idxrate, A, Z, model
+    real*8 :: xtemp, xmue, xq, xrho
+    real*8 :: rate
+
+    rate = scaling_factor(A,Z) * weakrates_approx_raduta(idxrate,xtemp,xq,xmue, xrho, A, Z, model)
+    return
+
+  end function return_weakrate_from_approx_raduta
+  !------------------------------------------------------------------------------------!
+
+  function return_weakrate_from_approx(idxrate,xtemp,xq,xmue,A,Z) result(rate)
+
+    implicit none
+    type(RateLibrary) :: this
+    integer :: idxrate, A, Z
     real*8 :: xtemp, xmue, xq
     real*8 :: rate
-    
-    rate = weakrates_approx(idxrate,xtemp,xq,xmue)
-    return
-    
-  end function return_weakrate_from_approx
-  
-!------------------------------------------------------------------------------------!
 
-  function return_weakrate_dynamic_search(this,A,Z,xrho,xtemp,xye,xmue,idxrate) result(rate) 
+    rate = scaling_factor(A,Z) * weakrates_approx(idxrate,xtemp,xq,xmue)
+    return
+
+  end function return_weakrate_from_approx
+
+  !------------------------------------------------------------------------------------!
+
+  function return_weakrate_dynamic_search(this,A,Z,xrho,xtemp,xye,xmue,idxrate) result(rate)
 
     implicit none
     type(RateLibrary) :: this
     real*8 :: xrho, xtemp, xye, xmue, rate
     integer :: A, Z, idxrate, idxtable
-    real*8 :: lrhoye, t9, q    
+    real*8 :: lrhoye, t9, q
     real*8, parameter :: kelvin_to_mev = 8.6173423d-11 !one K is # MeV
 
     ! convert to units of table grid
     lrhoye = log10(xrho*xye)
     t9 = xtemp/kelvin_to_mev*1.0d-9
     ! determine which table should be used for a given rate, if any
-    idxtable = in_table(this,A,Z,lrhoye,t9)    
+    idxtable = in_table(this,A,Z,lrhoye,t9)
     if (idxtable.eq.0) then
        ! use approx if no table contains a rate for (A,Z) at the req. point
        if (idxrate.eq.2.or.idxrate.eq.3)then
           q = return_hempel_qec(A,Z,Z-1)
-          rate = weakrates_approx(idxrate-2,xtemp,q,xmue) ! xmue should be mu_e-m_e
+          rate = scaling_factor(A,Z) * weakrates_approx_raduta(idxrate, xtemp, q, xmue, lrhoye, A, Z, this%approximation_model) ! xmue should be mu_e-m_e
           return
        else
           stop "RateLibrary Error: approximate rates only exist for electron capture and neutrino e-loss"
        endif
     endif
     ! interpolate correct rate table - defined by the priority hierarchy set in parameters
-    rate = 10.0d0**(weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),t9,lrhoye,idxrate))
+    rate = scaling_factor(A,Z) * 10.0d0**(weakrates_table(ratetables(idxtable),ratetables(idxtable)%nucleus_index(A,Z),t9,lrhoye,idxrate))
     return
 
   end function return_weakrate_dynamic_search
-  
-!------------------------------------------------------------------------------------!
+
+  !------------------------------------------------------------------------------------!
 
   function in_table(this,A,Z,lrhoye,t9) result (idxtable)
     implicit none
@@ -187,30 +221,25 @@ contains
        endif
        if (idxtable.ne.0)then
           idxtable = i
-          exit
-       endif       
+          ! check if the requested point is in the grid
+          if (t9.ge.ratetables(idxtable)%range_t9(1).and.t9.le.ratetables(idxtable)%range_t9(2)&
+               .and.&
+               lrhoye.ge.ratetables(idxtable)%range_lrhoye(1).and.lrhoye.le.ratetables(idxtable)%range_lrhoye(2)) then
+             exit
+          else
+             idxtable = 0
+          endif
+       endif
     end do
-    ! return if the requested nucleus i not found in a table
-    if (idxtable.eq.0)then
-       return
-    endif
 
-    ! check if the requested point is in the grid    
-    if (t9.ge.ratetables(idxtable)%range_t9(1).and.t9.le.ratetables(idxtable)%range_t9(2)&
-         .and.&
-         lrhoye.ge.ratetables(idxtable)%range_lrhoye(1).and.lrhoye.le.ratetables(idxtable)%range_lrhoye(2)) then
-    else
-       idxtable = 0
-    endif
-    
     return
-    
+
   end function in_table
-  
+
   subroutine weakrate_inputparser(fn,library)
 
     use inputparser
-    
+
     implicit none
     character*(*) fn
     type(RateLibrary) :: library
@@ -220,20 +249,31 @@ contains
     call get_string_parameter(fn,'lmsh_rates',library%files_to_load(2))
     call get_string_parameter(fn,'oda_rates',library%files_to_load(3))
     call get_string_parameter(fn,'ffn_rates',library%files_to_load(4))
+    call get_string_parameter(fn,'pruet_rates1',library%files_to_load(5))
+    call get_string_parameter(fn,'pruet_rates2',library%files_to_load(6))
+    call get_string_parameter(fn,'pruet_rates3',library%files_to_load(7))
+    call get_string_parameter(fn,'suzuki_honma_gxpf1j',library%files_to_load(8))
+    
     call get_integer_parameter(fn,'ilmp',library%priority(1))
     call get_integer_parameter(fn,'ilmsh',library%priority(2))
     call get_integer_parameter(fn,'ioda',library%priority(3))
     call get_integer_parameter(fn,'iffn',library%priority(4))
-    call get_integer_parameter(fn,'iapprox',library%priority(5))
-    
+    call get_integer_parameter(fn,'ipruet1',library%priority(5))
+    call get_integer_parameter(fn,'ipruet2',library%priority(6))
+    call get_integer_parameter(fn,'ipruet3',library%priority(7))
+    call get_integer_parameter(fn,'isuzuki_honma_gxpf1j',library%priority(8))
+    call get_integer_parameter(fn,'iapprox',library%priority(9))
+    call get_integer_parameter(fn,'raduta_model',library%approximation_model)
+    call get_string_parameter(fn,'eos_table_name',library%eos_path)
+
   end subroutine weakrate_inputparser
 
-!------------------------------------------------------------------------------------!
+  !------------------------------------------------------------------------------------!
 
   subroutine print_reference
     !$OMP SINGLE
-    print *, 
-    print *, "Loading weak rate library. Make reference to:"    
+    print *,
+    print *, "Loading weak rate library. Make reference to:"
     print *, "------------------------------------------------------------------------------------"
     print *, "| Sullivan, C., O'Connor, E., Zegers, R. G. T., Grubb, T., & Austin, S. M. (2015). |"
     print *, "| The Sensitivity of Core-Collapse Supernovae to Nuclear Electron Capture.         |"
@@ -242,7 +282,6 @@ contains
     print *, "------------------------------------------------------------------------------------"
     !$OMP END SINGLE
   end subroutine print_reference
-  
-!------------------------------------------------------------------------------------!
-end module class_ratelibrary
 
+  !------------------------------------------------------------------------------------!
+end module class_ratelibrary
