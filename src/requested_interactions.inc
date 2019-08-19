@@ -13,7 +13,7 @@
   !absorptions
   logical :: add_nue_absorption_on_n = .true.
   logical :: add_anue_absorption_on_p = .true.
-  logical :: add_nue_absorption_on_A = .false.
+  logical :: add_nue_absorption_on_A = .true.
   logical :: add_nux_absorption_on_n_and_p = .false.
 
   !scatterings
@@ -71,8 +71,8 @@
   logical :: add_nutau_emission_NNBrems = .true.
   logical :: add_anutau_emission_NNBrems = .true.	
 
-  logical :: add_nue_emission_weakinteraction_ecap = .true.
-  logical :: add_anue_emission_weakinteraction_poscap = .true.
+  logical :: add_nue_emission_weakinteraction_ecap = .false.
+  logical :: add_anue_emission_weakinteraction_poscap = .false.
 
   logical :: apply_kirchoff_to_pair_creation = .true.
 
