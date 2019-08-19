@@ -128,7 +128,7 @@ nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS) $(CLI
 ./weakrates/Clibs.a: $(CLIB_OBJECTS)
 	ar -rvs ./weakrates/Clibs.a $(CLIB_OBJECTS)
 $(CLIB_OBJECTS): %.o: %.c
-	gcc $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 PyNuLib:
 ifeq ($(PYTHON_BINDINGS),1)
