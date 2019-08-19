@@ -1,14 +1,22 @@
 F90=
-F90FLAGS= -O3
+F90FLAGS= -O3 -fPIC #-fopenmp
 
-#if you want to take advantage of openmp, set OPENMP=1
+#if you want to take advantage of openmp, set OPENMP=1, besure to add the appropiate flag to F90FLAGS too.
 OPENMP=0
 
 #if you want to take advantage of mpi, set MPI=1
-#mpif90 must be in your PATH (openmpi)
+#make sure F90 is a mpi compliler (mpif90, for example)
 MPI = 0
 
 MODINC="-I ./"
+
+#For the weakrates, a C compiler is needed along with these flags
+CC=
+CFLAGS=-Wall -O3 -fPIC
+
+#For NuLib library
+LDFLAGS=-shared
+
 
 #You must have a HDF5 version installed with
 #the _same_ compiler, this often means compiling

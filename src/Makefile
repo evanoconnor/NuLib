@@ -52,8 +52,14 @@ endif
 		   weakrates/interface.F90 \
 
 	DEFS += -DWEAK_RATES
+ifeq ($(PYTHON_BINDINGS),1)
 	SOURCES += pyinterface.F90
+endif
 
+#cfile for rate approximation
+	EXTRACDEPS = ./weakrates/Clibs.a
+	CLIB_SRC = ./weakrates/calc_delta_e.c
+	CLIB_OBJECTS = $(CLIB_SRC:.c=.o)
 endif
 
 
@@ -64,39 +70,23 @@ $(error MPI and OPENMP cannot be used simultaneously)
 endif
 endif
 
-ifeq ($(OPENMP),1)
-ifeq ($(F90),gfortran)
-	F90FLAGS += -fopenmp
-else
-	F90FLAGS += -openmp
-endif	
-endif
-
 ifeq ($(DEBUG),1)
 	F90FLAGS += -DDEBUG
 endif
 
 ifeq ($(MPI),1)
-	F90 = mpif90
 	DEFS += -D__MPI__
 endif
 
-CFLAGS=-Wall -O3 -fPIC
+
 MOD_OBJECTS=$(MODULES:.F90=.o )
 OBJECTS=$(SOURCES:.F90=.o )
 NT_OBJECTS=$(NT_SOURCES:.F90=.o )
-F90FLAGS += -fPIC
-LDFLAGS=-shared
 
 #take care of EOS dependences etc
 EXTRAINCS = -I./nuc_eos
 EXTRADEPS = nuc_eos/nuc_eos.a
 EXTRAOBJECTS = nuc_eos/nuc_eos.a
-
-#extra C library dependence
-EXTRACDEPS = ./weakrates/Clibs.a
-CLIB_SRC = ./weakrates/calc_delta_e.c
-CLIB_OBJECTS = $(CLIB_SRC:.c=.o)
 
 ifeq ($(HELMHOLTZ_EOS),1)
 	DEFS += -DHELMHOLTZ_EOS
@@ -150,9 +140,6 @@ ifeq ($(PYTHON_BINDINGS),1)
 	mv $@.py ..
 endif
 
-test:	../libNuLib.so  test.F90
-	$(F90) $(F90FLAGS) $(DEFS) -o test $^ -Wl,-rpath,src
-
 $(OBJECTS): %.o: %.F90 $(EXTRADEPS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -c $< -o $@
 
@@ -176,7 +163,6 @@ clean:
 	rm -rf ../make_table_weakrates
 	rm -rf ../point_example
 	rm -rf ../nulibtable_driver
-	rm -rf test
 	rm -rf *.o
 	rm -rf *.so
 	rm -rf *~
