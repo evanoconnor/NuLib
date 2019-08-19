@@ -29,6 +29,10 @@ program make_table_example
   !number of energy groups
   integer :: mytable_number_groups = 18
 
+  !number of species for nulib to output interactions for, must
+  !be commensurate with neutrino_scheme above
+  integer :: number_output_species = 3
+
   !NuLib parameters file (weak rates and EOS)
   character*200 :: parameters_filename = "./parameters"
 
@@ -38,7 +42,6 @@ program make_table_example
   real*8  :: min_logrho,max_logrho
   real*8  :: min_logtemp,max_logtemp
   real*8  :: min_ye,max_ye
-  integer :: number_output_species
   character*512 :: finaltable_filename
   real*8, allocatable,dimension(:) :: table_rho
   real*8, allocatable,dimension(:) :: table_temp
@@ -46,6 +49,7 @@ program make_table_example
   real*8, allocatable,dimension(:,:,:,:,:) :: table_emission 
   real*8, allocatable,dimension(:,:,:,:,:) :: table_absopacity
   real*8, allocatable,dimension(:,:,:,:,:) :: table_scatopacity 
+  real*8, allocatable,dimension(:,:,:,:,:) :: table_delta 
 
 
   !final Itable parameters
@@ -73,6 +77,7 @@ program make_table_example
   real*8, allocatable,dimension(:,:) :: local_emissivity
   real*8, allocatable,dimension(:,:) :: local_absopacity
   real*8, allocatable,dimension(:,:) :: local_scatopacity
+  real*8, allocatable,dimension(:,:) :: local_delta
   real*8, allocatable,dimension(:,:) :: local_Phi0
   real*8, allocatable,dimension(:,:) :: local_Phi1
   real*8, allocatable,dimension(:,:,:) :: local_Phi0_epannihil 
@@ -96,6 +101,7 @@ program make_table_example
   real*8, allocatable,dimension(:,:,:,:,:) :: table_emission_node
   real*8, allocatable,dimension(:,:,:,:,:) :: table_absopacity_node
   real*8, allocatable,dimension(:,:,:,:,:) :: table_scatopacity_node
+  real*8, allocatable,dimension(:,:,:,:,:) :: table_delta_node
   real*8, allocatable,dimension(:) :: Itable_temp_subset
   real*8, allocatable,dimension(:,:,:,:,:) :: Itable_Phi0_node
   real*8, allocatable,dimension(:,:,:,:,:) :: Itable_Phi1_node
@@ -146,7 +152,6 @@ program make_table_example
   Imax_logtemp = log10(150.0d0)
   Imin_logeta = log10(0.1d0)
   Imax_logeta = log10(100.0d0)
-  number_output_species = 3
 
   !set up energies bins
   do_integrated_BB_and_emissivity = .false.
@@ -210,6 +215,8 @@ program make_table_example
        final_table_size_ye,number_output_species,mytable_number_groups))
   allocate(table_scatopacity(final_table_size_rho,final_table_size_temp, &
        final_table_size_ye,number_output_species,mytable_number_groups))
+  allocate(table_delta(final_table_size_rho,final_table_size_temp, &
+       final_table_size_ye,number_output_species,mytable_number_groups))
 
 #ifdef __MPI__
   !mpi node tables
@@ -218,6 +225,8 @@ program make_table_example
   allocate(table_absopacity_node(final_table_size_rho,final_table_size_temp, &
        final_table_size_ye,number_output_species,mytable_number_groups))
   allocate(table_scatopacity_node(final_table_size_rho,final_table_size_temp, &
+       final_table_size_ye,number_output_species,mytable_number_groups))
+  allocate(table_delta_node(final_table_size_rho,final_table_size_temp, &
        final_table_size_ye,number_output_species,mytable_number_groups))
 
   table_emission_node = 0.0d0
@@ -249,7 +258,7 @@ program make_table_example
   
   !$OMP PARALLEL DO PRIVATE(itemp,iye,local_emissivity,local_absopacity,local_scatopacity, &
   !$OMP ns,ng,eos_variables,keytemp,keyerr,matter_prs,matter_ent,matter_cs2,matter_dedt, &
-  !$OMP matter_dpderho,matter_dpdrhoe,hempel_lookup_table)
+  !$OMP matter_dpderho,matter_dpdrhoe,hempel_lookup_table,local_delta)
   !loop over rho,temp,ye of table, do each point
 #ifdef __MPI__
   do irho=1,mpi_final_table_size_rho
@@ -260,6 +269,7 @@ program make_table_example
      allocate(local_emissivity(number_output_species,mytable_number_groups))
      allocate(local_absopacity(number_output_species,mytable_number_groups))
      allocate(local_scatopacity(number_output_species,mytable_number_groups))
+     allocate(local_delta(number_output_species,mytable_number_groups))
      allocate(eos_variables(total_eos_variables))
 #ifdef __MPI__
      write(*,*) "Rho:", 100.0*dble(displs(mpirank)+irho-1)/dble(final_table_size_rho),"%"
@@ -284,7 +294,7 @@ program make_table_example
 
            !calculate the rho,temp,ye
            call single_point_return_all(eos_variables, &
-                local_emissivity,local_absopacity,local_scatopacity, &
+                local_emissivity,local_absopacity,local_scatopacity,local_delta, &
                 mytable_neutrino_scheme)
            
            !check that the number is not NaN or Inf (.gt.1.0d300)
@@ -302,6 +312,11 @@ program make_table_example
                  endif
                  if (local_scatopacity(ns,ng).ne.local_scatopacity(ns,ng)) then
                     write(*,"(a,1P3E18.9,i6,i6)") "We have a NaN in scat", &
+                         eos_variables(rhoindex),eos_variables(tempindex),eos_variables(yeindex),ns,ng
+                    stop
+                 endif
+                 if (local_delta(ns,ng).ne.local_delta(ns,ng)) then
+                    write(*,"(a,1P3E18.9,i6,i6)") "We have a NaN in scat delta", &
                          eos_variables(rhoindex),eos_variables(tempindex),eos_variables(yeindex),ns,ng
                     stop
                  endif
@@ -324,6 +339,18 @@ program make_table_example
                          eos_variables(tempindex),eos_variables(yeindex),ns,ng
                     stop
                  endif
+                 if (local_delta(ns,ng).gt.1.0d0) then
+                    write(*,"(a,1P4E18.9,i6,i6)") "delta > 1", &
+                         local_delta(ns,ng),eos_variables(rhoindex), &
+                         eos_variables(tempindex),eos_variables(yeindex),ns,ng
+                    stop
+                 endif
+                 if (local_delta(ns,ng).lt.-1.0d0) then
+                    write(*,"(a,1P4E18.9,i6,i6)") "delta < -1", &
+                         local_delta(ns,ng),eos_variables(rhoindex), &
+                         eos_variables(tempindex),eos_variables(yeindex),ns,ng
+                    stop
+                 endif
               enddo !do ng=1,mytable_number_groups
            enddo !do ns=1,number_output_species
 
@@ -334,10 +361,12 @@ program make_table_example
                  table_emission_node(displs(mpirank)+irho,itemp,iye,ns,ng) = local_emissivity(ns,ng) !ergs/cm^3/s/MeV/srad
                  table_absopacity_node(displs(mpirank)+irho,itemp,iye,ns,ng) = local_absopacity(ns,ng) !cm^-1
                  table_scatopacity_node(displs(mpirank)+irho,itemp,iye,ns,ng) = local_scatopacity(ns,ng) !cm^-1
+                 table_delta_node(displs(mpirank)+irho,itemp,iye,ns,ng) = local_delta(ns,ng) !dimensionless
 #else
                  table_emission(irho,itemp,iye,ns,ng) = local_emissivity(ns,ng) !ergs/cm^3/s/MeV/srad
                  table_absopacity(irho,itemp,iye,ns,ng) = local_absopacity(ns,ng) !cm^-1
                  table_scatopacity(irho,itemp,iye,ns,ng) = local_scatopacity(ns,ng) !cm^-1
+                 table_delta(irho,itemp,iye,ns,ng) = local_delta(ns,ng) !dimensionless
 #endif
               enddo !do ns=1,number_output_species
            enddo !do ng=1,mytable_number_groups
@@ -348,6 +377,7 @@ program make_table_example
      deallocate(local_emissivity)
      deallocate(local_absopacity)
      deallocate(local_scatopacity)
+     deallocate(local_delta)
      deallocate(eos_variables)
   enddo!do irho=1,final_table_size_rho
   !$OMP END PARALLEL DO! end do
@@ -364,7 +394,8 @@ program make_table_example
        table_size,mpi_double,mpi_sum,0,mpi_comm_world,ierror)
   call mpi_reduce(table_scatopacity_node,table_scatopacity,&
        table_size,mpi_double,mpi_sum,0,mpi_comm_world,ierror)
-
+  call mpi_reduce(table_delta_node,table_delta,&
+       table_size,mpi_double,mpi_sum,0,mpi_comm_world,ierror)
 
 
   !begin inelastic, timing for mpi purposes
@@ -909,6 +940,16 @@ contains
     call h5dclose_f(dset_id, error)
     call h5sclose_f(dspace_id, error)  
     cerror = cerror + error   
+
+    if(.not. do_transport_opacities) then
+       call h5screate_simple_f(rank, dims5, dspace_id, error)
+       call h5dcreate_f(file_id, "scattering_delta", H5T_NATIVE_DOUBLE, &
+            dspace_id, dset_id, error)
+       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,table_delta, dims5, error)
+       call h5dclose_f(dset_id, error)
+       call h5sclose_f(dspace_id, error)
+       cerror = cerror + error
+    endif
 
     if (doing_inelastic.or.doing_epannihil) then
 

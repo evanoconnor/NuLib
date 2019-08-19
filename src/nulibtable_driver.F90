@@ -18,7 +18,7 @@ program driver
   integer i,j,k,ns,ng,ngprime
   real*8 rho,temp,ye,mue,eta
 
-  call nulibtable_reader(filename,include_Ielectron=.true.,include_epannihil_kernels=.true.)
+  call nulibtable_reader(filename,include_Ielectron=.false.,include_epannihil_kernels=.false.,include_scattering_delta=.false.)
 
   allocate(eas(nulibtable_number_easvariables))
   allocate(eas_energy(nulibtable_number_groups,nulibtable_number_easvariables))
@@ -50,7 +50,7 @@ program driver
      !example of single energy single species call, here I loop over rho
      write(*,*) "rho,temp,ye, eas variables"
      do i=1,100
-        eas(1:3) = 0.0d0
+        eas(:) = 0.0d0
         rho = 10.0d0**(8.0d0+6.0d0*dble(i)/100.0d0)
         temp = 1.0d0
         ye = 0.35d0

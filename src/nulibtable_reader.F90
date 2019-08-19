@@ -1,5 +1,5 @@
 !-*-f90-*-
-subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernels)
+subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernels,include_scattering_delta)
   
   use nulibtable
   use hdf5
@@ -9,9 +9,11 @@ subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernel
   character(*) :: filename
   logical,optional :: include_Ielectron
   logical,optional :: include_epannihil_kernels
+  logical,optional :: include_scattering_delta
   
   logical :: read_Ielectron
   logical :: read_epannihil
+  logical :: read_delta
   
   !H5 stuff
   integer :: error,rank,cerror
@@ -35,6 +37,12 @@ subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernel
      read_epannihil = include_epannihil_kernels
   else
      read_epannihil = .false.
+  endif
+
+  if (present(include_scattering_delta)) then
+     read_delta = include_scattering_delta
+  else
+     read_delta = .false.
   endif
 
   cerror = 0
@@ -208,7 +216,23 @@ subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernel
      nulibtable_scatopacity(:,:,:,startindex:endindex) = log10(nulibtable_temp(:,:,:,i,:))
   enddo
 
-  nulibtable_number_easvariables = 3
+  if(read_delta) then
+     nulibtable_number_easvariables = 4
+     call h5dopen_f(file_id, "scattering_delta", dset_id, error)
+     call h5dread_f(dset_id, H5T_NATIVE_DOUBLE,nulibtable_temp, dims5, error)
+     call h5dclose_f(dset_id, error)
+     cerror = cerror + error
+
+     allocate(nulibtable_delta(nulibtable_nrho,nulibtable_ntemp, &
+          nulibtable_nye,nulibtable_number_species*nulibtable_number_groups))
+     do i=1,nulibtable_number_species
+        startindex = (i-1)*nulibtable_number_groups+1
+        endindex = startindex + nulibtable_number_groups - 1
+        nulibtable_delta(:,:,:,startindex:endindex) = nulibtable_temp(:,:,:,i,:)
+     enddo
+  else
+     nulibtable_number_easvariables = 3
+  endif
 
   deallocate(nulibtable_temp)
 

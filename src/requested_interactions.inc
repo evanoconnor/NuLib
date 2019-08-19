@@ -5,6 +5,10 @@
   logical :: do_ionion_correlation = .true.
   logical :: do_heavyscat_formfactor = .true.
   logical :: do_electronpolarization_correction = .true.
+  logical :: do_nc_virial_correction = .false.
+  logical :: do_strange_coupling = .false.
+  logical :: do_transport_opacities = .true.
+  real*8, parameter :: gAs = -0.2d0 !dimensionless, for the strange coupling
 
   !absorptions
   logical :: add_nue_absorption_on_n = .true.
@@ -68,7 +72,7 @@
   logical :: add_anutau_emission_NNBrems = .true.	
 
   logical :: add_nue_emission_weakinteraction_ecap = .true.
-  logical :: add_anue_emission_weakinteraction_poscap = .false.
+  logical :: add_anue_emission_weakinteraction_poscap = .true.
 
   logical :: apply_kirchoff_to_pair_creation = .true.
 

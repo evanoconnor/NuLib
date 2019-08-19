@@ -406,7 +406,6 @@ subroutine return_emissivity_spectra_given_neutrino_scheme(emissivity_spectra,eo
            emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity(:) !erg/cm^3/s/MeV/srad
         end if
         if (add_anue_emission_weakinteraction_poscap.and.ns.eq.2) then
-           stop "emissivities :: anue weak rates are not yet implemented"
            call microphysical_electron_capture(ns,eos_variables,ec_emissivity)
            emissivity_spectra(ns,:) = emissivity_spectra(ns,:) + ec_emissivity(:) !erg/cm^3/s/MeV/srad
         end if

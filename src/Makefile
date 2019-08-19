@@ -72,6 +72,10 @@ else
 endif	
 endif
 
+ifeq ($(DEBUG),1)
+	F90FLAGS += -DDEBUG
+endif
+
 ifeq ($(MPI),1)
 	F90 = mpif90
 	DEFS += -D__MPI__
@@ -116,13 +120,13 @@ endif
 ../nulibtable_driver:  $(EXTRADEPS) $(NT_OBJECTS) $(F_OBJECTS) $(f90_OBJECTS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINC) -o $@ nulibtable_driver.F90 $(NT_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
 
-../point_example:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS)  $(f90_OBJECTS)point_example.F90
+../point_example:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS)  $(f90_OBJECTS) point_example.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ point_example.F90 $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
 
-../make_table_example:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS)  $(f90_OBJECTS)make_table_example.F90
+../make_table_example:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS)  $(f90_OBJECTS) make_table_example.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_example.F90 $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
 
-../make_table_weakrates:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS)  $(f90_OBJECTS)make_table_weakrates.F90
+../make_table_weakrates:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS)  $(f90_OBJECTS) make_table_weakrates.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_weakrates.F90 $(MOD_OBJECTS) $(EXTRACDEPS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
 
 nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS) $(CLIB_OBJECTS)

@@ -191,6 +191,7 @@ following publications from which the weak-rate tables derive:
 | http://prl.aps.org/abstract/PRL/v90/i24/e241102                              |
 --------------------------------------------------------------------------------
 
+Tables are available from: https://groups.nscl.msu.edu/charge_exchange/weakrates.html
 
 Sample Executables:
 -------------------
@@ -315,7 +316,8 @@ Extras
 
 There is support in NuLib for using Matthias Hempel's NSE mass
 distributions available from
-http://phys-merger.physik.unibas.ch/~hempel/eos.html.  To enable these
+https://astro.physik.unibas.ch/people/matthias-hempel/equations-of-state.html
+To enable these
 use must download his code and tables from his website, place them in
 the directory src/extra_code_and_tables/ and enable the preprocessor
 flag NUCLEI_HEMPEL.  We use the SFHo table as an example in the code,
@@ -324,7 +326,7 @@ directly.  Please see this file for more details.
 
 A few small changes must be made to xxxx_xxxx_composition_module.f
 as provided by M. Hempel if the weak_rates module (electron-capture
-rates).Primarily a public (non-private) copy of the loaded nuclear
+rates). Primarily a public (non-private) copy of the loaded nuclear
 masses must be exposed. e.g. for the SFHo EOS, one must add the
 following to the source file:
 ---------------------------------------------------
@@ -333,4 +335,5 @@ following to the source file:
 | sfho_mass = mass                                |
 ---------------------------------------------------
 We also found that an updated path is needed for the
-composition binary included with the module.
+composition binary included with the module (or a symbolic link
+from the run directory).
