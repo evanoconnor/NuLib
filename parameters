@@ -1,5 +1,5 @@
-# ####### EOS parameters #######
-eos_table_name			=	"./src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
+######## EOS parameters #######
+eos_table_name			=	"./SFHo.h5"
 
 ####### Weak interaction parameters #######
 directory     =	"./src/weakrates/tables/"
@@ -11,8 +11,15 @@ pruet_rates1  =	"pruet_66_80.dat"
 pruet_rates2  =	"pruet_66_80_leftover.dat"
 pruet_rates3  =	"pruet_81_110.dat"
 suzuki_honma_gxpf1j	= "suzuki_honma_gxpf1j.dat"
+diamond_rates = "diamondrates.dat"
 
 ## Rate table priority hierarchy ##
+
+# 0 indicates the table will not be used
+# 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, they will be ignored.
+# CITATION NOTICE: By setting the above rate table flags to anything non-zero you agree to cite the relevant publications
+# in your work.
+
 isuzuki_honma_gxpf1j   = 1
 ilmp		       = 2
 ilmsh		       = 3
@@ -21,18 +28,15 @@ iffn		       = 5
 ipruet1		       = 6
 ipruet2		       = 7
 ipruet3		       = 8
+idiamond	       = 0
 iapprox		       = 9
 
 ## Approximation model ##
 raduta_model	       =	3
 # Raduta et al. Phys. Rev. C 95, 025805 (2017) defines 4 different models
 # for the approximate method. Therefore, if iapprox above is non-zero,
-# choose below the desired approximation method [1-4] according to those
-# described in the publication.
+# choose for raduta_model the desired approximation method [1-4] according to those
+# described in the publication. A choice of 0 reverts to the original Langanke
+# approximation model with \Delta E = 2.5MeV 
 
 
-
-# 0 indicates the table will not be used
-# 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, they will be ignored.
-# CITATION NOTICE: By setting the above rate table flags to anything non-zero you agree to cite the relevant publications
-# in your work.
