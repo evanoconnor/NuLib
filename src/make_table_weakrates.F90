@@ -125,6 +125,9 @@ program make_table_example
   ! initialize weak-rate library if it is turned on in requested_interactions.inc
   if (add_nue_emission_weakinteraction_ecap.or.add_anue_emission_weakinteraction_poscap) then
      call initialize_weakratelib(parameters_filename)
+  else
+     write(*,*) "Recommend using at least one weakinteraction electron/positron rates with weakrates table"
+     stop
   endif
 
   outdir="./"
@@ -741,12 +744,12 @@ program make_table_example
              "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &
              "_ng"//trim(adjustl(sng))//"_ns"//trim(adjustl(sns))// &
              "_Itemp"//trim(adjustl(sItemp))//"_Ieta"//trim(adjustl(sIeta))// &
-             "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//"-pruetbase.h5"
+             "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//".h5"
      else
         finaltable_filename = trim(adjustl(outdir))//trim(adjustl(base))//"_rho"//trim(adjustl(srho))// &
              "_temp"//trim(adjustl(stemp))//"_ye"//trim(adjustl(sye))// &
              "_ng"//trim(adjustl(sng))//"_ns"//trim(adjustl(sns))// &
-             "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//"-pruetbase.h5"
+             "_version"//trim(adjustl(vnum))//"_"//trim(adjustl(date))//".h5"
      endif
 
      call write_h5(finaltable_filename,timestamp)
