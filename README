@@ -164,34 +164,20 @@ are availableas a part of the weak_rates module (set in the parameters
 file). In addition, number densities (abundances) and nuclear masses
 are needed for a large set of nuclei. These are calculated via Matthias
 Hempel's NSE mass distributions discussed below. To include emissivities
-and opcaities for this interaction, set the corresponding flag in
+and opacities for this interaction, set the corresponding flag in
 requested_interactions.inc, as well as WEAK_RATES=1 in make.inc. If
 these routines are utilized in a work, cite the above paper as well the
-following publications from which the weak-rate tables derive:
---------------------------------------------------------------------------------
-| Fuller, G. M., Fowler, W. A., & Newman, M. J. (1982).                        |
-| Stellar weak interaction rates for intermediate-mass nuclei.                 |
-| II - A = 21 to A = 60. The Astrophysical Journal, 252, 715.                  |
-| http://doi.org/10.1086/159597                                                |
---------------------------------------------------------------------------------
-| Oda, T., Hino, M., Muto, K., Takahara, M., & Sato, K. (1994).                |
-| Rate Tables for the Weak Processes of sd-Shell Nuclei in Stellar Matter.     |
-| Atomic Data and Nuclear Data Tables, 56(2), 231-403.                         |
-| http://doi.org/10.1006/adnd.1994.1007                                        |
---------------------------------------------------------------------------------
-| Langanke, K., & Mart\'{i}nez-Pinedo, G. (2000).                              |
-| Shell-model calculations of stellar weak interaction rates:                  |
-| II. Weak rates for nuclei in the mass range in supernovae environments.      |
-| Nuclear Physics A, 673(1-4), 481-508.                                        |
-| http://doi.org/10.1016/S0375-9474(00)00131-7                                 |
---------------------------------------------------------------------------------
-| Langanke, K., & Mart\'{i}nez-Pinedo, G. (2003).                              |
-| Electron capture rates on nuclei and implications for stellar core collapse. |
-| Physical Review Letters 90, 241102.                                          |
-| http://prl.aps.org/abstract/PRL/v90/i24/e241102                              |
---------------------------------------------------------------------------------
+any publications from which the weak-rate tables are derived.  This are
+printed to the screen during execution:
 
 Tables are available from: https://groups.nscl.msu.edu/charge_exchange/weakrates.html
+The `diamondrates` are referenced from Titus et al. (2019).  Caution
+is needed when using this rates as they are only for portions of the
+nuclear table.  Please contact the charge exchange group at NSCL for
+more information and data for these rates.
+
+beta-decay rates are also implemented in NuLib.  However caution is
+advised with these rates as well as they are largly untested.
 
 Sample Executables:
 -------------------
@@ -337,3 +323,6 @@ following to the source file:
 We also found that an updated path is needed for the
 composition binary included with the module (or a symbolic link
 from the run directory).
+
+There is some code present for utilizing NuLib in Python, however this
+is more like a stub and less a fully implemented tool
