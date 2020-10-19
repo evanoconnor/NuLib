@@ -117,7 +117,7 @@ program point_example
   bin_bottom(1) = 0.0d0 !MeV
   bin_bottom(2) = 2.0d0 !MeV
   bin_bottom(3) = bin_bottom(2)+mindx
-  bin_bottom(number_groups) = 250.0d0 ! MeV
+  bin_bottom(number_groups) = 200.0d0 ! MeV
   
   call nulib_series2(number_groups-1,bin_bottom(2),bin_bottom(number_groups),mindx,dxfac)
   do i=4,number_groups

@@ -1,6 +1,6 @@
 !-*-f90-*-
 module nulib
-
+  use hdf5
   implicit none
 
   !variables initialization
@@ -24,6 +24,7 @@ module nulib
   real*8, allocatable,dimension(:) :: bin_widths ! MeV, energy width of bin
   real*8, allocatable,dimension(:) :: bin_bottom ! MeV, energy at bottom of bin
   real*8, allocatable,dimension(:) :: bin_top ! MeV, energy at top of bin
+  real*8, allocatable,dimension(:,:,:,:) :: gang_table ! MeV, energy at top of bin
 
   !EOS table
   character*200 :: eos_filename
@@ -76,7 +77,14 @@ module nulib
 
   !tabulated weak rate table bounds
   real*8, dimension(4) :: table_bounds
-
+  
+  !Gang guo table
+  integer(HSIZE_T) :: dims4_gang(4)
+  integer :: error_gang,rank_gang,cerror_gang
+  integer(HID_T) :: file_id_gang,dset_id_gang,dspace_id_gang
+ INTEGER(HID_T) :: dataspace     ! 
+      INTEGER(HSIZE_T), DIMENSION(4) :: dimsr, maxdimsr
+  
   !special terms
   real*8 :: adhoc_nux_factor = 0.0d0
 
@@ -178,6 +186,25 @@ module nulib
       if (add_anutau_kernel_bremsstrahlung.and.add_anutau_emission_bremsstrahlung) then
          stop "initialize_nulib: you can't both thermally emit nu with/without a kernel: anutau"
       endif
+      if (add_nue_kernel_gangguo.and.add_nue_emission_bremsstrahlung) then
+         stop "initialize_nulib: you can't both thermally emit nu with/without a kernel: nue"
+      endif
+      if (add_anue_kernel_gangguo.and.add_anue_emission_bremsstrahlung) then
+         stop "initialize_nulib: you can't both thermally emit nu with/without a kernel: anue"
+      endif
+      if (add_numu_kernel_gangguo.and.add_numu_emission_bremsstrahlung) then
+         stop "initialize_nulib: you can't both thermally emit nu with/without a kernel: numu"
+      endif
+      if (add_anumu_kernel_gangguo.and.add_anumu_emission_bremsstrahlung) then
+         stop "initialize_nulib: you can't both thermally emit nu with/without a kernel: anumu"
+      endif
+      if (add_nutau_kernel_gangguo.and.add_nutau_emission_bremsstrahlung) then
+         stop "initialize_nulib: you can't both thermally emit nu with/without a kernel: nutau"
+      endif
+      if (add_anutau_kernel_gangguo.and.add_anutau_emission_bremsstrahlung) then
+         stop "initialize_nulib: you can't both thermally emit nu with/without a kernel: anutau"
+      endif
+
 
       if (neutrino_scheme.eq.1) then
          if ((add_numu_Iscattering_electrons.neqv.add_anumu_Iscattering_electrons).or. &
@@ -330,6 +357,64 @@ module nulib
       call GaussLegendreQuadrature_weights_and_roots(32,GPQ_n32_roots,GPQ_n32_weights)
       call GaussLegendreQuadrature_weights_and_roots(64,GPQ_n64_roots,GPQ_n64_weights)
       call GaussLegendreQuadrature_weights_and_roots(128,GPQ_n128_roots,GPQ_n128_weights)
+
+	  if (add_anutau_kernel_gangguo .or. add_nutau_kernel_gangguo .or. &
+			add_anumu_kernel_gangguo .or. add_numu_kernel_gangguo) then
+			
+			
+		!open HDF5 file, given filename                                                                                             
+		call h5open_f(error_gang)
+		
+		if (error_gang.ne.0) then
+		   stop "Error reading in gang file"
+		endif
+		
+
+		call h5fopen_f("Interpolated_data.h5", &
+		     H5F_ACC_RDONLY_F,file_id_gang,error_gang)
+		     
+		if (error_gang.ne.0) then
+		   write(*,*) trim(adjustl("Interpolated_data.h5"))
+		   stop "Error reading in gang table"
+		endif
+		rank_gang =4
+		dims4_gang(1) = 25
+		dims4_gang(2) = 25
+		dims4_gang(3) = 26
+		dims4_gang(4) = 40
+		
+		call h5dopen_f(file_id_gang, "kernel", dset_id_gang, error_gang)
+		write(*,*) file_id_gang,dset_id_gang,dims4_gang
+		
+	     CALL h5dget_space_f(dset_id_gang, dataspace, error_gang)
+          CALL h5sget_simple_extent_dims_f(dataspace, dimsr, maxdimsr, error_gang)
+         write(*,*) "arg", dimsr
+         
+		allocate(gang_table(dims4_gang(4),dims4_gang(3),dims4_gang(2),dims4_gang(1)))
+!~ 		allocate(gang_table(dimsr(1),dimsr(2),dimsr(3),dimsr(4)))
+!~ 		
+
+	     
+		call h5dread_f(dset_id_gang, H5T_NATIVE_DOUBLE,gang_table, dimsr, error_gang)
+		
+	    call h5dclose_f(dset_id_gang, error_gang)
+	    
+	    cerror_gang = cerror_gang + error_gang   
+	
+		if (cerror_gang.ne.0) then
+		     write (*,*) "We have errors on reading Gang file", cerror_gang
+		     stop
+		endif  
+
+		
+		call h5fclose_f(file_id_gang,error_gang)
+		call h5close_f(error_gang)
+		
+			
+			
+	  endif
+
+
 
     end subroutine initialize_nulib
 
@@ -545,6 +630,8 @@ module nulib
       endif
       delta = delta / scattering_opacity !pull out the weights to get the opacity-weighted average
 
+
+	!!! now calculations for non thermal processes
       temporary_spectra = 0.0d0
       call return_emissivity_spectra_given_neutrino_scheme(temporary_spectra,eos_variables)
 
@@ -1302,6 +1389,152 @@ module nulib
 
 
     end subroutine single_bremsstrahlung_kernel_point_return_all_Kuroda
+    
+    
+    !calcualates the expansion of the bremsstrahlung kernal, These are
+    !|phi^{prod/annihl}_{0/1} from gang et al. 2019 
+    subroutine single_bremsstrahlung_kernel_point_return_all_gang(iin,n_N,Ye,temperature, &
+         Phi0s,neutrino_local_scheme)
+
+      implicit none
+
+      !input
+      real*8, dimension(:,:,:), intent(out) :: Phi0s !species,other neutrino's energy, prod/annihilation
+      integer, intent(in) :: iin !this neutrinos energy
+      real*8, intent(in) :: n_N ! cm-3
+      real*8, intent(in) :: Ye ! cm-3
+      real*8, intent(in) :: temperature ! MeV
+      integer, intent(in) :: neutrino_local_scheme
+           
+      !neutrino species
+      !1 = electron neutrino !local scheme 1,2,3
+      !2 = electron anti-neutrino !scheme 1,2,3
+      !3 = muon neutrino !scheme 1,2,3
+      !4 = muon anti-neutrino !scheme 2,3
+      !5 = tau neutrino !scheme 3
+      !6 = tau anti-neutrino !scheme 3
+
+      !x neutrino = (3+4+5+6) !scheme 1
+      !y neutrino = (3+5) !scheme 2
+      !z anti-neutrino = (4+6) !scheme 2
+
+      !local
+      integer :: ns,ng
+      integer :: number_local_species
+      real*8  :: nu_energy_x   ! adim
+      real*8  :: nuother_energy_x  ! adim
+
+      !functions
+      real*8 :: bremsstrahlung_Phi0_gang
+
+      if (neutrino_local_scheme.ne.neutrino_scheme) then
+         write(*,*) neutrino_local_scheme, neutrino_scheme
+         stop "you are requesting different schemes"
+      endif
+
+      if (neutrino_scheme.eq.1) then
+         number_local_species = 3
+      else if (neutrino_scheme.eq.2) then
+         number_local_species = 4
+      else if (neutrino_scheme.eq.3) then
+         number_local_species = 6
+      else
+         stop "single_bremsstrahlung_kernel_return_all_Kuro:incorrect neutrino scheme"
+      endif
+
+      if (size(Phi0s,1).ne.number_local_species) then
+         stop "single_bremsstrahlung_kernel_return_all_Kuro:provided array has wrong number of species"
+      endif
+      if (size(Phi0s,2).ne.number_groups) then
+         stop "single_bremsstrahlung_kernel_return_all_Kuro:provided array has wrong number of groups"
+      endif
+      if (size(Phi0s,3).ne.2) then
+         stop "single_bremsstrahlung_kernel_return_all_Kuro:provided array has wrong number of kernels"
+      endif
+      
+      nu_energy_x = energies(iin)/temperature   ! adim
+!~ 		write(*,*) number_groups
+      Phi0s = 0.0d0
+
+      do ng=1,number_groups
+         nuother_energy_x = energies(ng)/temperature  !adim
+         !electron neutrinos
+         if (add_nue_kernel_gangguo) then
+            Phi0s(1,ng,1) = bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,1,0)!production of Phi_0
+            Phi0s(1,ng,2) = bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,1,1)!annihilation of Phi_0
+
+         endif
+
+         !electron antineutrinos
+         if (add_anue_kernel_gangguo) then
+            Phi0s(2,ng,1) = bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,2,0)!production of Phi_0
+            Phi0s(2,ng,2) = bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,2,1)!annihilation of Phi_0
+
+         endif
+
+         if (number_local_species.eq.3) then
+            !already ensure that all 4 are the all included or not
+            if (add_numu_kernel_gangguo) then
+               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,3,0) + &
+                    bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,4,0) + &
+                    bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,5,0) + & 
+                    bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,6,0))/4.0d0 !production of Phi_0
+               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,3,1) + &
+                    bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,4,1) + &
+                    bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,5,1) + & 
+                    bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,6,1))/4.0d0 !annihilation of Phi_0
+            endif
+
+         else if (number_local_species.eq.4) then
+
+            !already ensure that mu and tau the same
+            if (add_numu_kernel_gangguo) then
+               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,3,0) + &
+                    bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,5,0))/2.0d0 !production of Phi_0
+               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,3,1) + &
+                    bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,5,1))/2.0d0 !annihilation of Phi_0
+
+            endif
+
+            !already ensure that amu and atau the same
+            if (add_anumu_kernel_gangguo) then
+               Phi0s(3,ng,1) = (bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,4,0) + &
+                    bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,6,0))/2.0d0 !production of Phi_0
+               Phi0s(3,ng,2) = (bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,4,1) + &
+                    bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,6,1))/2.0d0 !annihilation of Phi_0
+            endif
+
+         else if (number_local_species.eq.6) then
+
+            if (add_numu_kernel_gangguo) then
+               Phi0s(3,ng,1) = bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,3,0) !production of Phi_0
+               Phi0s(3,ng,2) = bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,3,1) !annihilation of Phi_0
+            endif
+
+            if (add_anumu_kernel_gangguo) then
+               Phi0s(4,ng,1) = bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,4,0) !production of Phi_0
+               Phi0s(4,ng,2) = bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,4,1) !annihilation of Phi_0
+            endif
+
+            if (add_nutau_kernel_gangguo) then
+               Phi0s(5,ng,1) = bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,5,0) !production of Phi_0
+               Phi0s(5,ng,2) = bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,5,1) !annihilation of Phi_0
+            endif
+
+            if (add_anutau_kernel_gangguo) then
+               Phi0s(6,ng,1) = bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,6,0) !production of Phi_0
+               Phi0s(6,ng,2) = bremsstrahlung_Phi0_gang(nu_energy_x,nuother_energy_x,temperature,n_N,Ye,6,1) !annihilation of Phi_0
+            endif
+
+         else
+            stop "shouldn't be here"
+         endif
+         
+      enddo
+
+
+
+    end subroutine single_bremsstrahlung_kernel_point_return_all_gang
 
  end module nulib
 

@@ -22,7 +22,7 @@ real*8 :: s_func
 real*8 :: g 
 real*8 :: x
 real*8 :: y 
-real*8 :: G_f
+real*8 :: G_f  
 real*8 :: G_rampp
 real*8 :: GC2_raffelt
 real*8,parameter :: C_a = gA/2.0d0
@@ -55,7 +55,7 @@ Gamma_sigma = 8.0d0 * SQRT(2.0d0*pi) * 15.0d0**2 / (3.0d0*pi**2) * &
 
 G_f = Gfermi*(hbarc_mevcm)  ! Mev-1 cm
 G_rampp = (G_f*hbarc_mevcm**2)**2/(pi*(hbarc_mevcm)**4) !cm2 MeV^-2
-GC2_raffelt = 2.1d0 * 1d-44 !cm2 / Mev2
+GC2_raffelt = 2.1d0 * 1d-44 !cm2  Mev-2
 
 !Raffelt			  
 
@@ -99,7 +99,12 @@ if ( Phi0_nn .NE. Phi0_nn) then
 	write(*,*) "NaNing", s_func,x,y,matter_temperature,eta_star
 	stop
 endif
+if ( Phi0_nn .LT. 0.0d0) then 
+	write(*,*) "negative Han brem", s_func,x,y,matter_temperature,eta_star
+	stop
+endif
          
+!~  write(*,*) S_sig
 end function Bremsstrahlung_Phi0_Hannestad
 
 
@@ -149,9 +154,9 @@ Phi_ND_2 = hbarc_mevcm**6 * G/4.0d0 * 15.0d0**2 *(4.0d0*pi)**2/m_amu**4&
 		*3.0d0 * C_A**2.0d0 * n_N ** 2 * find_s2(0.0d0,0.0d0,x)! using the s_kl part as well 
 		
 
-if ( pro_ann .EQ. 0 ) then 
+if ( pro_ann .EQ. 0 ) then ! pro
 	Phi0_nn = exp(-x)* MIN(Phi_D_2,Phi_ND_2) !cm3 s-1 
-else if (pro_ann .EQ. 1 ) then 
+else if (pro_ann .EQ. 1 ) then !abs
 	Phi0_nn =   MIN(Phi_D_2,Phi_ND_2)  ! cm3 s-1
 else 
 	stop " pro_ann not allowed"
@@ -226,8 +231,6 @@ s_ND = 2.0d0 * sqrt(pi) * ( x + 2.0d0 - exp(-y/12.0d0))**1.5d0 * &
 			(x**2 + 2.0d0*x*y + 5.0d0/3.0d0 * y**2 +1.0d0) / ( sqrt(pi) &
 			 + ( pi **(1.0d0/8.0d0) + x + y)**4) 
 
-!~ s_ND = sqrt(1.0d0+x*pi/4.0d0) - (1.0d0+(pi*x/4.0d0)**(5.0d0/4.0d0))**0.4d0&
-!~ 		+ (1+ (64.0d0/(169.0d0*pi)*x)**(5.0d0/4.0d0))**(-0.4d0)
 		
 u = sqrt(y/(2.0d0*eta))
 
@@ -278,6 +281,7 @@ real*8 :: C
 real*8 :: G
 real*8 :: big_F
 
+
 !result
 real*8 :: s
 
@@ -285,7 +289,6 @@ real*8 :: s
 s_ND = sqrt(1.0d0+x*pi/4.0d0) - (1.0d0+(pi*x/4.0d0)**(5.0d0/4.0d0))**0.4d0&
 		+ (1+ (64.0d0/(169.0d0*pi)*x)**(5.0d0/4.0d0))**(-0.4d0)   ! (s_0 - s_k.l) from B.12 & B.16 in Raffelt & Seckel 1995
 		
-!~ s_ND = (1.0d0+pi/4.0d0/x)**(0.5d0)
 
 
 
@@ -302,3 +305,107 @@ endif
  
 end function find_s2
 
+function Bremsstrahlung_Phi0_gang(nu_energy_x,nubar_energy_x&
+         ,matter_temperature,n_N,Ye,neutrino_species,pro_ann) result(Phi0_nn)
+use nulib
+
+implicit none 
+real*8,intent(in) :: nu_energy_x,nubar_energy_x  ! dimensionless
+real*8, intent(in) :: matter_temperature ! MeV
+real*8, intent(in) :: n_N ! n/cm3
+real*8, intent(in) :: Ye ! n/cm3
+integer, intent(in) :: neutrino_species ! 1 to 6
+integer,intent(in) :: pro_ann ! 0 or 1
+
+
+real*8 :: Phi0_nn
+
+! internal variables 
+integer :: in_N,i
+real*8 :: Itable_n_N(25)
+real*8 :: temp_array(25) = (/(i, i=2,50, 2)/)
+real*8 :: Ye_array(26) = (/(i, i=0,50,2)/)/100.0d0
+real*8 :: om_array(40) = (/(i,i = 1,40,1)/)/10.0d0 -1.4d0
+real*8 :: omega
+real*8 :: S,n_N_fm
+real*8 :: G_f  
+real*8,parameter :: C_a = gA/2.0d0
+real*8 ::  eas_brem(25)
+real*8 :: dx,delt
+integer :: indx
+real*8 ::  t_try
+
+ do in_N=1,25
+	Itable_n_N(in_N) = &
+		 (-4.0d0+dble(in_N-1)/dble(24)*(4.0d0))
+ enddo
+
+n_N_fm= log10(n_N*(1.0d-13)**3)
+
+omega= log10((nu_energy_x+nubar_energy_x)*matter_temperature)
+S=0.0d0
+indx=0
+
+if ( matter_temperature .GT. maxval(temp_array) .or. matter_temperature .LT. minval(temp_array) &
+	.or.  Ye .GT. maxval(Ye_array) .or. Ye .LT. minval(Ye_array) &
+	.or.  abs(n_N_fm) .GE. maxval(abs(Itable_n_N)) .or. abs(n_N_fm) .LE. minval(abs(Itable_n_N))  & 
+	.or.  omega .GT. maxval(om_array) .or. omega .LT. minval(om_array) ) then
+	
+else 
+
+	call intp3d_many (omega, Ye,n_N_fm, eas_brem, 1, gang_table,40,26,25,25&
+						,om_array, Ye_array,Itable_n_N )
+						
+	
+	
+	dx = 0.5d0
+	indx= 1+ INT((matter_temperature-temp_array(1))*dx)
+
+
+	delt = (matter_temperature-temp_array(indx)) / 2.0d0 
+	
+	S = eas_brem(indx) + (eas_brem(indx+1)-eas_brem(indx))*delt
+ 
+
+	
+endif
+
+            
+
+
+!Rampp
+G_f = Gfermi*(hbarc_mevcm)  ! Mev-1 cm
+
+Phi0_nn = 6.0d0*G_f ** 2 * C_a**2 * n_N * S &
+			*(hbarc_mevcm)**3 *clight ! cm3   s-1
+
+if (pro_ann .EQ. 1) then
+       Phi0_nn = Phi0_nn ! absorption 
+else if (pro_ann .EQ. 0) then 
+       Phi0_nn = Phi0_nn * exp(-(nu_energy_x+nubar_energy_x)) ! production
+else
+      write(*,*) "brem : annihilation or production wrongly inserted"
+end if
+
+
+
+if (Phi0_nn .LT. 0.0d0) then 
+	write(*,*) " brem negative : problem"
+	write(*,*) "S",S,"Phi0_nn :", Phi0_nn,"Ye :", Ye, "omega :",omega,"n :"&
+				,n_N_fm,"n_cm : ",n_N,"T :", matter_temperature,"pro_ann :",pro_ann
+	write(*,*) eas_brem
+	write(*,*) "arg", shape(eas_brem), shape(gang_table)
+	write(*,*)
+	write(*,*) "nu,nubar,temp",nu_energy_x,nubar_energy_x&
+         ,matter_temperature
+    write(*,*) neutrino_species,pro_ann
+    write(*,*) 
+	write(*,*) om_array
+	write(*,*) temp_array
+	write(*,*) Ye_array
+	write(*,*) Itable_n_N
+	stop
+endif
+
+
+end function Bremsstrahlung_Phi0_gang
