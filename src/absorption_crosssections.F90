@@ -342,9 +342,9 @@ subroutine total_absorption_opacities(neutrino_species,neutrino_energy,absorptio
   real*8 :: nue_absorption_on_A !function declaration
   real*8 :: nux_absorption_on_n_and_p !function declaration
 
-  neutron_number_density = max(1.0d-20,eos_variables(xnindex))* &
+  neutron_number_density = max(1.0d-100,eos_variables(xnindex))* &
        eos_variables(rhoindex)/(m_ref*mev_to_gram) !# neutrons/cm^3
-  proton_number_density = max(1.0d-20,eos_variables(xpindex))* &
+  proton_number_density = max(1.0d-100,eos_variables(xpindex))* &
        eos_variables(rhoindex)/(m_ref*mev_to_gram) !# protons/cm^3
   if (eos_variables(abarindex).eq.0.0d0) then
      if (eos_variables(xhindex).gt.1.0d-10) write(*,*) "Warning!! matter_xh>0 but matter_abar=0.0"
