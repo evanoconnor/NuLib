@@ -168,7 +168,7 @@ function complete_fermi_integral(ifermi,eta)
      select case (ifermi)
      case (0)
         fermi_integral_analytical = &
-             log10(1.0d0+exp(eta))
+             log(1.0d0+exp(eta))
      case (1)
         fermi_integral_analytical = &
              (eta**2/2.0D0 + 1.6449d0)/(1.0D0+EXP(-1.6855d0*eta))
@@ -193,7 +193,7 @@ function complete_fermi_integral(ifermi,eta)
      select case (ifermi)
      case (0)
         fermi_integral_analytical = &
-             log10(1.0d0+exp(eta))
+             log(1.0d0+exp(eta))
      case (1)
         fermi_integral_analytical = &
              EXP(eta)/(1.0D0+0.2159d0*EXP(0.8857d0*eta))
