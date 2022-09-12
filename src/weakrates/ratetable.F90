@@ -1,4 +1,4 @@
-!-*-f90-*- 
+!-*-f90-*-
 module class_ratetable
 
   implicit none
@@ -26,7 +26,7 @@ module class_ratetable
 contains
 
 !------------------------------------------------------------------------------------!
-  
+
   function new_RateTableDefault(nnuc,nt9,nrho) result(this)
     !""" Default RateTable constructor """
 
@@ -45,11 +45,11 @@ contains
     allocate(this%nuclear_species(nnuc,3))
     allocate(this%t9dat(nt9/nrho))
     allocate(this%rhoYedat(nrho))
-    allocate(this%C(nnuc,7,2,nrho,nt9,4))  
+    allocate(this%C(nnuc,7,2,nrho,nt9,4))
 
   end function new_RateTableDefault
 
-!------------------------------------------------------------------------------------!   
+!------------------------------------------------------------------------------------!
 
   function new_RateTableFromFile(directory,filename) result(this)
     ! """ RateTable constructor (from data file) """
@@ -80,7 +80,7 @@ contains
     path = trim(adjustl(directory))//trim(adjustl(filename))
 
     call print_reference(filename)
-    
+
     !$OMP CRITICAL
     open(1,file=path,status='old')
     do
@@ -100,12 +100,12 @@ contains
              cycle
           end if
           nuc = nuc + 1
-          this%nrho = 0 
+          this%nrho = 0
           this%nt9 = 0
        end if
        if (index('0123456789',lindex).ne.0.and.continue_reading) then
           lrho_prior = lrho
-          read(line,*) t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu            
+          read(line,*) t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu
           if (lrho.ne.lrho_prior) then
              this%nrho = this%nrho + 1
           end if
@@ -148,16 +148,16 @@ contains
           this%nuclear_species(nuc,1) = nucQ
           this%nuclear_species(nuc,2) = nucA
           this%nuclear_species(nuc,3) = nucZ
-          this%nuclear_species(nuc,3) = this%nuclear_species(nuc,3)+1 
-          !^ currently reading in z of daughter which is 
+          this%nuclear_species(nuc,3) = this%nuclear_species(nuc,3)+1
+          !^ currently reading in z of daughter which is
           !1 less than that of parent, hence the addition of one
           this%nucleus_index(A,Z) = nuc
-          this%nrho = 0 
+          this%nrho = 0
           this%nt9 = 0
        end if
        if (index('0123456789',lindex).ne.0.and.continue_reading) then
           lrho_prior = lrho
-          read(line,*) t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu            
+          read(line,*) t9,lrho,uf,lbetap,leps,lnu,lbetam,lpos,lanu
           if (lrho.ne.lrho_prior) then
              this%nrho = this%nrho + 1
              this%nt9 = 0
@@ -183,7 +183,7 @@ contains
     this%range_t9(2)=maxval(this%t9dat)
     this%range_lrhoye(1)=minval(this%rhoyedat)
     this%range_lrhoye(2)=maxval(this%rhoyedat)
-    
+
     !$OMP SINGLE
     write(*,"(A37,I3,A15,I2,A1,I2,A29)") &
          "      - Done reading weak rates for ",nuc,&
@@ -196,17 +196,17 @@ contains
     !$OMP END SINGLE
 
     ! build array of interpolating spline coefficients
-    this%nnuc = nuc    
-    allocate(this%C(this%nnuc,7,2,this%nrho,this%nt9,4))  
+    this%nnuc = nuc
+    allocate(this%C(this%nnuc,7,2,this%nrho,this%nt9,4))
     call monotonic_interp_2d(this)
 
     !$OMP PARALLEL FIRSTPRIVATE(this)
     !$OMP END PARALLEL
   end function new_RateTableFromFile
-  
+
   !------------------------------------------------------------------------------------!
 
-  subroutine monotonic_interp_2d(this) 
+  subroutine monotonic_interp_2d(this)
 
     implicit none
     type(RateTable), intent(inout) :: this
@@ -222,7 +222,7 @@ contains
        do i=1,this%nrho
           do idxrate=1,7
              do j=1,this%nt9
-                Data(j,1)=this%t9dat(j) 
+                Data(j,1)=this%t9dat(j)
                 Data(j,2)=this%rates(idxnuc,j,i,idxrate)
              end do
              call monotonic_interpolator(this,idxnuc,idxrate,dim,i,this%nt9,Data)
@@ -233,8 +233,8 @@ contains
     return
   end subroutine monotonic_interp_2d
 
-!------------------------------------------------------------------------------------!   
-  
+!------------------------------------------------------------------------------------!
+
   subroutine monotonic_interpolator(this,idxnuc,idxrate,dim,spl,N,Data)
 
     type(RateTable), intent(inout) :: this
@@ -267,7 +267,7 @@ contains
     P(N)=S(N-1)*(1+h(N-1)/(h(N-1)+h(N-2)))-S(N-2)*h(N-1)/(h(N-1)+h(N-2))
     ! Build the array of 1st derivatives
     do i=1,N
-       if (i==1) then 
+       if (i==1) then
           if (P(1)*S(1) <= 0) then
              Dy(1)=0.0d0
           else if (abs(P(1)) > 2.0d0*abs(S(1))) then
@@ -310,14 +310,14 @@ contains
           end if
        end do
     end do
-    
+
     return
-    
+
   end subroutine monotonic_interpolator
 
-!------------------------------------------------------------------------------------!   
+!------------------------------------------------------------------------------------!
 
-  function weakrates_table(this,idxnuc,query_t9,query_lrhoye,idxrate) result(interp_val) 
+  function weakrates_table(this,idxnuc,query_t9,query_lrhoye,idxrate) result(interp_val)
 
     type(RateTable), intent(inout) :: this
 
@@ -329,9 +329,9 @@ contains
 
 
     do i=1,this%nrho
-       do j=1,this%nt9 
+       do j=1,this%nt9
           if (query_t9 <= this%t9dat(j)) then
-             if(j==1) then         
+             if(j==1) then
                 value = this%C(idxnuc,idxrate,dim,i,j,1)*(query_t9-this%t9dat(j))**3 +&
                      this%C(idxnuc,idxrate,dim,i,j,2)*(query_t9-this%t9dat(j))**2 +&
                      this%C(idxnuc,idxrate,dim,i,j,3)*(query_t9-this%t9dat(j)) +&
@@ -360,8 +360,8 @@ contains
 
   end function weakrates_table
 
-!------------------------------------------------------------------------------------!   
-  
+!------------------------------------------------------------------------------------!
+
   function interpolant(this,idxnuc,idxrate,dim,spl,query_lrhoye) result (interp_val)
 
     type(RateTable), intent(in) :: this
@@ -396,16 +396,26 @@ contains
 
     interp_val = result
     return
-    
+
   end function interpolant
 
-!------------------------------------------------------------------------------------!     
+!------------------------------------------------------------------------------------!
 
   subroutine print_reference(filename)
     implicit none
     character*200, intent(in) :: filename
     !$OMP SINGLE
     select case (filename)
+    case ("ftrqrpa.dat")
+       print *, "    Loading FT-PNRQRPA table. Make reference to: "
+       print *, "    ------------------------------------------------------------------------------------------"
+       print *, "    | iftrqrpa| Giraud, S., Zegers, R. G. T., Brown, B. A., Gabler, J.-M., Lesniak, J.,      |"
+       print *, "    |         | Rebenstock, J., Ney, E. M., Engel, J., Ravlić, A., Paar, N.                  |"
+       print *, "    |         | Finite-temperature electron-capture rates for neutron-rich nuclei near N = 50|"
+       print *, "    |         | and effects on core-collapse supernova simulation.                           |"
+       print *, "    |         | Phys. Rev. C 105, 055801 (2022)                                              |"
+       print *, "    |         | https://doi.org/10.1103/PhysRevC.105.055801                                  |"
+       print *, "    ------------------------------------------------------------------------------------------"
     case ("lmprates.dat")
        print *, "    Loading LMP table. Make reference to: "
        print *, "    ------------------------------------------------------------------------------------------"
@@ -438,13 +448,12 @@ contains
        print *, "    |         | Stellar weak interaction rates for intermediate-mass nuclei.                 |"
        print *, "    |         | II - A = 21 to A = 60. The Astrophysical Journal, 252, 715.                  |"
        print *, "    |         | http://doi.org/10.1086/159597                                                |"
-       print *, "    ------------------------------------------------------------------------------------------"       
+       print *, "    ------------------------------------------------------------------------------------------"
     case default
        stop "No default"
     end select
     !$OMP END SINGLE
-    
-  end subroutine print_reference  
-!------------------------------------------------------------------------------------!   
-end module class_ratetable
 
+  end subroutine print_reference
+!------------------------------------------------------------------------------------!
+end module class_ratetable
