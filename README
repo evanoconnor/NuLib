@@ -316,8 +316,8 @@ Extras
 
 There is support in NuLib for using Matthias Hempel's NSE mass
 distributions available from
-https://astro.physik.unibas.ch/people/matthias-hempel/equations-of-state.html
-To enable these
+https://astro.physik.unibas.ch/en/people/matthias-hempel/equations-of-state/
+(for example, sfho_frdm_comp.zip). To enable these
 use must download his code and tables from his website, place them in
 the directory src/extra_code_and_tables/ and enable the preprocessor
 flag NUCLEI_HEMPEL.  We use the SFHo table as an example in the code,
