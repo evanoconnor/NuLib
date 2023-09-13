@@ -334,6 +334,10 @@ following to the source file:
 |---------------------- & ------------------------|
 | sfho_mass = mass                                |
 ---------------------------------------------------
+The first should go in the module declaration (for example line 85). 
+The second should go in the 'compdata_readin' subroutine after the 
+mass variable has been read in (for example line 102).
+
 We also found that an updated path is needed for the
 composition binary included with the module (or a symbolic link
 from the run directory).
