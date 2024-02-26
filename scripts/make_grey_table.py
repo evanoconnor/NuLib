@@ -265,7 +265,7 @@ def generate_and_save_table(nulib_file: str,eos_file: str,output_file: str,
     log_temperatures = np.logspace(np.log10(temperature_range[0]), np.log10(temperature_range[1]), num=num_temperatures)
 
     # Initialize the 4D table array
-    table4d = np.zeros([3, 4, 82, 100, 56, len(log_temperatures)])
+    table4d = np.zeros([3, 4, len(nulib_table['rho']),len(nulib_table['temp']), len(nulib_table['ye']), len(log_temperatures)])
 
     # Integrate over temperatures
     tv4 = integrate_table(nulib_table, eos_table)  # Assuming integrate_table_v4 is similar to integrate_table
