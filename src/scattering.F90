@@ -612,6 +612,24 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
   else
      transport = 0
   endif
+
+  nn = max(1.0d-100,eos_variables(xnindex))* &
+       eos_variables(rhoindex)/(m_ref*mev_to_gram) !# neutrons/cm^3
+  np = max(1.0d-100,eos_variables(xpindex))* &
+       eos_variables(rhoindex)/(m_ref*mev_to_gram) !# protons/cm^3
+
+  if (do_breunn_final_state_nucleon_blocking) then
+     !final state blocking a la Bruenn 1985 and weakhub
+     ef_n = hbarc_mevcm**2/(2.0*m_ref)*(3.0*pi**2*nn)**(2.0/3.0)
+     ef_p = hbarc_mevcm**2/(2.0*m_ref)*(3.0*pi**2*np)**(2.0/3.0)
+     xi_n = 3.0*eos_variables(tempindex)/(2.0*ef_n)
+     xi_p = 3.0*eos_variables(tempindex)/(2.0*ef_p)
+     eta_nn = nn*xi_n/sqrt(1.0+xi_n**2)
+     eta_pp = np*xi_p/sqrt(1.0+xi_p**2)
+  else
+     eta_nn = nn
+     eta_pp = np
+  endif
   
   !electron neutrino
   if (neutrino_species.eq.1) then
@@ -619,7 +637,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_nue_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = 1
         call nu_scatter_elastic_n_total(neutrino_energy,transport,1,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        this_opacity = crosssection * eta_nn
         scattering_opacity = scattering_opacity + this_opacity             
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -628,7 +646,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_nue_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = 1
         call nu_scatter_elastic_p_total(neutrino_energy,transport,1,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        this_opacity = crosssection * eta_pp
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -666,7 +684,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_anue_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = -1
         call nu_scatter_elastic_n_total(neutrino_energy,transport,-1,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        this_opacity = crosssection * eta_nn
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -675,7 +693,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_anue_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = -1
         call nu_scatter_elastic_p_total(neutrino_energy,transport,-1,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        this_opacity = crosssection * eta_pp
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -713,7 +731,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_numu_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = 2
         call nu_scatter_elastic_n_total(neutrino_energy,transport,2,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        this_opacity = crosssection * eta_nn
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -722,7 +740,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_numu_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = 2
         call nu_scatter_elastic_p_total(neutrino_energy,transport,2,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        this_opacity = crosssection * eta_pp
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -760,7 +778,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_anumu_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = -2
         call nu_scatter_elastic_n_total(neutrino_energy,transport,-2,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        this_opacity = crosssection * eta_nn
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -769,7 +787,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_anumu_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = -2
         call nu_scatter_elastic_p_total(neutrino_energy,transport,-2,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        this_opacity = crosssection * eta_pp
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -807,7 +825,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_nutau_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = 3
         call nu_scatter_elastic_n_total(neutrino_energy,transport,3,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        this_opacity = crosssection * eta_nn
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -816,7 +834,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_nutau_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = 3
         call nu_scatter_elastic_p_total(neutrino_energy,transport,3,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        this_opacity = crosssection * eta_pp
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -854,7 +872,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_anutau_scattering_n) then
         !function call takes neutrino energy, transport=1, lepton number = -3
         call nu_scatter_elastic_n_total(neutrino_energy,transport,-3,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xnindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        this_opacity = crosssection * eta_nn
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
@@ -863,7 +881,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
      if (add_anutau_scattering_p) then
         !function call takes neutrino energy, transport=1, lepton number = -3
         call nu_scatter_elastic_p_total(neutrino_energy,transport,-3,eos_variables,crosssection,delta)
-        this_opacity = crosssection * eos_variables(xpindex)*eos_variables(rhoindex)/(m_ref*mev_to_gram)
+        this_opacity = crosssection * eta_pp
         scattering_opacity = scattering_opacity + this_opacity
         average_delta      = average_delta      + this_opacity*delta
      endif
