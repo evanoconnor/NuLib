@@ -623,7 +623,7 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
        eos_variables(rhoindex)/(m_ref*mev_to_gram) !# protons/cm^3
 
   if (do_breunn_final_state_nucleon_blocking) then
-     !final state blocking a la Bruenn 1985 and weakhub
+     !final state blocking a la Bruenn 1985 and weakhub/Mezzacappa & Bruenn 93
      ef_n = hbarc_mevcm**2/(2.0*m_ref)*(3.0*pi**2*nn)**(2.0/3.0)
      ef_p = hbarc_mevcm**2/(2.0*m_ref)*(3.0*pi**2*np)**(2.0/3.0)
      xi_n = 3.0*eos_variables(tempindex)/(2.0*ef_n)
