@@ -11,7 +11,8 @@
   real*8, parameter :: gAs = -0.2d0 !dimensionless, for the strange coupling
 
   !final state blocking options
-  logical :: do_breunn_final_state_nucleon_blocking = .true.
+  logical :: do_breunn_final_state_nucleon_blocking_abs = .true.
+  logical :: do_breunn_final_state_nucleon_blocking_scat = .true.
 
   !absorptions
   logical :: add_nue_absorption_on_n = .true.

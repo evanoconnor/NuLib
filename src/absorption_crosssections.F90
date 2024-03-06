@@ -363,7 +363,7 @@ subroutine total_absorption_opacities(neutrino_species,neutrino_energy,absorptio
 
   !final state nucleon blocking
   !some low density, low temperature regions give issues with nucleon blocking, so if rho<1e11, assume no nulceon blocking
-  if (do_breunn_final_state_nucleon_blocking.and.eos_variables(rhoindex).ge.1.0d11) then
+  if (do_breunn_final_state_nucleon_blocking_abs.and.eos_variables(rhoindex).ge.1.0d11) then
      !final state neutron blocking, C14
      eta_np = neutron_number_density* &! # neutons/cm^3
           max(0.0d0,(proton_number_density/neutron_number_density-1.0d0)/ & !final state proton blocking, =1 if blocking is irrelevant
