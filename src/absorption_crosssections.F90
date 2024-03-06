@@ -333,7 +333,9 @@ subroutine total_absorption_opacities(neutrino_species,neutrino_energy,absorptio
                           !(mun+mn-mn)-(mup+mn-mp) = mun-mup-Delta_np
   real*8 :: mu_nu_eq !neutrino equilibrium chemical potential
   real*8 :: expterm,inverse_bottom !to calculate stimulated absorption
+  real*8 :: eta_pn, eta_np ! terms for final state blocking
 
+  
   !function declarations
   real*8 :: fermidirac !function declaration
   real*8 :: fermidirac_exptermonly !function declaration

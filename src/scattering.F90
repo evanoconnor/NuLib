@@ -603,6 +603,10 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
   real*8 :: delta
   real*8 :: this_opacity
   integer :: transport
+  real*8 :: nn,np !number density of targets
+  real*8 :: ef_n,ef_p,xi_n,xi_p,eta_nn, eta_pp !for final state blocking
+  
+
   
   scattering_opacity = 0.0d0
   average_delta = 0.0d0
