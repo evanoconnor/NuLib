@@ -17,7 +17,7 @@ published work, it is YOUR responsibility to check their physical
 correctness and consistency.
 
 If you have any questions or have discovered a bug in our routines,
-please e-mail us at evanoc@tapir.caltech.edu or cott@tapir.caltech.edu
+please e-mail us at evan.oconnor@astro.su.se or open an issue.
 
 COPYRIGHT:
 ----------
@@ -316,8 +316,8 @@ Extras
 
 There is support in NuLib for using Matthias Hempel's NSE mass
 distributions available from
-https://astro.physik.unibas.ch/people/matthias-hempel/equations-of-state.html
-To enable these
+https://astro.physik.unibas.ch/en/people/matthias-hempel/equations-of-state/
+(for example, sfho_frdm_comp.zip). To enable these
 use must download his code and tables from his website, place them in
 the directory src/extra_code_and_tables/ and enable the preprocessor
 flag NUCLEI_HEMPEL.  We use the SFHo table as an example in the code,
@@ -334,6 +334,10 @@ following to the source file:
 |---------------------- & ------------------------|
 | sfho_mass = mass                                |
 ---------------------------------------------------
+The first should go in the module declaration (for example line 85). 
+The second should go in the 'compdata_readin' subroutine after the 
+mass variable has been read in (for example line 102).
+
 We also found that an updated path is needed for the
 composition binary included with the module (or a symbolic link
 from the run directory).
