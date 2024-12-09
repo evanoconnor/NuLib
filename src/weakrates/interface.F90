@@ -40,7 +40,7 @@ contains
     use nulib, only : total_eos_variables,energies,number_groups,&
          do_integrated_BB_and_emissivity,mueindex,rhoindex,tempindex,&
          yeindex,GPQ_n32_roots,GPQ_n32_weights
-
+      
     include 'constants.inc'
 
     integer A,Z
@@ -155,6 +155,10 @@ contains
                qec_eff,eos_variables(mueindex)-m_e,eos_variables(tempindex))
           emissivity(ng) = &  !erg/cm^3/s/MeV/srad
                (energies(ng)*mev_to_erg)*(1.0d39*number_density)*nu_spectrum_eval/(4.0d0*pi) 
+          ! spectra can be 0 and normalizaton_constant Inf. which results in NaN emissivity.
+          if(isnan(emissivity(ng))) then
+               emissivity(ng) = 0
+          endif
        end do
     endif
     return

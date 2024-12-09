@@ -3,18 +3,16 @@ eos_table_name 		= 	"./src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_y
 
 ####### Weak interaction parameters #######
 directory     		= 	"./src/weakrates/tables/"
-ftrqrpa_rates     = 	"ftrqrpa.dat"
+ravlic_rates        = 	"ravlicrates.dat"
+suzuki_rates		=	"suzukirates.dat"
 lmp_rates     		= 	"lmprates.dat"
-lmsh_rates		= 	"lmshrates.dat"
-oda_rates		=	"odarates.dat"
-ffn_rates		=	"ffnrates.dat"
+oda_rates		    =	"odarates.dat"
 
 ## Rate table priority hierarchy ##
-iftrqrpa  = 1
+isuzuki			=	1
 ilmp			=	2
-ilmsh			=	3
-ioda			=	4
-iffn			=	0
+ioda			=	3
+iravlic         =   4
 iapprox			=	5
 
 # 0 indicates the table will not be used
