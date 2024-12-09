@@ -185,7 +185,7 @@ contains
     this%range_lrhoye(2)=maxval(this%rhoyedat)
 
     !$OMP SINGLE
-    write(*,"(A37,I3,A15,I2,A1,I2,A29)") &
+    write(*,"(A37,I4,A15,I2,A1,I2,A29)") &
          "      - Done reading weak rates for ",nuc,&
          " nuclei across ",this%nrho,"/",this%nt9,&
          " log10(rhoYe)/T9 grid points."
@@ -406,15 +406,23 @@ contains
     character*200, intent(in) :: filename
     !$OMP SINGLE
     select case (filename)
-    case ("ftrqrpa.dat")
-       print *, "    Loading FT-PNRQRPA table. Make reference to: "
+    case ("ravlicrates.dat")
+       print *, "    Loading Ravlic et al. table. Make reference to: "
        print *, "    ------------------------------------------------------------------------------------------"
-       print *, "    | iftrqrpa| Giraud, S., Zegers, R. G. T., Brown, B. A., Gabler, J.-M., Lesniak, J.,      |"
-       print *, "    |         | Rebenstock, J., Ney, E. M., Engel, J., Ravlić, A., Paar, N.                  |"
-       print *, "    |         | Finite-temperature electron-capture rates for neutron-rich nuclei near N = 50|"
-       print *, "    |         | and effects on core-collapse supernova simulation.                           |"
-       print *, "    |         | Phys. Rev. C 105, 055801 (2022)                                              |"
-       print *, "    |         | https://doi.org/10.1103/PhysRevC.105.055801                                  |"
+       print *, "    | iravlic | Ravlic, A., Giraud, S., Paar, N., Zegers, R. G. T (2024).                    |"
+       print *, "    |         | Self-consistent microscopic calculations for electron captures on nuclei in  |"
+       print *, "    |         | core-collapse supernovae                                                     |"
+       print *, "    |         | arXiv:2412.00650v1                                                           |"
+       print *, "    |         | https://arxiv.org/pdf/2412.00650                                             |"
+       print *, "    ------------------------------------------------------------------------------------------"
+    case ("suzukirates.dat")
+       print *, "    Loading Suzuki et al. table, Make reference to: "
+       print *, "    ------------------------------------------------------------------------------------------"
+       print *, "    | isuzuki | Toshio Suzuki, Hiroshi Toki and Ken'ichi Nomoto (2016).                      |"
+       print *, "    |         | ELECTRON-CAPTURE AND beta-DECAY RATES FOR sd-SHELL NUCLEI IN STELLAR         |"
+       print *, "    |         | ENVIRONMENTS RELEVANT TO HIGH-DENSITY O–NE–MG CORES.                         |"
+       print *, "    |         | Astrophys. J. 817, 163.                                                      |"
+       print *, "    |         | https://doi.org/10.3847/0004-637x/817/2/163                                  |"
        print *, "    ------------------------------------------------------------------------------------------"
     case ("lmprates.dat")
        print *, "    Loading LMP table. Make reference to: "
