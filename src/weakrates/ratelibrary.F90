@@ -1,5 +1,5 @@
 !-*-f90-*-
-#define NUM_TABLES 4
+#define NUM_TABLES 6
 module class_ratelibrary
 
   use class_ratetable
@@ -220,11 +220,15 @@ contains
     call get_string_parameter(fn,'suzuki_rates',library%files_to_load(2))
     call get_string_parameter(fn,'lmp_rates',library%files_to_load(3))
     call get_string_parameter(fn,'oda_rates',library%files_to_load(4))
+    call get_string_parameter(fn,'lmsh_rates',library%files_to_load(5))
+    call get_string_parameter(fn,'ffn_rates',library%files_to_load(6))
     call get_integer_parameter(fn,'iravlic',library%priority(1))
     call get_integer_parameter(fn,'isuzuki',library%priority(2))
     call get_integer_parameter(fn,'ilmp',library%priority(3))
     call get_integer_parameter(fn,'ioda',library%priority(4))
-    call get_integer_parameter(fn,'iapprox',library%priority(5))
+    call get_integer_parameter(fn,'ilmsh',library%priority(5))
+    call get_integer_parameter(fn,'iffn',library%priority(6))
+    call get_integer_parameter(fn,'iapprox',library%priority(7))
 
   end subroutine weakrate_inputparser
 

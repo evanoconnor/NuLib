@@ -6,12 +6,16 @@ directory     		= 	"./src/weakrates/tables/"
 ravlic_rates        = 	"ravlicrates.dat"
 suzuki_rates		=	"suzukirates.dat"
 lmp_rates     		= 	"lmprates.dat"
+lmsh_rates		    = 	"lmshrates.dat"
 oda_rates		    =	"odarates.dat"
+ffn_rates		    =	"ffnrates.dat"
 
 ## Rate table priority hierarchy ##
 isuzuki			=	1
 ilmp			=	2
 ioda			=	3
+iffn			=	0
+ilmsh			=	0
 iravlic         =   4
 iapprox			=	5
 
