@@ -2,26 +2,26 @@
 eos_table_name 		= 	"./src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
 
 ####### Weak interaction parameters #######
-directory     		= 	"./src/weakrates/tables/"
-ravlic_rates        = 	"ravlicrates.dat"
+directory     	= "./src/weakrates/tables/"
+ravlic_rates    = "ravlicrates.dat"
 suzuki_rates		=	"suzukirates.dat"
-lmp_rates     		= 	"lmprates.dat"
-lmsh_rates		    = 	"lmshrates.dat"
+lmp_rates     	= "lmprates.dat"
+lmsh_rates		  = "lmshrates.dat"
 oda_rates		    =	"odarates.dat"
 ffn_rates		    =	"ffnrates.dat"
 
 ## Rate table priority hierarchy ##
-isuzuki			=	1
-ilmp			=	2
-ioda			=	3
-iffn			=	0
-ilmsh			=	0
-iravlic         =   4
-iapprox			=	5
+isuzuki			=	0
+ilmp			  =	0
+ioda			  =	0
+iffn			  =	0
+ilmsh			  =	0
+iravlic     = 1
+iapprox			=	2
 
 # 0 indicates the table will not be used
 # 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, they will be ignored.
-# CITATION NOTICE: By using the ilmp/ilmsh/iffn/ioda/iapprox flags you agree to cite the relevant publications in your work.
+# CITATION NOTICE: By using the ilmp/ilmsh/iffn/ioda/iravlic/iapprox flags you agree to cite the relevant publications in your work.
 ------------------------------------------------------------------------------------------
 | iffn    | Fuller, G. M., Fowler, W. A., & Newman, M. J. (1982).                        |
 |         | Stellar weak interaction rates for intermediate-mass nuclei.                 |
@@ -44,7 +44,7 @@ iapprox			=	5
 |         | Physical Review Letters 90, 241102.                                          |
 |         | http://prl.aps.org/abstract/PRL/v90/i24/e241102                              |
 ------------------------------------------------------------------------------------------
-| iftrqrpa| Giraud, S., Zegers, R. G. T., Brown, B. A., Gabler, J.-M., Lesniak, J.,      |
+| iravlic | Giraud, S., Zegers, R. G. T., Brown, B. A., Gabler, J.-M., Lesniak, J.,      |
 |         | Rebenstock, J., Ney, E. M., Engel, J., Ravlić, A., Paar, N.                  |
 |         | Finite-temperature electron-capture rates for neutron-rich nuclei near N = 50|
 |         | and effects on core-collapse supernova simulation.                           |
