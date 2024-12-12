@@ -11,13 +11,13 @@ oda_rates       =	"odarates.dat"
 ffn_rates       =	"ffnrates.dat"
 
 ## Rate table priority hierarchy ##
-isuzuki         =	0
-ilmp            =	0
-ioda            =	0
-iffn            =	0
-ilmsh           =	0
+isuzuki         = 0
+ilmp            = 0
+ioda            = 0
+iffn            = 0
+ilmsh           = 0
 iravlic         = 1
-iapprox         =	2
+iapprox         = 2
 
 # 0 indicates the table will not be used
 # 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, they will be ignored.
