@@ -2,22 +2,22 @@
 eos_table_name 		= 	"./src/extra_code_and_tables/Hempel_SFHoEOS_rho222_temp180_ye60_version_1.1_20120817.h5"
 
 ####### Weak interaction parameters #######
-directory     	= "./src/weakrates/tables/"
+directory       = "./src/weakrates/tables/"
 ravlic_rates    = "ravlicrates.dat"
-suzuki_rates		=	"suzukirates.dat"
-lmp_rates     	= "lmprates.dat"
-lmsh_rates		  = "lmshrates.dat"
-oda_rates		    =	"odarates.dat"
-ffn_rates		    =	"ffnrates.dat"
+suzuki_rates    =	"suzukirates.dat"
+lmp_rates       = "lmprates.dat"
+lmsh_rates      = "lmshrates.dat"
+oda_rates       =	"odarates.dat"
+ffn_rates       =	"ffnrates.dat"
 
 ## Rate table priority hierarchy ##
-isuzuki			=	0
-ilmp			  =	0
-ioda			  =	0
-iffn			  =	0
-ilmsh			  =	0
-iravlic     = 1
-iapprox			=	2
+isuzuki         =	0
+ilmp            =	0
+ioda            =	0
+iffn            =	0
+ilmsh           =	0
+iravlic         = 1
+iapprox         =	2
 
 # 0 indicates the table will not be used
 # 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, they will be ignored.
