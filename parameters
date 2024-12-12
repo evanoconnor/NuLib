@@ -11,17 +11,17 @@ oda_rates       = "odarates.dat"
 ffn_rates       = "ffnrates.dat"
 
 ## Rate table priority hierarchy ##
-isuzuki         = 0
+isuzuki         = 2
 ilmp            = 0
-ioda            = 0
+ioda            = 3
 iffn            = 0
 ilmsh           = 0
 iravlic         = 1
-iapprox         = 2
+iapprox         = 4
 
 # 0 indicates the table will not be used
 # 1 indicates highest priority, if other tables have rates for a nuclei contained in this table, they will be ignored.
-# CITATION NOTICE: By using the ilmp/ilmsh/iffn/ioda/iravlic/iapprox flags you agree to cite the relevant publications in your work.
+# CITATION NOTICE: By using the ilmp/ilmsh/iffn/ioda/iravlic/isuzuki/iapprox flags you agree to cite the relevant publications in your work.
 ------------------------------------------------------------------------------------------
 | iffn    | Fuller, G. M., Fowler, W. A., & Newman, M. J. (1982).                        |
 |         | Stellar weak interaction rates for intermediate-mass nuclei.                 |
@@ -43,6 +43,12 @@ iapprox         = 2
 | iapprox | Electron capture rates on nuclei and implications for stellar core collapse. |
 |         | Physical Review Letters 90, 241102.                                          |
 |         | http://prl.aps.org/abstract/PRL/v90/i24/e241102                              |
+------------------------------------------------------------------------------------------
+| isuzuki | Toshio Suzuki, Hiroshi Toki and Ken'ichi Nomoto (2016).                      |
+|         | ELECTRON-CAPTURE AND beta-DECAY RATES FOR sd-SHELL NUCLEI IN STELLAR         |
+|         | ENVIRONMENTS RELEVANT TO HIGH-DENSITY O–NE–MG CORES.                         |
+|         | Astrophys. J. 817, 163.                                                      |
+|         | https://doi.org/10.3847/0004-637x/817/2/163                                  |
 ------------------------------------------------------------------------------------------
 | iravlic | Giraud, S., Zegers, R. G. T., Brown, B. A., Gabler, J.-M., Lesniak, J.,      |
 |         | Rebenstock, J., Ney, E. M., Engel, J., Ravlić, A., Paar, N.                  |
