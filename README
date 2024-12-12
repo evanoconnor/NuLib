@@ -166,8 +166,8 @@ are needed for a large set of nuclei. These are calculated via Matthias
 Hempel's NSE mass distributions discussed below. To include emissivities
 and opcaities for this interaction, set the corresponding flag in
 requested_interactions.inc, as well as WEAK_RATES=1 in make.inc. If
-these routines are utilized in a work, cite the above paper as well the
-following publications from which the weak-rate tables derive:
+these routines are utilized in a work, cite the above paper as well any relevent
+publications from which the weak-rate tables derive:
 --------------------------------------------------------------------------------
 | Fuller, G. M., Fowler, W. A., & Newman, M. J. (1982).                        |
 | Stellar weak interaction rates for intermediate-mass nuclei.                 |
@@ -189,6 +189,18 @@ following publications from which the weak-rate tables derive:
 | Electron capture rates on nuclei and implications for stellar core collapse. |
 | Physical Review Letters 90, 241102.                                          |
 | http://prl.aps.org/abstract/PRL/v90/i24/e241102                              |
+--------------------------------------------------------------------------------
+| Toshio Suzuki, Hiroshi Toki and Ken'ichi Nomoto (2016).                      |
+| ELECTRON-CAPTURE AND beta-DECAY RATES FOR sd-SHELL NUCLEI IN STELLAR         |
+| ENVIRONMENTS RELEVANT TO HIGH-DENSITY O–NE–MG CORES.                         |
+| Astrophys. J. 817, 163.                                                      |
+| https://doi.org/10.3847/0004-637x/817/2/163                                  |
+--------------------------------------------------------------------------------
+| Ravlic, A., Giraud, S., Paar, N., Zegers, R. G. T (2024).                    |
+| Self-consistent microscopic calculations for electron captures on nuclei in  |
+| core-collapse supernovae                                                     |
+| arXiv:2412.00650v1                                                           |
+| https://arxiv.org/pdf/2412.00650                                             |
 --------------------------------------------------------------------------------
 
 Tables are available from: https://groups.nscl.msu.edu/charge_exchange/weakrates.html
