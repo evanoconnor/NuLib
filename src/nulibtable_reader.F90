@@ -85,7 +85,9 @@ subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernel
   allocate(nulibtable_ewidths(nulibtable_number_groups))
   allocate(nulibtable_ebottom(nulibtable_number_groups))
   allocate(nulibtable_etop(nulibtable_number_groups))
-
+  allocate(nulibtable_logenergies(nulibtable_number_groups))
+  allocate(nulibtable_logetop(nulibtable_number_groups))
+  
   call h5dopen_f(file_id, "nrho",dset_id, error)
   call h5dread_f(dset_id, H5T_NATIVE_INTEGER, nulibtable_nrho, dims1, error)
   call h5dclose_f(dset_id, error)
