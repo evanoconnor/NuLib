@@ -16,7 +16,7 @@ import numpy as np
 
 
 if len(sys.argv) < 2:
-    print "Usage: nulib_include_source_in_table.py <NuLib Table Name>"
+    print("Usage: nulib_include_source_in_table.py <NuLib Table Name>")
     sys.exit()
 
 nulib_table_name = sys.argv[1]
@@ -42,7 +42,7 @@ tarstring = "tar -czvf " + tarfile + " "
 for xfile in filelist:
     tarstring = tarstring + xfile + " "
 
-print tarstring
+print(tarstring)
 os.system(tarstring)
 
 infile = open(tarfile,"rb")

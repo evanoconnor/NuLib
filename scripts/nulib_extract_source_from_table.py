@@ -19,7 +19,7 @@ import numpy as np
 
 
 if len(sys.argv) < 2:
-    print "Usage: nulib_extract_source_in_table.py <NuLib Table Name>"
+    print("Usage: nulib_extract_source_in_table.py <NuLib Table Name>")
     sys.exit()
 
 nulib_table_name = sys.argv[1]
@@ -27,7 +27,7 @@ nulib_table_name = sys.argv[1]
 tarfile = "nulib_src.tar.gz"
 
 # creating output directory
-print "Creating output directory saved_nulib"
+print("Creating output directory saved_nulib")
 os.system("mkdir saved_nulib")
 
 h5file = h5py.File(nulib_table_name,"r")
@@ -35,7 +35,7 @@ h5file = h5py.File(nulib_table_name,"r")
 try:
     indata = h5file['NuLib Source'][()]
 except:
-    print "Sorry, no source availabe in this NuLib file."
+    print("Sorry, no source availabe in this NuLib file.")
     h5file.close()
     sys.exit()
 
