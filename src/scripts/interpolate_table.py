@@ -25,29 +25,29 @@ def interp3d(x,y,z,xt,yt,zt,data):
 
     #------- determine location in (equidistant!!!) table 
 
-    ix = 1 + int( (x - xt[0] - 1e-10) * dxi )
-    iy = 1 + int( (y - yt[0] - 1e-10) * dyi )
-    iz = 1 + int( (z - zt[0] - 1e-10) * dzi )
+    ix = 1 + np.array( (x - xt[0] - 1e-10) * dxi ).astype(int)
+    iy = 1 + np.array( (y - yt[0] - 1e-10) * dyi ).astype(int)
+    iz = 1 + np.array( (z - zt[0] - 1e-10) * dzi ).astype(int)
 
-    ix = max( 1, min( ix, nx ) )
-    iy = max( 1, min( iy, ny ) )
-    iz = max( 1, min( iz, nz ) )
+    ix = np.maximum( 1, np.minimum( ix, nx ) )
+    iy = np.maximum( 1, np.minimum( iy, ny ) )
+    iz = np.maximum( 1, np.minimum( iz, nz ) )
 
     #------- set-up auxiliary arrays for Lagrange interpolation
 
-    delx = xt[ix] - x
-    dely = yt[iy] - y
-    delz = zt[iz] - z
+    delx = xt[[ix]] - x
+    dely = yt[[iy]] - y
+    delz = zt[[iz]] - z
 
-    corners = np.zeros(8)
-    corners[0] = data[ix  , iy  , iz  ]
-    corners[1] = data[ix-1, iy  , iz  ]
-    corners[2] = data[ix  , iy-1, iz  ]
-    corners[3] = data[ix  , iy  , iz-1]
-    corners[4] = data[ix-1, iy-1, iz  ]
-    corners[5] = data[ix-1, iy  , iz-1]
-    corners[6] = data[ix  , iy-1, iz-1]
-    corners[7] = data[ix-1, iy-1, iz-1]
+    corners = np.zeros((8,)+ix.shape)
+    corners[0] = data[[ix  ], [iy  ], [iz  ]]
+    corners[1] = data[[ix-1], [iy  ], [iz  ]]
+    corners[2] = data[[ix  ], [iy-1], [iz  ]]
+    corners[3] = data[[ix  ], [iy  ], [iz-1]]
+    corners[4] = data[[ix-1], [iy-1], [iz  ]]
+    corners[5] = data[[ix-1], [iy  ], [iz-1]]
+    corners[6] = data[[ix  ], [iy-1], [iz-1]]
+    corners[7] = data[[ix-1], [iy-1], [iz-1]]
     
     # coefficients
     
@@ -87,22 +87,22 @@ def interp2d(x, y, xt, yt, data):
 
     #------- determine location in (equidistant!!!) table 
 
-    ix = 1 + int( (x - xt[0] - 1e-10) * dxi )
-    iy = 1 + int( (y - yt[0] - 1e-10) * dyi )
+    ix = 1 + np.array( (x - xt[0] - 1e-10) * dxi ).astype(int)
+    iy = 1 + np.array( (y - yt[0] - 1e-10) * dyi ).astype(int)
     
-    ix = max( 1, min( ix, nx ) )
-    iy = max( 1, min( iy, ny ) )
+    ix = np.maximum( 1, np.minimum( ix, nx ) )
+    iy = np.maximum( 1, np.minimum( iy, ny ) )
 
     #------- set-up auxiliary arrays for Lagrange interpolation
     
-    delx = xt[ix] - x
-    dely = yt[iy] - y
+    delx = xt[[ix]] - x
+    dely = yt[[iy]] - y
 
-    corners = np.zeros(4)
-    corners[0] = data[ix  , iy  ]
-    corners[1] = data[ix-1, iy  ]
-    corners[2] = data[ix  , iy-1]
-    corners[3] = data[ix-1, iy-1]
+    corners = np.zeros((4,)+ix.shape)
+    corners[0] = data[[ix  ], [iy  ]]
+    corners[1] = data[[ix-1], [iy  ]]
+    corners[2] = data[[ix  ], [iy-1]]
+    corners[3] = data[[ix-1], [iy-1]]
 
     #------ set up coefficients of the interpolation polynomial and
 
@@ -132,7 +132,7 @@ def interpolate_eas(ig, s, rho, T, Ye, table, datasetname):
 #!     table    h5py.File()
 #!     datasetname  {"absorption_opacity", "emissivities", "scattering_opacity", "scattering_delta"}
 #!---------------------------------------------------------------------
-    data = table[datasetname]
+    data = np.array(table[datasetname])
 
     zt = np.log10(table["rho_points"])
     yt = np.log10(table["temp_points"])
@@ -168,7 +168,7 @@ def interpolate_kernel(ig_in, s, ig_out, eta, T, table, datasetname):
 #!     table    h5py.File()
 #!     datasetname  {"inelastic_phi0", "inelastic_phi1"}
 #!---------------------------------------------------------------------
-    data = table[datasetname][ig_in,s,ig_out,:,:]
+    data = np.array(table[datasetname][ig_in,s,ig_out,:,:])
 
     xt = np.log10(table["eta_Ipoints"])
     yt = np.log10(table["temp_Ipoints"])
@@ -184,11 +184,11 @@ def interpolate_kernel(ig_in, s, ig_out, eta, T, table, datasetname):
     return interp2d(x, y, xt, yt, data)
 
 def interpolate_eos(rho, T, Ye, table, datasetname):
-    data = table[datasetname]
+    data = np.array(table[datasetname])
 
-    zt = table["logrho"]
-    yt = table["logtemp"]
-    xt = table["ye"]
+    zt = np.array(table["logrho"])
+    yt = np.array(table["logtemp"])
+    xt = np.array(table["ye"])
 
     z = np.log10(rho)
     y = np.log10(T)
