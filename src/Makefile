@@ -91,7 +91,7 @@ EXTRAINCS += $(HDF5INCS)
 EXTRAOBJECTS += $(HDF5LIBS)
 
 ifeq ($(WEAK_RATES),1)
-all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates
+all: nulib.a ../nulibtable_driver ../point_example ../make_table_weakrates ../make_table_electron_capture
 else
 all: nulib.a ../nulibtable_driver ../point_example ../make_table_example
 endif
@@ -107,6 +107,9 @@ endif
 
 ../make_table_weakrates:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS)  $(f90_OBJECTS)make_table_weakrates.F90
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_weakrates.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
+
+../make_table_electron_capture:  $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS)  $(f90_OBJECTS)make_table_electron_capture.F90
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) $(EXTRAINCS) -o $@ make_table_electron_capture.F90 $(MOD_OBJECTS) $(OBJECTS) $(F_OBJECTS) $(EXTRAOBJECTS) $(f90_OBJECTS)
 
 nulib.a: $(EXTRADEPS) $(F_OBJECTS) $(MOD_OBJECTS) $(OBJECTS) $(NT_OBJECTS)
 	ar -r nulib.a *.o nuc_eos/*.o
@@ -136,6 +139,7 @@ nuc_eos/nuc_eos.a: nuc_eos/*.F90 nuc_eos/*.f
 clean:
 	rm -rf ../make_table_example
 	rm -rf ../make_table_weakrates
+	rm -rf ../make_table_electron_capture
 	rm -rf ../point_example
 	rm -rf ../nulibtable_driver
 	rm -rf test
